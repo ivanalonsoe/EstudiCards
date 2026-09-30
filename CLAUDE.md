@@ -1,11 +1,13 @@
 # CLAUDE.md
 
-Las instrucciones del proyecto están en `AGENTS.md`, compartidas con otros agentes de código. Claude Code las carga con esta importación:
+The project instructions are in `AGENTS.md`, shared with other coding agents. Claude Code loads them through this import:
 
 @AGENTS.md
 
-## Notas específicas para Claude Code
+## Notes specific to Claude Code
 
-- Antes de empezar una fase del plan, lee `docs/SPEC.md` (sección de la fase y las historias de usuario implicadas) y, si hay interfaz, `docs/DESIGN_BRIEF.md`.
-- Para tareas de varias partes, crea una lista de tareas y ve marcándolas.
-- Si una decisión no está en el spec y cambia el comportamiento visible para el usuario, pregunta antes de implementarla.
+- Talk to the owner in Spanish; write code, tests, commits and documentation in English (see `AGENTS.md`).
+- Before starting a task, read it in `docs/TASKS.md`, together with the user stories and rules from `docs/SPEC.md` it references. If it involves UI, look at the screenshots in `docs/design/` and the brief.
+- Apply TDD: first show the tests failing, then green (see `AGENTS.md`).
+- For multi-part tasks, create a task list and tick items off as you go.
+- If a decision is not in the spec and changes the behaviour the user sees, ask before implementing it.

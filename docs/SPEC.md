@@ -1,576 +1,619 @@
-# EstudiCards — Especificación funcional y técnica
+# EstudiCards — Functional and Technical Specification
 
-> **Nombre:** EstudiCards ("Estudi" + "Cards"). A 30/09/2026 no se han encontrado apps con ese nombre exacto en App Store, Google Play ni la web. Antes de publicar, comprobar de nuevo las tiendas y el registro de marcas (OEPM / EUIPO).
+> **Name:** EstudiCards ("Estudi" + "Cards"). As of 30/09/2026, no apps with this exact name were found on the App Store, Google Play or the web. Before publishing, check the stores and the trademark registries (OEPM / EUIPO) again.
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Versión del documento | 1.0 |
-| Fecha | 30/09/2026 |
-| Alcance | Versión 1 (v1) |
-| Plataformas v1 | Windows, macOS, Android, iOS |
-| Tecnología | Flutter (Dart) |
-| Idioma de la interfaz | Español |
-| Documentos relacionados | `DESIGN_BRIEF.md` (diseño visual), `AGENTS.md` / `CLAUDE.md` (instrucciones para agentes de código) |
+| Document version | 1.2 |
+| Date | 30/09/2026 |
+| Scope | Version 1 (v1) |
+| v1 platforms | Windows, macOS, Android, iOS |
+| Technology | Flutter (Dart) |
+| UI language | Spanish (see [§2.1](#21-ui-vocabulary)) |
+| Documentation, code and tests language | English |
+| Related documents | `DESIGN_BRIEF.md` (visual design), `design/` (design screenshots), `TASKS.md` (task plan), `AGENTS.md` / `CLAUDE.md` (instructions for coding agents) |
 
 ---
 
-## Índice
+## Table of contents
 
-1. [Resumen y objetivos](#1-resumen-y-objetivos)
-2. [Glosario](#2-glosario)
-3. [Arquitectura técnica](#3-arquitectura-técnica)
-4. [Modelo de datos](#4-modelo-de-datos)
-5. [Pantallas y navegación](#5-pantallas-y-navegación)
-6. [Historias de usuario y criterios de aceptación](#6-historias-de-usuario-y-criterios-de-aceptación)
-7. [Reglas de negocio](#7-reglas-de-negocio)
-8. [Importación y exportación](#8-importación-y-exportación)
-9. [Requisitos no funcionales](#9-requisitos-no-funcionales)
-10. [Plan de implementación por fases](#10-plan-de-implementación-por-fases)
-11. [Próximos objetivos (fuera de la v1)](#11-próximos-objetivos-fuera-de-la-v1)
-12. [Registro de decisiones y supuestos](#12-registro-de-decisiones-y-supuestos)
-
----
-
-## 1. Resumen y objetivos
-
-EstudiCards es una app de tarjetas de estudio (flashcards) para escritorio y móvil. Permite organizar el contenido en **proyectos** que contienen **barajas** de **tarjetas**, estudiar con sesiones aleatorias con o sin temporizador, y repasar los errores a partir del historial de aciertos y fallos.
-
-### 1.1 Objetivos de la v1
-
-- Crear, editar, archivar y eliminar proyectos y barajas, con papelera de 15 días.
-- Crear tarjetas de dos tipos: **simple** (pregunta → respuesta) y **test** (pregunta con 2–6 opciones, una o varias correctas).
-- Proyectos de tipo **idioma** con voz (TTS del sistema), frase de ejemplo, notas y modo inverso.
-- Sesiones de estudio aleatorias configurables: número de tarjetas, barajas, modo normal o solo errores, sentido, temporizador por pregunta o general.
-- Registrar cada intento y mantener una lista de errores por tarjeta y sentido.
-- Estadísticas por proyecto y globales, racha diaria y objetivo diario opcional.
-- Importar y exportar: copia de seguridad completa, compartir proyecto o baraja (JSON/CSV) e importar tarjetas desde CSV con plantilla y prompt para IA.
-- Funcionamiento **100% offline**, sin cuentas ni login.
-
-### 1.2 Fuera de alcance de la v1
-
-Login, sincronización en la nube, versión web, voces de IA, repetición espaciada, escribir la respuesta, fórmulas y código, atajos de teclado e idiomas de interfaz distintos del español. Ver [sección 11](#11-próximos-objetivos-fuera-de-la-v1).
-
-### 1.3 Usuario objetivo
-
-Un único usuario que estudia temarios (oposiciones, asignaturas, certificaciones) o idiomas, y alterna entre el ordenador y el móvil moviendo sus datos mediante ficheros exportados.
+1. [Summary and goals](#1-summary-and-goals)
+2. [Glossary](#2-glossary)
+3. [Technical architecture](#3-technical-architecture)
+4. [Data model](#4-data-model)
+5. [Screens and navigation](#5-screens-and-navigation)
+6. [User stories and acceptance criteria](#6-user-stories-and-acceptance-criteria)
+7. [Business rules](#7-business-rules)
+8. [Import and export](#8-import-and-export)
+9. [Non-functional requirements](#9-non-functional-requirements)
+10. [Quality: TDD, tests and CI/CD](#10-quality-tdd-tests-and-cicd)
+11. [Phased implementation plan](#11-phased-implementation-plan)
+12. [Future goals (outside v1)](#12-future-goals-outside-v1)
+13. [Decision log and assumptions](#13-decision-log-and-assumptions)
 
 ---
 
-## 2. Glosario
+## 1. Summary and goals
 
-| Término | Definición |
+EstudiCards is a flashcard app for desktop and mobile. Content is organised into **projects** that contain **decks** of **cards**. Users study with random sessions, with or without a timer, and review their mistakes based on the history of correct and wrong answers.
+
+### 1.1 v1 goals
+
+- Create, edit, archive and delete projects and decks, with a 15-day trash.
+- Create two types of cards: **simple** (question → answer) and **test** (question with 2–6 options, one or several correct).
+- **Language** projects with text-to-speech (system TTS), example sentence, notes and reverse mode.
+- Configurable random study sessions: number of cards, decks, normal or errors-only mode, direction, per-question or global timer.
+- Record every attempt and keep an error list per card and direction.
+- Per-project and global statistics, daily streak and optional daily goal.
+- Import and export: full backup, share a project or deck (JSON/CSV), and import cards from CSV with a template and an AI prompt.
+- **100% offline**, no accounts or login.
+
+### 1.2 Out of scope for v1
+
+Login, cloud sync, web version, AI voices, spaced repetition, typing the answer, formulas and code, keyboard shortcuts and UI languages other than Spanish. See [section 12](#12-future-goals-outside-v1).
+
+### 1.3 Target user
+
+A single user who studies syllabi (public exams, school subjects, certifications) or languages, and switches between computer and phone, moving their data with exported files.
+
+---
+
+## 2. Glossary
+
+| Term | Definition |
 |---|---|
-| **Proyecto** | Contenedor de nivel superior (p. ej. "Inglés B2"). Define el tipo (general o idioma) y los idiomas, que heredan sus barajas. |
-| **Baraja** | Grupo de tarjetas dentro de un proyecto (p. ej. "Verbos irregulares"). |
-| **Tarjeta** | Unidad de estudio. Puede ser *simple* o *test*. |
-| **Tarjeta simple** | Tiene anverso (pregunta, palabra o frase) y reverso (respuesta o traducción). Se evalúa con "Acerté" o "Fallé". |
-| **Tarjeta test** | Pregunta con 2–6 opciones y una o varias correctas. La app corrige automáticamente al pulsar "Comprobar". |
-| **Sentido** | *Normal* (pregunta → respuesta) o *inverso* (respuesta → pregunta). El inverso solo existe en proyectos de idioma. |
-| **Sesión** | Una partida de estudio con una configuración concreta. |
-| **Intento** | El resultado de una tarjeta dentro de una sesión: acierto, fallo o sin responder. |
-| **Error / lista de errores** | Una tarjeta está "en errores" para un sentido si se falló y aún no se ha acertado 2 veces seguidas. |
-| **Papelera** | Lugar donde quedan los proyectos y barajas eliminados durante 15 días antes de borrarse definitivamente. |
-| **Archivado** | Proyecto oculto del dashboard sin borrarlo. |
-| **Racha** | Número de días consecutivos con al menos una tarjeta respondida. |
+| **Project** | Top-level container (e.g. "Inglés B2"). Defines the type (general or language) and the languages, which its decks inherit. |
+| **Deck** | Group of cards inside a project (e.g. "Verbos irregulares"). |
+| **Card** | Unit of study. It can be *simple* or *test*. |
+| **Simple card** | Has a front (question, word or sentence) and a back (answer or translation). The user self-grades it with "Acerté" (got it) or "Fallé" (missed it). |
+| **Test card** | Question with 2–6 options and one or several correct ones. The app grades it automatically when the user taps "Comprobar" (check). |
+| **Direction** | *Normal* (question → answer) or *reverse* (answer → question). Reverse only exists in language projects. |
+| **Session** | One round of study with a specific configuration. |
+| **Attempt** | The result of one card within a session: correct, wrong or unanswered. |
+| **Error / error list** | A card is "in errors" for a direction if it was answered wrong and has not yet been answered correctly twice in a row. |
+| **Trash** | Where deleted projects and decks stay for 15 days before being permanently deleted. |
+| **Archived** | A project hidden from the dashboard without deleting it. |
+| **Streak** | Number of consecutive days with at least one card answered. |
+
+### 2.1 UI vocabulary
+
+The app UI is in **Spanish**. This document quotes UI labels in Spanish, exactly as they must appear in `app_es.arb`. Main labels:
+
+| Spanish UI label | Meaning |
+|---|---|
+| Proyecto / Baraja / Tarjeta | Project / Deck / Card |
+| Tipo test | Test type (toggle in the card editor) |
+| Permitir varias correctas | Allow multiple correct answers |
+| Girar | Flip |
+| Acerté / Fallé | Got it / Missed it |
+| Comprobar / Siguiente | Check / Next |
+| Ver respuesta | Show answer |
+| Dejar para el final | Leave for later (move to the end of the queue) |
+| Solo errores | Errors only |
+| Priorizar las más falladas | Prioritise the most missed |
+| Repetir falladas al final | Repeat missed cards at the end |
+| Repasar errores (N) | Review errors (N) |
+| Repasar falladas ahora | Review missed cards now |
+| Repetir sesión / Volver | Repeat session / Back |
+| En pausa / Continuar / Salir | Paused / Resume / Exit |
+| No respondidas | Unanswered |
+| Guardar / Guardar y añadir otra | Save / Save and add another |
+| Deshacer | Undo |
+| Papelera / Archivados / Ajustes | Trash / Archived / Settings |
+| Vaciar papelera / Eliminar definitivamente | Empty trash / Delete permanently |
+| Exportar todo / Restaurar copia | Export all / Restore backup |
+| Reemplazar todo / Fusionar | Replace all / Merge |
+| Importar tarjetas / Descargar plantilla / Copiar prompt para IA | Import cards / Download template / Copy AI prompt |
+| Frase de ejemplo / Notas / Explicación | Example sentence / Notes / Explanation |
 
 ---
 
-## 3. Arquitectura técnica
+## 3. Technical architecture
 
 ### 3.1 Stack
 
-| Pieza | Elección | Para qué sirve (explicado) |
+| Piece | Choice | What it is for (explained) |
 |---|---|---|
-| Framework | **Flutter** (stable) + **Dart 3** | Un solo código para Windows, macOS, Android e iOS. Flutter dibuja toda la interfaz, así que se ve igual en todas las plataformas. |
-| Base de datos | **Drift** sobre SQLite (`drift`, `drift_flutter`) | SQLite es una base de datos en un solo fichero, dentro del dispositivo. Drift permite escribir las tablas y consultas en Dart con comprobación de tipos, y gestiona las migraciones cuando cambie el esquema. |
-| Estado | **Riverpod** (`flutter_riverpod`) | Conecta los datos con las pantallas: cuando algo cambia en la base de datos, las pantallas que lo muestran se actualizan solas. |
-| Navegación | **go_router** | Define las rutas (`/proyecto/:id`, `/baraja/:id`…) y la navegación atrás. |
-| IDs | `uuid` (v4) | Identificadores únicos globales. Permiten exportar e importar sin choques de IDs. |
-| Voz | `flutter_tts` | Usa el motor de voz del sistema operativo. Gratis, offline, sin IA. |
-| Ficheros | `file_picker`, `share_plus`, `path_provider` | Elegir ficheros para importar, compartir por el menú nativo (WhatsApp, email…) y guardar en disco. |
-| Imágenes | `image_picker` (móvil), `file_picker` (escritorio), `image` (redimensionado en Dart puro) | Añadir imágenes a las tarjetas y comprimirlas en todas las plataformas. |
-| CSV | `csv` | Leer y escribir CSV. |
-| Gráficas | `fl_chart` | Gráficas de estadísticas. |
-| Textos | `flutter_localizations` + ficheros ARB (`intl`) | Todos los textos de la interfaz en un fichero, para poder traducir en el futuro. |
-| Tests | `flutter_test`, `mocktail` | Pruebas automáticas de reglas de negocio y pantallas. |
+| Framework | **Flutter** (stable) + **Dart 3** | A single codebase for Windows, macOS, Android and iOS. Flutter draws the whole UI itself, so it looks the same on every platform. |
+| Database | **Drift** on SQLite (`drift`, `drift_flutter`) | SQLite is a database in a single file, on the device. Drift lets you write tables and queries in Dart with type checking, and handles migrations when the schema changes. |
+| State | **Riverpod** (`flutter_riverpod`) | Connects data to screens: when something changes in the database, the screens that show it update automatically. |
+| Navigation | **go_router** | Defines routes (`/project/:id`, `/deck/:id`…) and back navigation. |
+| IDs | `uuid` (v4) | Globally unique identifiers. They allow exporting and importing without ID clashes. |
+| Voice | `flutter_tts` | Uses the operating system's speech engine. Free, offline, no AI. |
+| Files | `file_picker`, `share_plus`, `path_provider` | Pick files to import, share through the native menu (WhatsApp, email…) and save to disk. |
+| Images | `image_picker` (mobile), `file_picker` (desktop), `image` (resizing in pure Dart) | Add images to cards and compress them on every platform. |
+| CSV | `csv` | Read and write CSV. |
+| Charts | `fl_chart` | Statistics charts. |
+| UI strings | `flutter_localizations` + ARB files (`intl`) | All UI strings in one file, so the app can be translated in the future. |
+| Unit and widget tests | `flutter_test`, `mocktail`, `fake_async` | Tests for business rules and isolated screens. `mocktail` creates test doubles; `fake_async` controls time in timer tests. |
+| Integration tests | `integration_test` (Flutter SDK) | Full flows inside the real app, with a database. |
+| E2E tests | `patrol` | Full flows in the real app that also interact with native system dialogs (file picker, share sheet, permissions). |
+| Git hooks | Lefthook (`lefthook.yml`) | Runs formatting, analysis and tests automatically before each commit and push. |
+| CI/CD | GitHub Actions (`.github/workflows/`) | Runs all tests on every PR and builds the installers when a version is released. |
 
-> Las versiones concretas de cada paquete se fijan al crear el proyecto (última estable compatible). No hace falta decidirlas ahora.
+> The exact version of each package is pinned when the project is created (latest compatible stable). No need to decide them now.
 
-### 3.2 Capas y estructura de carpetas
+### 3.2 Layers and folder structure
 
-Se organiza **por funcionalidad** (feature-first) con tres capas:
+The code is organised **by feature** (feature-first) with three layers:
 
-- **data:** tablas de Drift, DAOs y repositorios.
-- **domain:** modelos y reglas de negocio puras. No dependen de Flutter y se pueden probar con tests unitarios.
-- **presentation:** pantallas, widgets y providers de Riverpod.
+- **data:** Drift tables, DAOs and repositories.
+- **domain:** models and pure business rules. They do not depend on Flutter and can be covered by unit tests.
+- **presentation:** screens, widgets and Riverpod providers.
 
 ```
 lib/
 ├── main.dart
-├── app/                     # MaterialApp, tema, router, localización
+├── app/                     # MaterialApp, theme, router, localisation
 │   ├── router.dart
-│   ├── theme/               # tokens de color, tipografía, tema claro/oscuro
+│   ├── theme/               # colour tokens, typography, light/dark theme
 │   └── l10n/                # app_es.arb
-├── core/                    # utilidades comunes
-│   ├── db/                  # AppDatabase (Drift), migraciones
-│   ├── ids.dart             # generación de UUID
-│   ├── clock.dart           # reloj inyectable (para tests de timers y papelera)
-│   ├── files/               # guardar/compartir, imágenes
-│   └── widgets/             # componentes reutilizables
+├── core/                    # shared utilities
+│   ├── db/                  # AppDatabase (Drift), migrations
+│   ├── ids.dart             # UUID generation
+│   ├── clock.dart           # injectable clock (for timer and trash tests)
+│   ├── files/               # save/share, images
+│   └── widgets/             # reusable components
 └── features/
-    ├── projects/            # dashboard, proyecto, archivados, papelera
-    ├── decks/               # baraja y lista de tarjetas
-    ├── cards/               # editor de tarjeta y vista previa
-    ├── study/               # configuración, motor de sesión, resultados
-    ├── stats/               # estadísticas, errores, racha
-    ├── import_export/       # JSON, CSV, plantilla, prompt IA
-    └── settings/            # ajustes
-test/                        # espejo de lib/
+    ├── projects/            # dashboard, project, archived, trash
+    ├── decks/               # deck and card list
+    ├── cards/               # card editor and preview
+    ├── study/               # configuration, session engine, results
+    ├── stats/               # statistics, errors, streak
+    ├── import_export/       # JSON, CSV, template, AI prompt
+    └── settings/            # settings
+test/                        # unit and widget tests (mirrors lib/)
+│   └── fixtures/            # sample CSV and JSON files for tests
+integration_test/            # integration tests (one flow per epic)
+.github/workflows/           # CI (ci.yml) and CD (release.yml)
+lefthook.yml                 # git hooks
 ```
 
-### 3.3 Diseño adaptable
+> Patrol E2E tests live in the folder set by its configuration; it is decided in phase 0 following the Patrol documentation.
 
-| Ancho de ventana | Diseño |
+### 3.3 Responsive layout
+
+| Window width | Layout |
 |---|---|
-| < 600 dp (móvil) | Navegación en pila: Dashboard → Proyecto → Baraja. El menú del dashboard va en un cajón lateral. |
-| 600–839 dp (tablet) | Como móvil, con más márgenes y el editor de tarjeta a dos columnas. |
-| ≥ 840 dp (escritorio) | Barra lateral fija con la lista de proyectos (y accesos a Archivados, Papelera, Estadísticas y Ajustes); a la derecha, el contenido del proyecto o baraja. En el editor, la vista previa va a la derecha. |
+| < 600 dp (mobile) | Stack navigation: Dashboard → Project → Deck. The dashboard menu is in a side drawer. |
+| 600–839 dp (tablet) | Like mobile, with larger margins and a two-column card editor. |
+| ≥ 840 dp (desktop) | Fixed sidebar with the project list (and links to Archived, Trash, Statistics and Settings); the project or deck content on the right. In the editor, the preview is on the right. |
 
-### 3.4 Almacenamiento de ficheros
+### 3.4 File storage
 
-- Base de datos: `<app documents>/estudicards.sqlite`.
-- Imágenes: `<app documents>/images/<uuid>.jpg`. En la base de datos solo se guarda la ruta relativa.
-- Las imágenes se redimensionan a un máximo de 1600 px en el lado mayor y se guardan en JPEG con calidad 80.
+- Database: `<app documents>/estudicards.sqlite`.
+- Images: `<app documents>/images/<uuid>.jpg`. Only the relative path is stored in the database.
+- Images are resized to at most 1600 px on the long side and saved as JPEG at quality 80.
 
-### 3.5 Plataformas y distribución
+### 3.5 Platforms and distribution
 
-- **v1:** Android, iOS, Windows y macOS.
-- **Compartir:** en móvil se usa el menú nativo (`share_plus`). En escritorio se usa "Guardar como…" (`file_picker`), ya que compartir directamente a WhatsApp no está disponible igual en escritorio.
-- **Voz (TTS):** depende de las voces instaladas en el sistema. Si falta la voz del idioma, la app lo avisa y explica cómo instalarla.
+- **v1:** Android, iOS, Windows and macOS.
+- **Sharing:** on mobile, the native share menu (`share_plus`). On desktop, "Save as…" (`file_picker`), because sharing straight to WhatsApp does not work the same way on desktop.
+- **Voice (TTS):** depends on the voices installed on the system. If the voice for a language is missing, the app says so and explains how to install it.
 
 ---
 
-## 4. Modelo de datos
+## 4. Data model
 
-Nombres de tablas y campos en inglés (código); descripciones en español. Todos los IDs son UUID v4 en texto. Todas las fechas se guardan en UTC (ISO 8601 o epoch en milisegundos).
+All IDs are UUID v4 strings. All dates are stored in UTC (ISO 8601 or epoch milliseconds).
 
-### 4.1 Diagrama
+### 4.1 Diagram
 
 ```mermaid
 erDiagram
-    PROJECT ||--o{ DECK : contiene
-    DECK ||--o{ CARD : contiene
-    CARD ||--o{ CARD_OPTION : "opciones (test)"
-    CARD ||--o{ CARD_STATS : "1 por sentido"
-    PROJECT ||--o{ STUDY_SESSION : tiene
-    STUDY_SESSION ||--o{ SESSION_DECK : incluye
-    STUDY_SESSION ||--o{ ATTEMPT : registra
-    CARD ||--o{ ATTEMPT : recibe
+    PROJECT ||--o{ DECK : contains
+    DECK ||--o{ CARD : contains
+    CARD ||--o{ CARD_OPTION : "options (test)"
+    CARD ||--o{ CARD_STATS : "1 per direction"
+    PROJECT ||--o{ STUDY_SESSION : has
+    STUDY_SESSION ||--o{ SESSION_DECK : includes
+    STUDY_SESSION ||--o{ ATTEMPT : records
+    CARD ||--o{ ATTEMPT : receives
 ```
 
-### 4.2 Tablas
+### 4.2 Tables
 
 #### `projects`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
-| name | TEXT | Obligatorio, 1–60 caracteres |
-| description | TEXT? | Hasta 300 caracteres |
-| color | TEXT | Clave de la paleta de proyectos (p. ej. `orange`, `blue`) |
-| icon | TEXT | Emoji o clave de icono |
+| name | TEXT | Required, 1–60 characters |
+| description | TEXT? | Up to 300 characters |
+| color | TEXT | Key from the project palette (e.g. `orange`, `blue`) |
+| icon | TEXT | Emoji or icon key |
 | type | TEXT | `general` \| `language` |
-| source_lang | TEXT? | BCP-47 (p. ej. `en-GB`). Solo si `type = language` |
-| target_lang | TEXT? | BCP-47 (p. ej. `es-ES`). Solo si `type = language` |
-| is_favorite | BOOL | Por defecto `false` |
-| is_archived | BOOL | Por defecto `false` |
-| deleted_at | DATETIME? | No nulo = en papelera |
-| last_used_at | DATETIME? | Se actualiza al abrir el proyecto o estudiar |
+| source_lang | TEXT? | BCP-47 (e.g. `en-GB`). Only if `type = language` |
+| target_lang | TEXT? | BCP-47 (e.g. `es-ES`). Only if `type = language` |
+| is_favorite | BOOL | Default `false` |
+| is_archived | BOOL | Default `false` |
+| deleted_at | DATETIME? | Not null = in the trash |
+| last_used_at | DATETIME? | Updated when the project is opened or studied |
 | created_at / updated_at | DATETIME | |
 
 #### `decks`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
 | project_id | TEXT FK | → projects.id |
-| name | TEXT | Obligatorio, 1–60 caracteres |
+| name | TEXT | Required, 1–60 characters |
 | description | TEXT? | |
-| color | TEXT? | Nulo = hereda el del proyecto |
-| deleted_at | DATETIME? | No nulo = en papelera |
+| color | TEXT? | Null = inherits the project colour |
+| deleted_at | DATETIME? | Not null = in the trash |
 | last_used_at | DATETIME? | |
 | created_at / updated_at | DATETIME | |
 
 #### `cards`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
 | deck_id | TEXT FK | → decks.id |
 | type | TEXT | `simple` \| `test` |
-| question | TEXT | Obligatorio. Admite `**negrita**` y `*cursiva*` |
-| question_image | TEXT? | Ruta relativa |
-| answer | TEXT? | Obligatorio si `simple`. No se usa en `test` |
-| answer_image | TEXT? | En `test` se muestra con la explicación |
-| explanation | TEXT? | Solo `test`, opcional |
-| allow_multiple | BOOL | Solo `test`. Permite varias correctas |
-| example | TEXT? | Solo proyectos de idioma |
-| notes | TEXT? | Solo proyectos de idioma |
+| question | TEXT | Required. Supports `**bold**` and `*italic*` |
+| question_image | TEXT? | Relative path |
+| answer | TEXT? | Required if `simple`. Not used in `test` |
+| answer_image | TEXT? | In `test` it is shown with the explanation |
+| explanation | TEXT? | `test` only, optional |
+| allow_multiple | BOOL | `test` only. Allows several correct options |
+| example | TEXT? | Language projects only |
+| notes | TEXT? | Language projects only |
 | created_at / updated_at | DATETIME | |
 
 #### `card_options`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
-| card_id | TEXT FK | → cards.id, borrado en cascada |
-| text | TEXT | Obligatorio |
+| card_id | TEXT FK | → cards.id, cascade delete |
+| text | TEXT | Required |
 | is_correct | BOOL | |
-| position | INT | Orden al editar (en estudio se barajan) |
+| position | INT | Order while editing (shuffled when studying) |
 
-#### `card_stats` (una fila por tarjeta y sentido)
+#### `card_stats` (one row per card and direction)
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
-| card_id | TEXT FK | PK compuesta con `direction` |
+| card_id | TEXT FK | Composite PK with `direction` |
 | direction | TEXT | `normal` \| `reverse` |
-| correct_count | INT | Solo primeros intentos |
-| wrong_count | INT | Solo primeros intentos |
-| consecutive_correct | INT | Aciertos seguidos desde el último fallo |
-| in_error_list | BOOL | Ver regla [7.4](#74-lista-de-errores) |
+| correct_count | INT | First attempts only |
+| wrong_count | INT | First attempts only |
+| consecutive_correct | INT | Correct answers in a row since the last miss |
+| in_error_list | BOOL | See rule [7.4](#74-error-list) |
 | last_result | TEXT? | `correct` \| `wrong` |
 | last_attempt_at | DATETIME? | |
 
-> Es una tabla derivada: se puede recalcular a partir de `attempts`. Se guarda para que las listas y el dashboard sean rápidos.
+> This is a derived table: it can be recalculated from `attempts`. It is stored so that lists and the dashboard are fast.
 
 #### `study_sessions`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
-| project_id | TEXT FK | Una sesión nunca mezcla proyectos |
+| project_id | TEXT FK | A session never mixes projects |
 | mode | TEXT | `normal` \| `errors` |
 | direction | TEXT | `normal` \| `reverse` |
-| requested_count | INT? | Nulo = todas |
+| requested_count | INT? | Null = all |
 | prioritize_failed | BOOL | |
 | repeat_failed | BOOL | |
 | timer_type | TEXT | `none` \| `per_card` \| `global` |
-| timer_seconds | INT? | Por tarjeta: 5–120. General: 60–7200 |
+| timer_seconds | INT? | Per card: 5–120. Global: 60–7200 |
 | status | TEXT | `in_progress` \| `completed` \| `abandoned` \| `time_up` |
 | started_at / ended_at | DATETIME | |
-| active_duration_ms | INT | Excluye el tiempo en pausa |
-| correct_total / wrong_total / unanswered_total | INT | Solo primeros intentos |
+| active_duration_ms | INT | Excludes paused time |
+| correct_total / wrong_total / unanswered_total | INT | First attempts only |
 
 #### `session_decks`
 
-| Campo | Tipo |
+| Field | Type |
 |---|---|
 | session_id | TEXT FK |
 | deck_id | TEXT FK |
 
 #### `attempts`
 
-| Campo | Tipo | Notas |
+| Field | Type | Notes |
 |---|---|---|
 | id | TEXT PK | UUID |
 | session_id | TEXT FK | |
-| card_id | TEXT FK | Borrado en cascada al borrar la tarjeta |
+| card_id | TEXT FK | Cascade delete when the card is deleted |
 | direction | TEXT | `normal` \| `reverse` |
 | result | TEXT | `correct` \| `wrong` \| `unanswered` |
 | source | TEXT | `self_eval` \| `test_check` \| `timeout` \| `revealed` \| `session_end` |
-| is_first_attempt | BOOL | `false` en las repeticiones de "Repetir falladas" |
-| selected_option_ids | TEXT? | JSON con las opciones marcadas (solo test) |
-| response_time_ms | INT? | Desde que se muestra la tarjeta hasta que se responde, sin pausas |
+| is_first_attempt | BOOL | `false` for the repeats of "Repetir falladas al final" |
+| selected_option_ids | TEXT? | JSON with the ticked options (test only) |
+| response_time_ms | INT? | From when the card is shown until it is answered, excluding pauses |
 | answered_at | DATETIME | |
 
-#### `settings` (clave–valor)
+#### `settings` (key–value)
 
-| Clave | Valor por defecto |
+| Key | Default value |
 |---|---|
 | `theme_mode` | `system` (`light` \| `dark` \| `system`) |
 | `card_text_scale` | `1.0` (0.8–1.6) |
-| `daily_goal` | nulo (desactivado) o número de tarjetas |
-| `last_session_config:<projectId>` | JSON con la última configuración usada en ese proyecto |
+| `daily_goal` | null (off) or number of cards |
+| `last_session_config:<projectId>` | JSON with the last configuration used in that project |
 
-### 4.3 Índices recomendados
+### 4.3 Recommended indexes
 
 - `decks(project_id, deleted_at)`
 - `cards(deck_id)`
-- `attempts(card_id, direction, answered_at)` y `attempts(session_id)`
+- `attempts(card_id, direction, answered_at)` and `attempts(session_id)`
 - `card_stats(in_error_list)`
 
 ---
 
-## 5. Pantallas y navegación
+## 5. Screens and navigation
 
-### 5.1 Mapa de navegación
+### 5.1 Navigation map
 
 ```mermaid
 flowchart TD
-    D[Dashboard] --> P[Proyecto]
-    D --> MENU[Menú: Archivados · Papelera · Estadísticas globales · Importar · Exportar todo · Ajustes]
-    D -->|Repasar errores N| CFG
-    P --> B[Baraja]
-    P --> CFG[Configurar sesión]
-    P --> PS[Estadísticas del proyecto]
-    B --> E[Editor de tarjeta]
-    B --> IMP[Importar tarjetas]
+    D[Dashboard] --> P[Project]
+    D --> MENU[Menu: Archived · Trash · Global statistics · Import · Export all · Settings]
+    D -->|Review errors N| CFG
+    P --> B[Deck]
+    P --> CFG[Session setup]
+    P --> PS[Project statistics]
+    B --> E[Card editor]
+    B --> IMP[Import cards]
     B --> CFG
-    CFG --> S[Sesión de estudio]
-    S --> R[Resultados]
-    R -->|Repasar falladas / Repetir| S
+    CFG --> S[Study session]
+    S --> R[Results]
+    R -->|Review missed / Repeat| S
 ```
 
-### 5.2 Pantallas
+### 5.2 Screens
 
-| ID | Pantalla | Contenido principal | Acciones |
+| ID | Screen | Main content | Actions |
 |---|---|---|---|
-| P01 | **Dashboard** | Cabecera con racha y progreso del objetivo diario. Buscador por título. Lista de proyectos: favoritos primero, después por último uso. Cada tarjeta de proyecto muestra icono, color, nombre, nº de barajas y tarjetas, % de aciertos, fecha del último estudio y nº de errores. | Crear proyecto (botón flotante). Menú ⋮ por proyecto: Editar, Compartir, Favorito, Archivar, Eliminar. Botón "Repasar errores (N)" si N > 0. Menú general. |
-| P02 | **Crear/editar proyecto** | Nombre, descripción, color, icono, tipo. Si es idioma: idioma origen y destino. | Guardar, Cancelar. En edición: Reiniciar estadísticas del proyecto. |
-| P03 | **Proyecto** | Cabecera con datos del proyecto. Pestañas **Barajas** y **Estadísticas**. Cada baraja muestra nombre, color, nº de tarjetas, % de aciertos y nº de errores. | Nueva baraja, Estudiar, Repasar errores, Editar proyecto, Compartir proyecto, Importar como baraja nueva. Menú ⋮ por baraja: Editar, Compartir, Reiniciar estadísticas, Eliminar. |
-| P04 | **Crear/editar baraja** | Nombre, descripción, color (por defecto el del proyecto). | Guardar, Cancelar. |
-| P05 | **Baraja** | Lista de tarjetas: pregunta, icono de tipo (simple/test) y % de aciertos. Buscador por pregunta y respuesta. Ordenar por fecha de creación, alfabético o más falladas. | Añadir tarjeta, Estudiar esta baraja, Repasar errores, Importar tarjetas, Descargar plantilla, Copiar prompt para IA, Compartir baraja. Selección múltiple: Copiar a…, Mover a…, Eliminar. |
-| P06 | **Editor de tarjeta** | Pregunta (+ imagen). Toggle **Tipo test**. Simple: Respuesta (+ imagen). Test: lista de 2–6 opciones, check "Permitir varias correctas", selector de correcta(s) y Explicación (+ imagen). Idioma: Frase de ejemplo y Notas. **Vista previa** girable abajo (móvil) o a la derecha (escritorio). | Guardar, Guardar y añadir otra, Cancelar. En edición: Eliminar tarjeta, Reiniciar estadísticas. |
-| P07 | **Importar** | Paso 1: elegir fichero. Paso 2: elegir destino (según dónde se lanzó). Paso 3: vista previa con tarjetas a crear, duplicadas y filas con errores. | Confirmar importación, Cancelar. |
-| P08 | **Configurar sesión** | Barajas (selección múltiple + "Todo el proyecto"), nº de tarjetas (10, 20, 50, Todas, Personalizado), modo (Normal / Solo errores), sentido (Normal / Inverso, solo idioma), "Priorizar las más falladas", "Repetir falladas al final", timer (Sin timer / Por pregunta / General) con su valor. Muestra cuántas tarjetas hay disponibles. | Empezar. |
-| P09 | **Sesión de estudio** | Barra de progreso ("7 / 20"), contador ✓/✗, timer (si hay), tarjeta en el centro. | Ver sección [7.3](#73-sesión-de-estudio). Botones: Pausa, Salir. |
-| P10 | **Pausa** (superposición) | Oculta completamente la tarjeta. Muestra "En pausa" y el tiempo. | Continuar, Salir. |
-| P11 | **Resultados** | % de aciertos, aciertos/fallos/sin responder, tiempo total y medio. Listas: **Falladas** (pregunta + respuesta correcta) y **No respondidas**. Celebración discreta si ≥ 80%. | Repasar falladas ahora, Repetir sesión, Volver. |
-| P12 | **Estadísticas del proyecto** (pestaña de P03) | Gráfica de aciertos/fallos por día (30 días), % de aciertos por baraja, top 10 de tarjetas más falladas, historial de sesiones (se abre para ver el detalle). | Abrir sesión, abrir tarjeta. |
-| P13 | **Estadísticas globales** | Racha actual y récord, tarjetas respondidas hoy / 7 días / 30 días, gráfica de 30 días de todos los proyectos, resumen por proyecto. **Sin repaso de errores.** | Abrir proyecto. |
-| P14 | **Archivados** | Lista de proyectos archivados. | Desarchivar, Eliminar. |
-| P15 | **Papelera** | Proyectos y barajas eliminados, con los días que les quedan. | Restaurar, Eliminar definitivamente (con confirmación), Vaciar papelera. |
-| P16 | **Ajustes** | Tema, tamaño de texto de las tarjetas, objetivo diario, estado de las voces TTS, Exportar todo, Restaurar copia, Acerca de. | — |
+| P01 | **Dashboard** | Header with streak and daily goal progress. Search by title. Project list: favourites first, then by last use. Each project card shows icon, colour, name, number of decks and cards, % correct, date last studied and number of errors. | Create project (floating button). ⋮ menu per project: Edit, Share, Favourite, Archive, Delete. "Repasar errores (N)" button if N > 0. General menu. |
+| P02 | **Create/edit project** | Name, description, colour, icon, type. If language: source and target language. | Save, Cancel. When editing: reset project statistics. |
+| P03 | **Project** | Header with the project details. **Barajas** (decks) and **Estadísticas** (statistics) tabs. Each deck shows name, colour, number of cards, % correct and number of errors. | New deck, Study, Review errors, Edit project, Share project, Import as new deck. ⋮ menu per deck: Edit, Share, Reset statistics, Delete. |
+| P04 | **Create/edit deck** | Name, description, colour (project colour by default). | Save, Cancel. |
+| P05 | **Deck** | Card list: question, type icon (simple/test) and % correct. Search by question and answer. Sort by creation date, alphabetically or most missed. | Add card, Study this deck, Review errors, Import cards, Download template, Copy AI prompt, Share deck. Multi-select: Copy to…, Move to…, Delete. |
+| P06 | **Card editor** | Question (+ image). **Tipo test** toggle. Simple: Answer (+ image). Test: list of 2–6 options, "Permitir varias correctas" check, correct-answer selector(s) and Explanation (+ image). Language: Example sentence and Notes. Flippable **preview** below (mobile) or on the right (desktop). | Save, Save and add another, Cancel. When editing: Delete card, Reset statistics. |
+| P07 | **Import** | Step 1: choose file. Step 2: choose destination (depending on where it was launched). Step 3: preview with cards to create, duplicates and rows with errors. | Confirm import, Cancel. |
+| P08 | **Session setup** | Decks (multi-select + "Todo el proyecto"), number of cards (10, 20, 50, All, Custom), mode (Normal / Errors only), direction (Normal / Reverse, language only), "Priorizar las más falladas", "Repetir falladas al final", timer (None / Per question / Global) with its value. Shows how many cards are available. | Start. |
+| P09 | **Study session** | Progress bar ("7 / 20"), ✓/✗ counter, timer (if any), card in the centre. | See section [7.3](#73-study-session). Buttons: Pause, Exit. |
+| P10 | **Pause** (overlay) | Completely hides the card. Shows "En pausa" and the time. | Resume, Exit. |
+| P11 | **Results** | % correct, correct/wrong/unanswered, total and average time. Lists: **missed** (question + correct answer) and **unanswered**. Subtle celebration if ≥ 80%. | Review missed now, Repeat session, Back. |
+| P12 | **Project statistics** (tab of P03) | Chart of correct/wrong per day (30 days), % correct per deck, top 10 most missed cards, session history (opens the details). | Open session, open card. |
+| P13 | **Global statistics** | Current and best streak, cards answered today / 7 days / 30 days, 30-day chart across all projects, summary per project. **No error review.** | Open project. |
+| P14 | **Archived** | List of archived projects. | Unarchive, Delete. |
+| P15 | **Trash** | Deleted projects and decks, with the days they have left. | Restore, Delete permanently (with confirmation), Empty trash. |
+| P16 | **Settings** | Theme, card text size, daily goal, TTS voice status, Export all, Restore backup, About. | — |
 
-### 5.3 Estados vacíos obligatorios
+### 5.3 Required empty states
 
-- Dashboard sin proyectos: ilustración + "Crea tu primer proyecto" + botón.
-- Proyecto sin barajas: "Crea una baraja para empezar a añadir tarjetas".
-- Baraja sin tarjetas: "Añade tu primera tarjeta" + "o importa desde CSV" + "Descargar plantilla".
-- Configurar sesión sin tarjetas disponibles (p. ej. "Solo errores" sin errores): mensaje y botón Empezar desactivado.
-- Búsqueda sin resultados, papelera vacía, archivados vacío, estadísticas sin datos.
-
----
-
-## 6. Historias de usuario y criterios de aceptación
-
-Formato: **HU-XX — Como usuario, quiero… para…**, seguido de sus criterios de aceptación (CA).
-
-### Épica A — Proyectos
-
-**HU-01 — Crear proyecto.** Quiero crear un proyecto para organizar un tema de estudio.
-- CA1. El nombre es obligatorio (1–60 caracteres); el resto es opcional salvo el tipo, que por defecto es "General".
-- CA2. Si el tipo es "Idioma", se piden idioma origen y destino; ambos obligatorios.
-- CA3. Al guardar aparece en el dashboard y se abre el proyecto.
-
-**HU-02 — Editar proyecto.** Desde el menú ⋮ del dashboard y desde la pantalla del proyecto.
-- CA1. Se pueden cambiar todos los campos.
-- CA2. Cambiar el tipo de "Idioma" a "General" pide confirmación y avisa de que se ocultan la voz, el modo inverso y los campos de ejemplo y notas. Los datos no se borran.
-
-**HU-03 — Eliminar proyecto.**
-- CA1. Diálogo de confirmación que indica cuántas barajas y tarjetas contiene.
-- CA2. Tras confirmar, aviso con "Deshacer" durante 5 segundos.
-- CA3. Si no se deshace, el proyecto pasa a la papelera con sus barajas y tarjetas.
-
-**HU-04 — Papelera.**
-- CA1. Muestra proyectos y barajas eliminados con los días restantes (15 − días transcurridos).
-- CA2. Restaurar devuelve el elemento a su lugar con todas sus tarjetas y estadísticas.
-- CA3. Al pasar 15 días se borra definitivamente, junto con sus tarjetas, intentos e imágenes.
-- CA4. "Eliminar definitivamente" y "Vaciar papelera" piden confirmación.
-
-**HU-05 — Favoritos, archivar y buscar.**
-- CA1. Los favoritos aparecen arriba; dentro de cada grupo, orden por último uso.
-- CA2. Archivar oculta el proyecto del dashboard y del buscador; está en "Archivados".
-- CA3. El buscador filtra por título de proyecto mientras se escribe, sin distinguir mayúsculas ni acentos.
-
-### Épica B — Barajas
-
-**HU-06 — Crear, editar y eliminar baraja.**
-- CA1. Nombre obligatorio. Color opcional; por defecto el del proyecto.
-- CA2. Eliminar pide confirmación con el nº de tarjetas, ofrece "Deshacer" 5 s y después la baraja va a la papelera.
-
-**HU-07 — Copiar y mover tarjetas.**
-- CA1. En la baraja se activa la selección múltiple con pulsación larga (móvil) o casillas (escritorio).
-- CA2. "Mover a…" y "Copiar a…" muestran solo las barajas del mismo proyecto.
-- CA3. Mover conserva el ID y las estadísticas. Copiar crea tarjetas nuevas (nuevo ID, opciones copiadas) sin historial.
-
-### Épica C — Tarjetas
-
-**HU-08 — Crear tarjeta simple.**
-- CA1. Pregunta y respuesta obligatorias; imágenes opcionales.
-- CA2. En proyectos de idioma aparecen "Frase de ejemplo" y "Notas" (opcionales).
-- CA3. Negrita y cursiva disponibles en la barra del campo de texto.
-- CA4. La vista previa se actualiza mientras se escribe y se gira al pulsarla.
-
-**HU-09 — Crear tarjeta test.**
-- CA1. Al activar el toggle "Tipo test", el campo Respuesta se sustituye por la lista de opciones (mínimo 2, máximo 6) y el campo "Explicación".
-- CA2. Sin "Permitir varias correctas", el selector es de opción única. Con él activado, casillas múltiples.
-- CA3. Validación: al menos 2 opciones no vacías y al menos 1 correcta. Si "Permitir varias correctas" está desactivado, exactamente 1.
-- CA4. Desactivar "Permitir varias correctas" con varias marcadas pide elegir cuál se queda.
-
-**HU-10 — Guardar y añadir otra.**
-- CA1. Guarda la tarjeta, limpia el formulario y mantiene el tipo (simple/test) y el estado de "Permitir varias correctas".
-- CA2. Muestra un aviso breve "Tarjeta guardada" y pone el foco en la pregunta.
-
-**HU-11 — Editar y eliminar tarjeta.**
-- CA1. Editar conserva las estadísticas. "Reiniciar estadísticas" las borra tras confirmar.
-- CA2. Eliminar pide confirmación, ofrece "Deshacer" 5 s y después borra la tarjeta, sus intentos y sus imágenes. No pasa por la papelera.
-
-**HU-12 — Lista de tarjetas.**
-- CA1. Busca en pregunta, respuesta y opciones.
-- CA2. Orden: creación (por defecto, más recientes primero), alfabético o más falladas.
-
-**HU-13 — Voz (TTS).**
-- CA1. En proyectos de idioma, el texto de la pregunta y de la respuesta tiene un botón de altavoz que lo lee en su idioma correspondiente.
-- CA2. Si el sistema no tiene la voz, se muestra un aviso con instrucciones y el botón aparece desactivado.
-
-### Épica D — Sesión de estudio
-
-**HU-14 — Configurar sesión.** Ver P08.
-- CA1. Por defecto se carga la última configuración usada en ese proyecto.
-- CA2. Se muestra en tiempo real el nº de tarjetas disponibles para la selección actual.
-- CA3. Si el nº pedido supera las disponibles, se usan todas y se indica.
-
-**HU-15 — Estudiar tarjeta simple.**
-- CA1. Se muestra el anverso. Pulsar la tarjeta o "Girar" la gira con animación 3D.
-- CA2. En el reverso aparecen "Acerté" y "Fallé". En móvil también se puede deslizar a la derecha (acierto) o a la izquierda (fallo), con vibración.
-
-**HU-16 — Estudiar tarjeta test.**
-- CA1. Opciones en orden aleatorio. Se seleccionan (una o varias) y se pulsa "Comprobar".
-- CA2. Se marcan en verde con ✓ las correctas y en rojo con ✗ las marcadas incorrectamente. Se muestra la explicación si existe.
-- CA3. Es acierto solo si el conjunto marcado coincide exactamente con el conjunto correcto.
-- CA4. Botón "Siguiente".
-
-**HU-17 — "Ver respuesta" y "Dejar para el final".** Ver [7.3](#73-sesión-de-estudio).
-
-**HU-18 — Timers.** Ver [7.5](#75-temporizadores).
-
-**HU-19 — Pausa y salir.**
-- CA1. La pausa oculta la tarjeta y congela el timer.
-- CA2. Si la app pasa a segundo plano, se pausa automáticamente.
-- CA3. "Salir" pide confirmación, guarda lo respondido y lleva a Resultados.
-
-**HU-20 — Resultados.** Ver P11.
-- CA1. "Repasar falladas ahora" inicia una sesión solo con las falladas de esta sesión, mismo sentido y timer.
-- CA2. "Repetir sesión" usa la misma configuración con una nueva selección aleatoria.
-
-### Épica E — Estadísticas y errores
-
-**HU-21 — Repasar errores.** Desde la baraja, el proyecto o el acceso "Repasar errores (N)" del dashboard.
-- CA1. Solo incluye tarjetas en la lista de errores del sentido elegido, dentro de un único proyecto.
-- CA2. Una tarjeta sale de la lista al acertarla 2 veces seguidas.
-
-**HU-22 — Estadísticas.** Ver P12 y P13.
-
-**HU-23 — Racha y objetivo diario.**
-- CA1. Un día cuenta para la racha si se respondió (acierto o fallo) al menos una tarjeta.
-- CA2. El objetivo diario es opcional; el dashboard muestra el progreso del día.
-
-### Épica F — Importar y exportar
-
-**HU-24 — Exportar todo.** Genera una copia de seguridad JSON con todo. Ver [8.2](#82-json).
-**HU-25 — Restaurar copia.** Si hay datos, pregunta "Reemplazar todo" o "Fusionar". Ver [8.4](#84-reglas-de-importación).
-**HU-26 — Compartir proyecto o baraja.** Elige formato JSON (para la app) o CSV (para Excel/Sheets). Sin estadísticas.
-**HU-27 — Importar.** Como proyecto nuevo (dashboard), como baraja nueva (proyecto) o añadiendo a una baraja existente (baraja). Siempre con vista previa.
-**HU-28 — Plantilla y prompt para IA.** "Descargar plantilla" guarda un CSV de ejemplo. "Copiar prompt para IA" copia al portapapeles el prompt de [8.5](#85-prompt-para-ia).
+- Dashboard with no projects: illustration + "Crea tu primer proyecto" + button.
+- Project with no decks: "Crea una baraja para empezar a añadir tarjetas".
+- Deck with no cards: "Añade tu primera tarjeta" + "o importa desde CSV" + "Descargar plantilla".
+- Session setup with no available cards (e.g. "Solo errores" with no errors): message and the Start button disabled.
+- Search with no results, empty trash, no archived projects, statistics with no data.
 
 ---
 
-## 7. Reglas de negocio
+## 6. User stories and acceptance criteria
 
-### 7.1 Papelera y borrado
+Format: **US-XX — As a user, I want… so that…**, followed by its acceptance criteria (AC).
 
-| Elemento | Al eliminar | Recuperable |
-|---|---|---|
-| Proyecto | Confirmación → "Deshacer" 5 s → papelera 15 días | Sí, desde Papelera |
-| Baraja | Confirmación → "Deshacer" 5 s → papelera 15 días | Sí, desde Papelera. Si su proyecto también está en la papelera, se restaura el proyecto. |
-| Tarjeta | Confirmación → "Deshacer" 5 s → borrado definitivo | Solo durante los 5 s |
+### Epic A — Projects
 
-- La purga de elementos con más de 15 días se ejecuta al abrir la app.
-- El borrado definitivo elimina en cascada: barajas, tarjetas, opciones, estadísticas, intentos e imágenes. Las sesiones de un proyecto borrado también se eliminan.
-- Los elementos en papelera no aparecen en búsquedas, estadísticas ni sesiones.
+**US-01 — Create project.** I want to create a project to organise a study topic.
+- AC1. The name is required (1–60 characters); everything else is optional except the type, which defaults to "General".
+- AC2. If the type is "Idioma" (language), source and target languages are requested; both are required.
+- AC3. On save, it appears on the dashboard and the project opens.
 
-### 7.2 Selección de tarjetas
+**US-02 — Edit project.** From the dashboard ⋮ menu and from the project screen.
+- AC1. All fields can be changed.
+- AC2. Changing the type from "Idioma" to "General" asks for confirmation and warns that voice, reverse mode and the example and notes fields will be hidden. The data is not deleted.
 
-1. **Conjunto base:** tarjetas de las barajas elegidas, no eliminadas.
-2. **Modo "Solo errores":** se filtra por `in_error_list = true` en el sentido elegido.
-3. **Selección:**
-   - Sin "Priorizar": muestreo aleatorio uniforme sin repetición.
-   - Con "Priorizar las más falladas": muestreo aleatorio ponderado sin repetición. Peso 3 si está en errores, 2 si nunca se ha estudiado en ese sentido, 1 en el resto.
-4. **Orden:** la cola resultante se baraja siempre (Fisher–Yates). Nunca se muestra en orden de creación.
-5. **Opciones de test:** se barajan cada vez que se muestra la tarjeta.
+**US-03 — Delete project.**
+- AC1. Confirmation dialog showing how many decks and cards it contains.
+- AC2. After confirming, a snackbar with "Deshacer" (undo) for 5 seconds.
+- AC3. If not undone, the project goes to the trash with its decks and cards.
 
-### 7.3 Sesión de estudio
+**US-04 — Trash.**
+- AC1. Shows deleted projects and decks with the days remaining (15 − days elapsed).
+- AC2. Restoring puts the item back in place with all its cards and statistics.
+- AC3. After 15 days it is permanently deleted, together with its cards, attempts and images.
+- AC4. "Eliminar definitivamente" and "Vaciar papelera" ask for confirmation.
 
-Botones visibles según el estado de la tarjeta (no hay atajos de teclado en la v1):
+**US-05 — Favourites, archive and search.**
+- AC1. Favourites appear at the top; within each group, sorted by last use.
+- AC2. Archiving hides the project from the dashboard and from search; it is listed under "Archivados".
+- AC3. Search filters by project title as the user types, ignoring case and accents.
 
-| Estado | Tarjeta simple | Tarjeta test |
-|---|---|---|
-| Sin responder | Girar · Ver respuesta · Dejar para el final | Comprobar (activo si hay selección) · Ver respuesta · Dejar para el final |
-| Respondida / girada | Acerté · Fallé | Siguiente |
+### Epic B — Decks
 
-- **Ver respuesta:** gira la tarjeta (o revela las correctas en test) y registra **fallo** (`source = revealed`). Luego "Siguiente".
-- **Dejar para el final:** mueve la tarjeta al final de la cola sin registrar nada. Puede repetirse. Al volver a mostrarse, su timer por pregunta empieza de cero.
-- **Repetir falladas al final** (si está activo): cada tarjeta fallada se añade de nuevo al final de la cola hasta acertarla. Estas repeticiones se registran con `is_first_attempt = false` y no cuentan en estadísticas ni en la lista de errores.
-- **Progreso:** "n / total" cuenta tarjetas originales resueltas. Si hay repeticiones pendientes, se indica aparte ("+3 repasos").
-- **Fin de sesión:** cuando no quedan tarjetas, al agotarse el timer general o al salir. Las tarjetas no resueltas (pendientes o dejadas para el final) se registran como `unanswered` (`source = session_end`).
-- **Sentido inverso:** solo afecta a las tarjetas simples de proyectos de idioma (se muestra la respuesta y se adivina la pregunta). Las tarjetas test se muestran siempre en sentido normal y se registran como `normal`.
+**US-06 — Create, edit and delete a deck.**
+- AC1. Name required. Colour optional; the project colour by default.
+- AC2. Deleting asks for confirmation showing the number of cards, offers "Deshacer" for 5 s, and then the deck goes to the trash.
 
-### 7.4 Lista de errores
+**US-07 — Copy and move cards.**
+- AC1. In the deck, multi-select is activated with a long press (mobile) or checkboxes (desktop).
+- AC2. "Mover a…" and "Copiar a…" only list decks from the same project.
+- AC3. Moving keeps the ID and the statistics. Copying creates new cards (new ID, options copied) with no history.
 
-Por cada tarjeta y sentido, aplicando **solo primeros intentos**:
+### Epic C — Cards
 
-- **Fallo:** `wrong_count++`, `consecutive_correct = 0`, `in_error_list = true`.
-- **Acierto:** `correct_count++`, `consecutive_correct++`. Si `in_error_list` y `consecutive_correct ≥ 2` → `in_error_list = false`.
-- **Sin responder:** no cambia nada.
-- El umbral de 2 aciertos seguidos es fijo en la v1.
-- **Reiniciar estadísticas** (tarjeta, baraja o proyecto) borra sus intentos y filas de `card_stats`. Las sesiones pasadas conservan sus totales.
+**US-08 — Create a simple card.**
+- AC1. Question and answer required; images optional.
+- AC2. In language projects, "Frase de ejemplo" and "Notas" appear (optional).
+- AC3. Bold and italic are available in the text field toolbar.
+- AC4. The preview updates while typing and flips when tapped.
 
-### 7.5 Temporizadores
+**US-09 — Create a test card.**
+- AC1. Turning on the "Tipo test" toggle replaces the Answer field with the options list (minimum 2, maximum 6) and the "Explicación" field.
+- AC2. Without "Permitir varias correctas", the selector is single-choice. With it on, multiple checkboxes.
+- AC3. Validation: at least 2 non-empty options and at least 1 correct. If "Permitir varias correctas" is off, exactly 1.
+- AC4. Turning off "Permitir varias correctas" with several ticked asks which one to keep.
 
-Son **excluyentes**: sin timer, por pregunta o general.
+**US-10 — Save and add another.**
+- AC1. Saves the card, clears the form and keeps the type (simple/test) and the "Permitir varias correctas" state.
+- AC2. Shows a short "Tarjeta guardada" snackbar and focuses the question field.
 
-| Tipo | Rango | Al agotarse |
-|---|---|---|
-| Por pregunta | 5–120 s (pasos de 5) | La tarjeta se gira (o se revelan las correctas) y se registra **fallo** (`source = timeout`). Se espera a "Siguiente". |
-| General | 1–120 min | La sesión termina (`status = time_up`). Las no resueltas se registran como `unanswered` y aparecen en "No respondidas". |
+**US-11 — Edit and delete a card.**
+- AC1. Editing keeps the statistics. "Reiniciar estadísticas" deletes them after confirmation.
+- AC2. Deleting asks for confirmation, offers "Deshacer" for 5 s, and then deletes the card, its attempts and its images. It does not go to the trash.
 
-- El timer se congela en pausa y cuando la app está en segundo plano.
-- Aviso visual en los últimos 5 s (por pregunta) o el último minuto (general).
+**US-12 — Card list.**
+- AC1. Search looks in the question, answer and options.
+- AC2. Sort: creation date (default, newest first), alphabetical or most missed.
 
-### 7.6 Porcentajes y métricas
+**US-13 — Voice (TTS).**
+- AC1. In language projects, the question and answer text each have a speaker button that reads it in its language.
+- AC2. If the system lacks the voice, a notice with instructions is shown and the button is disabled.
 
-- **% de aciertos** = aciertos / (aciertos + fallos), con primeros intentos y ambos sentidos. Sin datos se muestra "—".
-- **Errores pendientes** de un proyecto o baraja = nº de pares (tarjeta, sentido) con `in_error_list = true`.
-- **Tiempo medio** = media de `response_time_ms` de los intentos respondidos.
-- **Racha** = días naturales consecutivos (hora local) hasta hoy con al menos un acierto o fallo. Si hoy aún no hay actividad, la racha de ayer sigue vigente.
+### Epic D — Study session
 
-### 7.7 Último uso
+**US-14 — Session setup.** See P08.
+- AC1. The last configuration used in that project is loaded by default.
+- AC2. The number of available cards for the current selection is shown live.
+- AC3. If the requested number exceeds the available cards, all of them are used and this is indicated.
 
-`last_used_at` del proyecto (y de la baraja) se actualiza al abrirlo, al estudiar y al añadir tarjetas.
+**US-15 — Study a simple card.**
+- AC1. The front is shown. Tapping the card or "Girar" flips it with a 3D animation.
+- AC2. On the back, "Acerté" and "Fallé" appear. On mobile the user can also swipe right (correct) or left (wrong), with haptic feedback.
+
+**US-16 — Study a test card.**
+- AC1. Options in random order. The user selects one or several and taps "Comprobar".
+- AC2. Correct options are marked green with ✓ and wrongly ticked ones red with ✗. The explanation is shown if there is one.
+- AC3. It is correct only if the ticked set matches the correct set exactly.
+- AC4. "Siguiente" (next) button.
+
+**US-17 — "Ver respuesta" and "Dejar para el final".** See [7.3](#73-study-session).
+
+**US-18 — Timers.** See [7.5](#75-timers).
+
+**US-19 — Pause and exit.**
+- AC1. Pausing hides the card and freezes the timer.
+- AC2. If the app goes to the background, it pauses automatically.
+- AC3. "Salir" asks for confirmation, saves what has been answered and goes to Results.
+
+**US-20 — Results.** See P11.
+- AC1. "Repasar falladas ahora" starts a session with only the cards missed in this session, same direction and timer.
+- AC2. "Repetir sesión" uses the same configuration with a new random selection.
+
+### Epic E — Statistics and errors
+
+**US-21 — Review errors.** From the deck, the project or the dashboard "Repasar errores (N)" shortcut.
+- AC1. Only includes cards in the error list for the chosen direction, within a single project.
+- AC2. A card leaves the list after being answered correctly twice in a row.
+
+**US-22 — Statistics.** See P12 and P13.
+
+**US-23 — Streak and daily goal.**
+- AC1. A day counts towards the streak if at least one card was answered (correct or wrong).
+- AC2. The daily goal is optional; the dashboard shows the day's progress.
+
+### Epic F — Import and export
+
+**US-24 — Export all.** Generates a full JSON backup. See [8.2](#82-json).
+**US-25 — Restore backup.** If there is data, asks "Reemplazar todo" or "Fusionar". See [8.4](#84-import-rules).
+**US-26 — Share project or deck.** Choose JSON (for the app) or CSV (for Excel/Sheets). No statistics.
+**US-27 — Import.** As a new project (dashboard), as a new deck (project) or adding to an existing deck (deck). Always with a preview.
+**US-28 — Template and AI prompt.** "Descargar plantilla" saves a sample CSV. "Copiar prompt para IA" copies the prompt in [8.5](#85-ai-prompt) to the clipboard.
 
 ---
 
-## 8. Importación y exportación
+## 7. Business rules
 
-### 8.1 Resumen de operaciones
+### 7.1 Trash and deletion
 
-| Operación | Dónde | Formato | Incluye estadísticas |
+| Item | On delete | Recoverable |
+|---|---|---|
+| Project | Confirmation → "Deshacer" 5 s → trash for 15 days | Yes, from the Trash |
+| Deck | Confirmation → "Deshacer" 5 s → trash for 15 days | Yes, from the Trash. If its project is also in the trash, the project is restored too. |
+| Card | Confirmation → "Deshacer" 5 s → permanent deletion | Only during those 5 s |
+
+- Items older than 15 days are purged when the app starts.
+- Permanent deletion cascades: decks, cards, options, statistics, attempts and images. Sessions of a deleted project are also deleted.
+- Items in the trash do not appear in search, statistics or sessions.
+
+### 7.2 Card selection
+
+1. **Base set:** cards from the chosen decks, not deleted.
+2. **"Solo errores" mode:** filtered by `in_error_list = true` for the chosen direction.
+3. **Selection:**
+   - Without "Priorizar": uniform random sampling without replacement.
+   - With "Priorizar las más falladas": weighted random sampling without replacement. Weight 3 if in errors, 2 if never studied in that direction, 1 otherwise.
+4. **Order:** the resulting queue is always shuffled (Fisher–Yates). It is never shown in creation order.
+5. **Test options:** shuffled every time the card is shown.
+
+### 7.3 Study session
+
+Buttons shown depending on the card state (no keyboard shortcuts in v1):
+
+| State | Simple card | Test card |
+|---|---|---|
+| Unanswered | Girar · Ver respuesta · Dejar para el final | Comprobar (enabled when something is selected) · Ver respuesta · Dejar para el final |
+| Answered / flipped | Acerté · Fallé | Siguiente |
+
+- **Ver respuesta (show answer):** flips the card (or reveals the correct options in a test) and records a **wrong** answer (`source = revealed`). Then "Siguiente".
+- **Dejar para el final (leave for later):** moves the card to the end of the queue without recording anything. It can be repeated. When shown again, its per-question timer restarts from zero.
+- **Repetir falladas al final** (if on): each missed card is added again at the end of the queue until it is answered correctly. These repeats are recorded with `is_first_attempt = false` and do not count in statistics or the error list.
+- **Progress:** "n / total" counts resolved original cards. Pending repeats are shown separately ("+3 repasos").
+- **End of session:** when no cards remain, when the global timer runs out, or on exit. Unresolved cards (pending or left for later) are recorded as `unanswered` (`source = session_end`).
+- **Reverse direction:** only affects simple cards in language projects (the answer is shown and the user guesses the question). Test cards are always shown in the normal direction and recorded as `normal`.
+
+### 7.4 Error list
+
+Per card and direction, applying **first attempts only**:
+
+- **Wrong:** `wrong_count++`, `consecutive_correct = 0`, `in_error_list = true`.
+- **Correct:** `correct_count++`, `consecutive_correct++`. If `in_error_list` and `consecutive_correct ≥ 2` → `in_error_list = false`.
+- **Unanswered:** nothing changes.
+- The threshold of 2 correct answers in a row is fixed in v1.
+- **Reset statistics** (card, deck or project) deletes its attempts and `card_stats` rows. Past sessions keep their totals.
+
+### 7.5 Timers
+
+They are **mutually exclusive**: no timer, per question or global.
+
+| Type | Range | When it runs out |
+|---|---|---|
+| Per question | 5–120 s (steps of 5) | The card flips (or the correct options are revealed) and a **wrong** answer is recorded (`source = timeout`). Waits for "Siguiente". |
+| Global | 1–120 min | The session ends (`status = time_up`). Unresolved cards are recorded as `unanswered` and appear under "No respondidas". |
+
+- The timer freezes while paused and while the app is in the background.
+- Visual warning in the last 5 s (per question) or the last minute (global).
+
+### 7.6 Percentages and metrics
+
+- **% correct** = correct / (correct + wrong), using first attempts and both directions. With no data, "—" is shown.
+- **Pending errors** of a project or deck = number of (card, direction) pairs with `in_error_list = true`.
+- **Average time** = mean of `response_time_ms` over answered attempts.
+- **Streak** = consecutive calendar days (local time) up to today with at least one correct or wrong answer. If there is no activity yet today, yesterday's streak still stands.
+
+### 7.7 Last use
+
+`last_used_at` of the project (and the deck) is updated when it is opened, studied and when cards are added.
+
+---
+
+## 8. Import and export
+
+### 8.1 Operations summary
+
+| Operation | Where | Format | Includes statistics |
 |---|---|---|---|
-| Exportar todo | Menú del dashboard / Ajustes | JSON (`kind: backup`) | Sí |
-| Restaurar copia | Ajustes | JSON (`kind: backup`) | Sí |
-| Compartir proyecto | Proyecto / menú ⋮ del dashboard | JSON (`kind: project`) o CSV con columna `baraja` | No |
-| Compartir baraja | Baraja / menú ⋮ de la baraja | JSON (`kind: deck`) o CSV | No |
-| Importar como proyecto nuevo | Dashboard | JSON `project`/`deck` o CSV | — |
-| Importar como baraja nueva | Proyecto | JSON `deck` o CSV | — |
-| Añadir a baraja existente | Baraja | JSON `deck` o CSV | — |
-| Descargar plantilla | Baraja (y estado vacío) | CSV | — |
+| Export all | Dashboard menu / Settings | JSON (`kind: backup`) | Yes |
+| Restore backup | Settings | JSON (`kind: backup`) | Yes |
+| Share project | Project / dashboard ⋮ menu | JSON (`kind: project`) or CSV with a `deck` column | No |
+| Share deck | Deck / deck ⋮ menu | JSON (`kind: deck`) or CSV | No |
+| Import as new project | Dashboard | JSON `project`/`deck` or CSV | — |
+| Import as new deck | Project | JSON `deck` or CSV | — |
+| Add to existing deck | Deck | JSON `deck` or CSV | — |
+| Download template | Deck (and empty state) | CSV | — |
 
-Nombres de fichero: `estudicards-copia-AAAA-MM-DD.json`, `<proyecto>.json`, `<proyecto>-<baraja>.json` / `.csv`.
+File names: `estudicards-backup-YYYY-MM-DD.json`, `<project>.json`, `<project>-<deck>.json` / `.csv`.
 
 ### 8.2 JSON
 
-Estructura común:
+Common structure:
 
 ```json
 {
@@ -583,13 +626,13 @@ Estructura común:
 }
 ```
 
-Contenido de `data` según `kind`:
+Contents of `data` depending on `kind`:
 
 - **deck:** `{ "language": {"source": "en-GB", "target": "es-ES"} | null, "deck": Deck }`
-- **project:** `{ "project": Project }` con sus barajas y tarjetas anidadas.
-- **backup:** `{ "projects": [Project], "sessions": [...], "sessionDecks": [...], "attempts": [...], "cardStats": [...], "settings": {...} }`. Incluye proyectos archivados y en papelera.
+- **project:** `{ "project": Project }` with its decks and cards nested.
+- **backup:** `{ "projects": [Project], "sessions": [...], "sessionDecks": [...], "attempts": [...], "cardStats": [...], "settings": {...} }`. Includes archived projects and projects in the trash.
 
-Ejemplo de una baraja compartida:
+Example of a shared deck (card contents are user data, here in Spanish):
 
 ```json
 {
@@ -623,146 +666,258 @@ Ejemplo de una baraja compartida:
 }
 ```
 
-**Imágenes:** van incrustadas como `{ "mime": "image/jpeg", "data": "<base64>" }` en lugar de la ruta. El CSV no admite imágenes.
+**Images:** embedded as `{ "mime": "image/jpeg", "data": "<base64>" }` instead of the path. CSV does not support images.
 
 ### 8.3 CSV
 
-- **Codificación:** UTF-8. Al exportar se añade BOM para que Excel muestre bien acentos y eñes.
-- **Separador:** al exportar `;` (Excel en español). Al importar se detecta automáticamente `;` o `,`.
-- **Comillas:** estándar RFC 4180. Los campos con separador, comillas o saltos de línea van entre comillas dobles.
-- **Cabecera obligatoria** en la primera fila, con estos nombres (el orden da igual; las columnas opcionales pueden omitirse):
+- **Encoding:** UTF-8. A BOM is added on export so that Excel displays accents and "ñ" correctly.
+- **Separator:** `;` on export (the default in Spanish-locale Excel). On import, `;` or `,` is detected automatically.
+- **Quoting:** RFC 4180. Fields containing the separator, quotes or line breaks are wrapped in double quotes.
+- **Header row required** as the first row, with these names (order does not matter; optional columns can be omitted). **Column names are in English and are part of the file format**; they are not translated with the UI:
 
-| Columna | Obligatoria | Descripción |
+| Column | Required | Description |
 |---|---|---|
-| `pregunta` | Sí | Texto de la pregunta, palabra o frase |
-| `respuesta` | Si es simple | Respuesta o traducción. Se ignora en tarjetas test |
-| `opcion1` … `opcion6` | Para test | Si `opcion1` y `opcion2` tienen texto, la tarjeta es de tipo test |
-| `correctas` | Para test | Nº de las opciones correctas, separados por `\|` (p. ej. `1` o `1\|3`) |
-| `explicacion` | No | Solo test |
-| `ejemplo` | No | Solo proyectos de idioma |
-| `notas` | No | Solo proyectos de idioma |
-| `baraja` | No | Solo al importar como proyecto nuevo: agrupa las filas en barajas con ese nombre. Sin ella se crea una baraja "Importadas". Se ignora en los demás casos. |
+| `question` | Yes | Question text, word or sentence |
+| `answer` | For simple cards | Answer or translation. Ignored for test cards |
+| `option1` … `option6` | For test cards | If `option1` and `option2` have text, the card is a test card |
+| `correct` | For test cards | Number(s) of the correct options, separated by `\|` (e.g. `1` or `1\|3`) |
+| `explanation` | No | Test cards only |
+| `example` | No | Language projects only |
+| `notes` | No | Language projects only |
+| `deck` | No | Only when importing as a new project: groups rows into decks with that name. Without it, a deck named "Importadas" is created. Ignored in other cases. |
 
-- Si `correctas` tiene más de un número, la tarjeta se crea con "Permitir varias correctas" activado.
-- Se admite `**negrita**` y `*cursiva*` en los textos.
+- If `correct` has more than one number, the card is created with "Permitir varias correctas" on.
+- `**bold**` and `*italic*` are supported in the text.
 
-Plantilla descargable (`plantilla_estudicards.csv`):
+Downloadable template (`estudicards_template.csv`; the rows are sample content):
 
 ```csv
-pregunta;respuesta;opcion1;opcion2;opcion3;opcion4;opcion5;opcion6;correctas;explicacion;ejemplo;notas
+question;answer;option1;option2;option3;option4;option5;option6;correct;explanation;example;notes
 to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irregular
 ¿Capital de Australia?;;Sídney;Canberra;Melbourne;;;;2;Canberra es la capital desde 1913.;;
 ¿Qué números son primos?;;2;4;7;9;;;1|3;El 4 y el 9 tienen divisores distintos de 1 y de sí mismos.;;
 ```
 
-### 8.4 Reglas de importación
+### 8.4 Import rules
 
-1. **Validación:** se comprueba `format` y `version` (JSON) o la cabecera (CSV). Un fichero no válido muestra un error claro y no importa nada.
-2. **Vista previa:** nº de tarjetas nuevas, nº de duplicadas que se omitirán y lista de filas con errores ("Fila 7: falta la respuesta"). Las filas con error se omiten; el resto se importa si el usuario confirma.
+1. **Validation:** `format` and `version` (JSON) or the header row (CSV) are checked. An invalid file shows a clear error and imports nothing.
+2. **Preview:** number of new cards, number of duplicates that will be skipped, and a list of rows with errors (shown in the UI as, e.g., "Fila 7: falta la respuesta"). Rows with errors are skipped; the rest is imported if the user confirms.
 3. **IDs:**
-   - Como proyecto nuevo o baraja nueva: se generan **IDs nuevos** para todo, evitando choques.
-   - Añadir a baraja existente: se conserva el ID de la tarjeta salvo que ya exista en la base de datos, en cuyo caso se genera uno nuevo.
-4. **Duplicados** (solo al añadir a baraja existente): se omite una tarjeta si en la baraja destino ya existe otra con el mismo ID, o con la misma pregunta y respuesta (u opciones) tras normalizar (sin espacios sobrantes, sin distinguir mayúsculas).
-5. **Resumen final:** "12 añadidas, 3 omitidas por duplicadas, 1 con errores".
-6. **Tipo de proyecto:** al importar un JSON de idioma como proyecto nuevo, se crea como proyecto de idioma con sus idiomas. Al importar CSV como proyecto nuevo, se pregunta el tipo.
-7. **Restaurar copia completa:**
-   - Base de datos vacía: se importa todo tal cual.
-   - Con datos: el usuario elige **Reemplazar todo** (confirmación explícita; borra lo actual) o **Fusionar** (por ID; si existe en ambos, gana el de `updated_at` más reciente; los intentos se unen por ID y después se recalcula `card_stats`).
-8. Todas las importaciones se ejecutan en **una transacción**: o se importa todo lo confirmado o nada.
+   - As a new project or new deck: **new IDs** are generated for everything, avoiding clashes.
+   - Adding to an existing deck: the card ID is kept unless it already exists in the database, in which case a new one is generated.
+4. **Duplicates** (only when adding to an existing deck): a card is skipped if the target deck already has one with the same ID, or with the same question and answer (or options) after normalising (trimmed whitespace, case-insensitive).
+5. **Final summary** (UI): "12 añadidas, 3 omitidas por duplicadas, 1 con errores".
+6. **Project type:** when importing a language JSON as a new project, it is created as a language project with its languages. When importing a CSV as a new project, the user is asked for the type.
+7. **Restore full backup:**
+   - Empty database: everything is imported as is.
+   - With data: the user chooses **Reemplazar todo** (replace all; explicit confirmation; deletes current data) or **Fusionar** (merge by ID; if it exists in both, the one with the most recent `updated_at` wins; attempts are merged by ID and then `card_stats` is recalculated).
+8. Every import runs in **a single transaction**: either everything confirmed is imported or nothing is.
 
-### 8.5 Prompt para IA
+### 8.5 AI prompt
 
-Texto que copia el botón "Copiar prompt para IA" (el usuario sustituye los corchetes):
+Text copied by the "Copiar prompt para IA" button. It is in English so that it works with any AI; the user replaces the square brackets:
 
 ```text
-Genera [NÚMERO] tarjetas de estudio sobre [TEMA] en formato CSV para importarlas en la app EstudiCards.
+Generate [NUMBER] flashcards about [TOPIC] in CSV format to import into the EstudiCards app.
+Write the content of the cards in [LANGUAGE].
 
-Reglas del formato:
-- Separador: punto y coma (;). Codificación UTF-8.
-- Primera fila, exactamente esta cabecera:
-  pregunta;respuesta;opcion1;opcion2;opcion3;opcion4;opcion5;opcion6;correctas;explicacion;ejemplo;notas
-- Tarjeta simple: rellena "pregunta" y "respuesta"; deja vacías las opciones y "correctas".
-- Tarjeta tipo test: rellena "pregunta", de 2 a 6 opciones y en "correctas" el número de las opciones correctas separados por | (ejemplo: 2 o 1|3). Deja "respuesta" vacía. "explicacion" es opcional.
-- "ejemplo" y "notas" son opcionales (útiles para idiomas).
-- Si un texto contiene punto y coma o saltos de línea, ponlo entre comillas dobles.
-- Puedes usar **negrita** y *cursiva*.
+Format rules:
+- Separator: semicolon (;). Encoding: UTF-8.
+- First row, exactly this header:
+  question;answer;option1;option2;option3;option4;option5;option6;correct;explanation;example;notes
+- Simple card: fill in "question" and "answer"; leave the options and "correct" empty.
+- Multiple-choice card: fill in "question", 2 to 6 options, and in "correct" the number(s) of the correct options separated by | (for example: 2 or 1|3). Leave "answer" empty. "explanation" is optional.
+- "example" and "notes" are optional (useful for language learning).
+- If a text contains a semicolon or a line break, wrap it in double quotes.
+- You may use **bold** and *italic*.
 
-Quiero aproximadamente [PORCENTAJE]% de tarjetas tipo test. Nivel: [NIVEL].
-Devuelve solo el CSV, sin explicaciones ni bloques de código.
+I want about [PERCENTAGE]% multiple-choice cards. Level: [LEVEL].
+Return only the CSV, with no explanations and no code blocks.
 ```
 
 ---
 
-## 9. Requisitos no funcionales
+## 9. Non-functional requirements
 
-| Área | Requisito |
+| Area | Requirement |
 |---|---|
-| Offline | Todas las funciones de la v1 funcionan sin conexión. La app no hace peticiones de red. |
-| Privacidad | Sin cuentas, sin analíticas ni telemetría. Los datos solo salen del dispositivo cuando el usuario exporta o comparte. |
-| Rendimiento | Arranque en frío < 2 s en un móvil de gama media. Listas fluidas (60 fps) con 5.000 tarjetas por baraja. Iniciar una sesión < 300 ms. |
-| Integridad | Escrituras críticas (responder, importar, borrar) en transacciones. Una respuesta se guarda en el momento, de modo que si la app se cierra no se pierde. |
-| Accesibilidad | Contraste mínimo WCAG AA. Acierto y fallo siempre con icono (✓/✗) además del color. Respeta el tamaño de texto del sistema. Tamaño de texto de tarjetas ajustable (80–160%). Áreas táctiles ≥ 48 dp. Etiquetas semánticas para lectores de pantalla. |
-| Adaptabilidad | Diseño correcto de 360 dp a 1920 px de ancho y en orientación vertical y horizontal. |
-| Tema | Claro y oscuro; por defecto sigue el sistema. |
-| Localización | Todos los textos en ARB (`app_es.arb`). Ningún texto de interfaz escrito directamente en el código. |
-| Calidad | `flutter analyze` sin avisos. Tests unitarios para selección de tarjetas, motor de sesión, timers, lista de errores, racha, papelera y parsers JSON/CSV. |
+| Offline | Every v1 feature works without a connection. The app makes no network requests. |
+| Privacy | No accounts, analytics or telemetry. Data only leaves the device when the user exports or shares it. |
+| Performance | Cold start < 2 s on a mid-range phone. Smooth lists (60 fps) with 5,000 cards per deck. Starting a session < 300 ms. |
+| Integrity | Critical writes (answering, importing, deleting) in transactions. Each answer is saved immediately, so nothing is lost if the app closes. |
+| Accessibility | Minimum WCAG AA contrast. Correct and wrong always shown with an icon (✓/✗) as well as colour. Respects the system text size. Adjustable card text size (80–160%). Touch targets ≥ 48 dp. Semantic labels for screen readers. |
+| Responsiveness | Correct layout from 360 dp to 1920 px wide, in portrait and landscape. |
+| Theme | Light and dark; follows the system by default. |
+| Localisation | All UI strings in ARB (`app_es.arb`), in Spanish. No UI text hard-coded. |
+| Quality | Developed with TDD. `flutter analyze` with no warnings and formatted code. Minimum coverage 90% in `domain/` and 70% overall. See [section 10](#10-quality-tdd-tests-and-cicd). |
 
 ---
 
-## 10. Plan de implementación por fases
+## 10. Quality: TDD, tests and CI/CD
 
-Cada fase se puede construir, probar y usar por separado. "Hecho cuando" indica cuándo pasar a la siguiente.
+### 10.1 Test-driven development (TDD)
 
-| Fase | Contenido | Hecho cuando |
+Every feature is developed with the **red → green → refactor** cycle:
+
+1. **Red:** write the test that describes the expected behaviour (based on the user story's acceptance criteria) and run it to **see it fail** for the right reason.
+2. **Green:** write the minimum code for the test to pass.
+3. **Refactor:** improve the code without changing its behaviour, with every test green.
+
+Rules:
+- No business logic is written without a test that failed first.
+- Every task in `TASKS.md` states which tests to write first.
+- A bug is fixed by first writing a test that reproduces it.
+- Test descriptions and code are in English (`test('marks the card as an error when answered wrong', ...)`).
+
+### 10.2 Test pyramid
+
+| Level | Tool | Where | What it covers | When it runs |
+|---|---|---|---|---|
+| **Unit** | `flutter_test` / `test` | `test/**/domain/`, `test/**/data/` | Pure business rules (section 7), CSV/JSON parsers and validation, repositories with in-memory Drift. | Pre-push and CI |
+| **Widget** | `flutter_test` | `test/**/presentation/` | Each screen and component in isolation: states (empty, loading, error), editor validation, card flip, buttons shown per state. | Pre-push and CI |
+| **Integration** | `integration_test` | `integration_test/` | One flow per epic with the full app and a real database (temporary file). | CI (Android and Windows) |
+| **E2E** | `patrol` | Patrol folder | Critical user flows, including native dialogs. | CI (Android) |
+
+Coverage targets: **≥ 90% in `domain/`**, **≥ 70% overall**. CI fails if they are not met.
+
+Minimum E2E flows for v1:
+
+| ID | Flow |
+|---|---|
+| E2E-01 | First use: create a language project → create a deck → add 3 cards → study → see results. |
+| E2E-02 | Multiple-answer test card: create it → answer it wrong → it appears in errors → answer it correctly twice in a row → it leaves the errors. |
+| E2E-03 | Timers: an expired per-question timer counts as wrong; an expired global timer ends the session and shows the unanswered cards. |
+| E2E-04 | Import a CSV with the native file picker → preview with duplicates and errors → import. |
+| E2E-05 | Export all → delete data → restore backup → the data is identical. |
+| E2E-06 | Delete a project → undo; delete it again → restore it from the trash. |
+| E2E-07 | Share a deck: the native share sheet opens (Android). |
+| E2E-08 | Switch to dark theme and change the card text size; both persist after restarting the app. |
+
+### 10.3 Conventions for testable code
+
+- **Time:** every access to the current time goes through the injectable clock (`core/clock.dart`). Tests use a fake clock and `fake_async` to advance timers without waiting.
+- **Randomness:** selection and shuffling receive an injectable `Random`; tests use a fixed seed for reproducible results.
+- **Database:** unit and widget tests use in-memory Drift; integration tests use a temporary file.
+- **Stable keys:** elements that tests interact with have a `Key` with a fixed English name (e.g. `Key('study.flip')`, `Key('cardEditor.save')`).
+- **Fixtures:** sample CSV and JSON files in `test/fixtures/` (valid, with duplicates, with errors, with accents and `;` separator).
+
+### 10.4 Git hooks with Lefthook
+
+Lefthook is a language-agnostic tool (the equivalent of Husky, which is Node.js-based). It is installed once per machine and then `lefthook install` activates the repository hooks.
+
+```yaml
+# lefthook.yml
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed {staged_files}
+    analyze:
+      run: flutter analyze
+pre-push:
+  commands:
+    tests:
+      run: flutter test
+```
+
+- **pre-commit:** formatting and analysis (fast, a few seconds).
+- **pre-push:** unit and widget tests. Integration and E2E tests are left to CI because they take longer.
+
+### 10.5 CI/CD with GitHub Actions
+
+Workflow: each task on its own branch (`feature/T2.3-card-editor`), a PR to `main`, and `main` protected: merging is only allowed with CI green.
+
+**`ci.yml`** — on every PR and every push to `main`:
+
+| Job | Runner | Steps |
 |---|---|---|
-| **0. Base** | Crear el proyecto Flutter para las 4 plataformas, estructura de carpetas, tema claro/oscuro con los tokens del brief, router, localización y base de datos Drift con todas las tablas. | La app arranca en Windows y Android con una pantalla vacía y el tema correcto. |
-| **1. Proyectos y barajas** | P01–P04, P14, P15: CRUD de proyectos y barajas, favoritos, archivar, buscador, papelera con purga a 15 días, "Deshacer". Diseño adaptable (barra lateral en escritorio). | Se pueden crear, editar, archivar, borrar y restaurar proyectos y barajas. Tests de papelera. |
-| **2. Tarjetas** | P05–P06: editor de tarjeta simple y test (una o varias correctas), vista previa girable, imágenes, negrita/cursiva, TTS, campos de idioma, "Guardar y añadir otra", lista con búsqueda y orden, selección múltiple, copiar/mover, eliminar con "Deshacer". | Se pueden crear todos los tipos de tarjeta y la vista previa coincide con el diseño. |
-| **3. Sesión de estudio** | P08–P11: configuración, motor de sesión (dominio puro con tests), selección y barajado, gestos, botones, "Ver respuesta", "Dejar para el final", repetir falladas, timers, pausa, resultados, registro de intentos. | Se puede estudiar con todas las combinaciones de configuración. Tests del motor y de los timers. |
-| **4. Estadísticas y errores** | `card_stats`, lista de errores, modo "Solo errores", "Repasar errores (N)", P12–P13, racha, objetivo diario, reiniciar estadísticas. | Los números del dashboard y las estadísticas coinciden con los intentos. Tests de las reglas 7.4 y 7.6. |
-| **5. Importar y exportar** | JSON (backup, project, deck), CSV, plantilla, prompt para IA, vista previa de importación, duplicados, restaurar (reemplazar/fusionar), compartir y "Guardar como". | Exportar todo en un dispositivo y restaurar en otro deja los datos idénticos. Un CSV generado por IA con el prompt se importa sin errores. |
-| **6. Pulido** | Animaciones (giro 3D, destellos, celebración), vibración, estados vacíos, accesibilidad, iconos de la app, pruebas en las 4 plataformas y empaquetado. | Revisión completa en móvil y escritorio, en claro y oscuro. |
+| `quality` | Ubuntu | Install Flutter (stable, cached) → `pub get` → `build_runner` → `gen-l10n` → check formatting → `flutter analyze` → `flutter test --coverage` → check coverage thresholds → publish the report. |
+| `integration-windows` | Windows | `flutter test integration_test -d windows`. |
+| `e2e-android` | Ubuntu with Android emulator | Integration tests and Patrol E2E tests on an emulator. |
+
+**`release.yml`** — when a `v*` tag is created (e.g. `v1.0.0`):
+
+| Job | Runner | Output |
+|---|---|---|
+| Android | Ubuntu | Signed APK (the signing key is stored as a repository secret). |
+| Windows | Windows | Executable packaged as a `.zip`. |
+| macOS | macOS | Packaged app. |
+
+The artifacts are attached to a GitHub *Release*. Publishing to the App Store and Google Play is part of the [future goals](#12-future-goals-outside-v1): it requires developer accounts and iOS signing.
+
+> If the repository is private, macOS minutes consume 10 times more of the free quota than Linux minutes; that is why macOS is only used for releases.
+
+### 10.6 Definition of done for any task
+
+- The tests listed in the task were written first and were seen failing.
+- All tests pass locally and in CI.
+- `flutter analyze` with no warnings and code formatted.
+- Coverage within the thresholds.
+- The UI matches the design (`design/`) in light and dark, and on mobile and desktop where applicable.
+- UI strings in `app_es.arb`, none hard-coded.
+- The task is ticked in `TASKS.md` and the PR merged.
 
 ---
 
-## 11. Próximos objetivos (fuera de la v1)
+## 11. Phased implementation plan
 
-- **Login y sincronización en la nube** entre dispositivos.
-- **Versión web** (Flutter la soporta) y **Linux**.
-- **Voces de IA** en la nube (Google Cloud TTS, Azure, ElevenLabs). Requieren internet y tienen coste.
-- **Repetición espaciada** (SM-2 o FSRS): el historial de `attempts` ya lo permite.
-- **Modo "Escribir la respuesta"**, con comparación tolerante a acentos y mayúsculas.
-- **Fórmulas matemáticas (LaTeX) y bloques de código** en las tarjetas.
-- **Atajos de teclado** en escritorio.
-- **Umbral configurable** de aciertos seguidos para salir de la lista de errores.
-- **Otros idiomas de interfaz.**
-- **Importar desde Anki** y otros formatos.
-- **Audio grabado** en las tarjetas.
-- **Verificar y registrar el nombre** (tiendas, dominio y marca) antes de publicar.
+Each phase can be built, tested and used on its own. "Done when" says when to move to the next one. The task breakdown is in [`TASKS.md`](TASKS.md).
+
+| Phase | Content | Done when |
+|---|---|---|
+| **0. Foundation** | Create the Flutter project for the 4 platforms, folder structure, analysis rules, Lefthook, CI on GitHub Actions, Patrol setup, light/dark theme with the brief's tokens, router, localisation and the Drift database with all tables. | The app starts on Windows and Android with an empty screen and the right theme, the hooks work and CI is green with a first test at each level. |
+| **1. Projects and decks** | P01–P04, P14, P15: projects and decks CRUD, favourites, archive, search, trash with 15-day purge, undo. Responsive layout (sidebar on desktop). | Projects and decks can be created, edited, archived, deleted and restored. Trash tests. |
+| **2. Cards** | P05–P06: simple and test card editor (one or several correct), flippable preview, images, bold/italic, TTS, language fields, "Save and add another", list with search and sorting, multi-select, copy/move, delete with undo. | Every card type can be created and the preview matches the design. |
+| **3. Study session** | P08–P11: setup, session engine (pure domain with tests), selection and shuffling, gestures, buttons, "Show answer", "Leave for later", repeat missed cards, timers, pause, results, attempt recording. | Every combination of settings can be studied. Engine and timer tests. |
+| **4. Statistics and errors** | `card_stats`, error list, "Errors only" mode, "Review errors (N)", P12–P13, streak, daily goal, reset statistics. | Dashboard and statistics numbers match the attempts. Tests for rules 7.4 and 7.6. |
+| **5. Import and export** | JSON (backup, project, deck), CSV, template, AI prompt, import preview, duplicates, restore (replace/merge), sharing and "Save as". | Exporting everything on one device and restoring on another leaves identical data. A CSV generated by an AI with the prompt imports with no errors. |
+| **6. Polish** | Animations (3D flip, flashes, celebration), haptics, empty states, accessibility, app icons, testing on the 4 platforms and packaging. | Full review on mobile and desktop, light and dark. |
 
 ---
 
-## 12. Registro de decisiones y supuestos
+## 12. Future goals (outside v1)
 
-### 12.1 Decisiones tomadas con el usuario
+- **Login and cloud sync** between devices.
+- **Web version** (Flutter supports it) and **Linux**.
+- **AI voices** in the cloud (Google Cloud TTS, Azure, ElevenLabs). They need internet and cost money.
+- **Spaced repetition** (SM-2 or FSRS): the `attempts` history already supports it.
+- **"Type the answer" mode**, with accent- and case-tolerant comparison.
+- **Maths formulas (LaTeX) and code blocks** in cards.
+- **Keyboard shortcuts** on desktop.
+- **Configurable threshold** of consecutive correct answers to leave the error list.
+- **More UI languages.**
+- **Import from Anki** and other formats.
+- **Recorded audio** on cards.
+- **Publishing to the App Store and Google Play** (developer accounts, iOS signing, store listings).
+- **Visual regression tests** (*golden tests*) for the main screens.
+- **Check and register the name** (stores, domain and trademark) before publishing.
 
-| Sección | Decisión |
+---
+
+## 13. Decision log and assumptions
+
+### 13.1 Decisions made with the owner
+
+| Area | Decision |
 |---|---|
-| Plataforma | Windows, macOS, Android, iOS. Flutter. Sin login. 100% offline. |
-| Datos | Solo locales. Exportar todo (con estadísticas) y compartir proyecto/baraja (sin estadísticas) en JSON o CSV. Importar como proyecto nuevo, baraja nueva o añadiendo a una baraja. |
-| Estructura | Proyecto → Barajas → Tarjetas. Tipo e idiomas en el proyecto. Sin etiquetas. |
-| Borrado | Proyectos y barajas a papelera 15 días. Tarjetas borrado directo con "Deshacer". |
-| Dashboard | Orden por último uso, favoritos arriba, archivar, buscador por título, racha, "Repasar errores (N)" por proyecto. |
-| Tarjetas | Simple o test (2–6 opciones, check para varias correctas). Explicación en test. Imagen, TTS del sistema, negrita/cursiva. Ejemplo y notas en idiomas. |
-| Estudio | Selección aleatoria (opción de priorizar falladas), siempre desordenada, opciones barajadas. Autoevaluación. Multirespuesta sin parciales. Timers excluyentes. Pausa oculta la tarjeta. "Ver respuesta" y "Dejar para el final". Solo botones, sin atajos. |
-| Errores | Entra al fallar; sale con 2 aciertos seguidos (fijo). Por sentido. Nunca mezcla proyectos. |
-| Diseño | Minimalista, naranja como color principal, claro/oscuro, español, barra lateral en escritorio. |
+| Platform | Windows, macOS, Android, iOS. Flutter. No login. 100% offline. |
+| Data | Local only. Export all (with statistics) and share a project/deck (without statistics) as JSON or CSV. Import as a new project, a new deck or by adding to a deck. |
+| Structure | Project → Decks → Cards. Type and languages set on the project. No tags. |
+| Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. |
+| Dashboard | Sorted by last use, favourites on top, archive, search by title, streak, "Review errors (N)" per project. |
+| Cards | Simple or test (2–6 options, check to allow several correct). Explanation on test cards. Image, system TTS, bold/italic. Example and notes for languages. |
+| Study | Random selection (option to prioritise missed cards), always shuffled, shuffled options. Self-grading. Multiple answer with no partial credit. Mutually exclusive timers. Pause hides the card. "Show answer" and "Leave for later". Buttons only, no shortcuts. |
+| Errors | A card enters when answered wrong; leaves after 2 correct in a row (fixed). Per direction. Never mixes projects. |
+| Design | Minimal, orange as the main colour, light/dark, sidebar on desktop. Plus Jakarta Sans typeface. Icon: two cards with a ✓. |
+| Languages | UI in Spanish. Documentation, code, tests, commits, CSV column names and the AI prompt in English. Coding agents talk to the owner in Spanish. |
+| Quality | Mandatory TDD. Unit, widget, integration (`integration_test`) and E2E (Patrol) tests. Lefthook for git hooks. GitHub Actions for CI/CD; integration and E2E tests on Android and Windows. |
 
-### 12.2 Supuestos del analista (revisables)
+### 13.2 Analyst assumptions (open to review)
 
-1. Las tarjetas test se estudian siempre en sentido normal, aunque la sesión sea inversa.
-2. Los proyectos archivados no se pueden estudiar sin desarchivarlos y no cuentan para el acceso "Repasar errores" del dashboard. Sí cuentan en las estadísticas globales.
-3. Las respuestas "sin responder" no afectan a estadísticas, errores ni racha.
-4. La celebración de la pantalla de resultados aparece con un 80% de aciertos o más.
-5. En escritorio "Compartir" guarda el fichero con "Guardar como…" en lugar del menú de compartir.
-6. Las imágenes se comprimen a 1600 px / JPEG 80 y viajan en base64 dentro del JSON.
+1. Test cards are always studied in the normal direction, even in a reverse session.
+2. Archived projects cannot be studied until unarchived and do not count for the dashboard "Review errors" shortcut. They do count in the global statistics.
+3. Unanswered cards do not affect statistics, errors or the streak.
+4. The results screen celebration appears at 80% correct or more.
+5. On desktop, "Share" saves the file with "Save as…" instead of a share menu.
+6. Images are compressed to 1600 px / JPEG 80 and travel as base64 inside the JSON.

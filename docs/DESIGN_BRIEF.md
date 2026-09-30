@@ -1,268 +1,270 @@
-# Brief de diseño — EstudiCards
+# Design brief — EstudiCards
 
-> Documento para Claude Design. Describe el diseño visual de una app de tarjetas de estudio para móvil y escritorio. La especificación funcional completa está en `SPEC.md`; este brief contiene todo lo necesario para diseñar sin leerla.
+> Document for Claude Design. It describes the visual design of a flashcard app for mobile and desktop. The full functional specification is in `SPEC.md`; this brief contains everything needed to design without reading it.
 >
-> **Estado (30/09/2026):** aprobados el sistema de diseño (tokens y componentes), la hoja de variantes de tarjeta y las pantallas principales de móvil en tema claro. También aprobados el resto de pantallas de móvil, los diálogos, los estados vacíos y las pantallas de escritorio. También aprobado el tema oscuro de todas las pantallas. También aprobados el icono de la app (propuesta principal: dos tarjetas con ✓) y el logotipo; sus ficheros están en `assets/branding/`. **El diseño visual de la v1 está completo.** Están en el lienzo de diseño "EstudiCards — Sistema de diseño". Los valores de este brief ya reflejan lo aprobado.
+> **Status (30/09/2026):** approved: the design system (tokens and components), the card variant sheet, every mobile screen, dialogs and empty states, the desktop screens, the dark theme of every screen, and the app icon (main proposal: two cards with a ✓) and logo; their files are in `assets/branding/`. **The v1 visual design is complete.** Everything is on the design canvas "EstudiCards — Sistema de diseño" and exported as screenshots in [`design/`](design/). The values in this brief reflect what was approved.
+>
+> **Language:** the app UI is in Spanish, so every piece of UI copy in the designs (and quoted in this brief) is in Spanish. The meaning of the main labels is listed in `SPEC.md` §2.1.
 
 ---
 
-## 1. El producto en una frase
+## 1. The product in one sentence
 
-**EstudiCards** es una app de tarjetas de estudio para Windows, macOS, Android e iOS. Organiza el contenido en **proyectos → barajas → tarjetas**, permite estudiar con sesiones aleatorias (con temporizador opcional) y guarda aciertos y fallos para repasar los errores.
+**EstudiCards** is a flashcard app for Windows, macOS, Android and iOS. It organises content into **projects → decks → cards**, lets the user study with random sessions (with an optional timer) and records correct and wrong answers so mistakes can be reviewed.
 
-- **Usuario:** una persona que estudia temarios (oposiciones, asignaturas, certificaciones) o idiomas, y alterna entre ordenador y móvil.
-- **Plataforma técnica:** Flutter. El diseño debe ser **idéntico en todas las plataformas** (no imitar los controles nativos de iOS o Android) y construible con componentes Material 3 personalizados.
-- **Idioma de la interfaz:** español.
+- **User:** someone studying syllabi (public exams, school subjects, certifications) or languages, switching between computer and phone.
+- **Technical platform:** Flutter. The design must be **identical on every platform** (no imitation of native iOS or Android controls) and buildable with customised Material 3 components.
+- **UI language:** Spanish.
 
-## 2. Personalidad y principios
+## 2. Personality and principles
 
-**Personalidad:** enfocada, cálida y motivadora, sin ser infantil.
+**Personality:** focused, warm and motivating, without being childish.
 
-1. **Minimalista y moderna.** Fondos neutros, mucho espacio en blanco, jerarquía clara. Nada de ilustraciones recargadas ni gamificación exagerada.
-2. **La tarjeta es la protagonista.** En la sesión de estudio solo importan la tarjeta y los botones de respuesta.
-3. **El color tiene significado.** El naranja es la marca y la acción principal. Cada proyecto tiene su propio color de acento, que aparece en su icono, en la franja de sus tarjetas y en sus barajas.
-4. **Nunca solo color.** Acierto y fallo siempre llevan icono (✓ / ✗) además del verde o rojo.
-5. **Calma durante el estudio.** Animaciones cortas y suaves. La celebración final es discreta.
+1. **Minimal and modern.** Neutral backgrounds, plenty of white space, clear hierarchy. No busy illustrations or over-the-top gamification.
+2. **The card is the star.** In a study session only the card and the answer buttons matter.
+3. **Colour carries meaning.** Orange is the brand and the main action. Each project has its own accent colour, shown on its icon, on its cards' top band and on its decks.
+4. **Never colour alone.** Correct and wrong always carry an icon (✓ / ✗) as well as green or red.
+5. **Calm while studying.** Short, gentle animations. The final celebration is subtle.
 
-Referencias de sensación (no copiar): la limpieza de Things 3 o Linear, la claridad de las tarjetas de Apple Wallet y la motivación ligera de Duolingo sin su estética infantil.
+Mood references (do not copy): the cleanliness of Things 3 or Linear, the clarity of Apple Wallet cards, and Duolingo's light motivation without its childish look.
 
-## 3. Sistema visual
+## 3. Visual system
 
-### 3.1 Color
+### 3.1 Colour
 
-| Token | Claro | Oscuro | Uso |
+| Token | Light | Dark | Use |
 |---|---|---|---|
-| `primary` | `#F97316` | `#FB923C` | Acentos, iconos activos, racha, anillo del objetivo diario |
-| `primary-strong` | `#C2410C` | `#FDBA74` | Fondo de botones principales (texto blanco en claro, texto `#1C1917` en oscuro) para cumplir contraste AA |
-| `primary-soft` | `#FFF1E6` | `#3A2314` | Fondos de chips seleccionados y destacados |
-| `background` | `#FAFAF9` | `#0F0E0D` | Fondo de la app |
-| `surface` | `#FFFFFF` | `#1C1A18` | Tarjetas, hojas, diálogos |
-| `surface-variant` | `#F2F1EF` | `#282522` | Campos de texto, filas alternas |
-| `border` | `#E7E5E4` | `#35312D` | Bordes y separadores |
-| `text` | `#1C1917` | `#F5F5F4` | Texto principal |
-| `text-muted` | `#78716C` | `#A8A29E` | Texto secundario |
-| `success` | `#15803D` | `#4ADE80` | Acierto (siempre con ✓) |
-| `error` | `#BE123C` | `#FB7185` | Fallo (siempre con ✗). Rojo frambuesa para que no se confunda con el naranja de marca |
-| `warning` | `#B45309` | `#FBBF24` | Timer a punto de agotarse |
+| `primary` | `#F97316` | `#FB923C` | Accents, active icons, streak, daily goal ring |
+| `primary-strong` | `#C2410C` | `#FDBA74` | Primary button fill (white text in light, `#1C1917` text in dark) to meet AA contrast |
+| `primary-soft` | `#FFF1E6` | `#3A2314` | Selected chip and highlight backgrounds |
+| `background` | `#FAFAF9` | `#0F0E0D` | App background |
+| `surface` | `#FFFFFF` | `#1C1A18` | Cards, sheets, dialogs |
+| `surface-variant` | `#F2F1EF` | `#282522` | Text fields, alternate rows |
+| `border` | `#E7E5E4` | `#35312D` | Borders and dividers |
+| `text` | `#1C1917` | `#F5F5F4` | Main text |
+| `text-muted` | `#78716C` | `#A8A29E` | Secondary text |
+| `success` | `#15803D` | `#4ADE80` | Correct (always with ✓) |
+| `error` | `#BE123C` | `#FB7185` | Wrong (always with ✗). Raspberry red so it is not confused with the orange brand colour |
+| `warning` | `#B45309` | `#FBBF24` | Timer about to run out |
 
-Los grises son cálidos (familia *stone*) para acompañar al naranja. Los valores son una propuesta: se pueden ajustar manteniendo el contraste WCAG AA.
+The greys are warm (*stone* family) to go with the orange. Values can be adjusted as long as WCAG AA contrast is kept.
 
-**Paleta de proyectos** (12 colores que el usuario elige para cada proyecto; valor para tema claro / oscuro):
+**Project palette** (12 colours the user picks for each project; light / dark theme value):
 
-| Color | Claro | Oscuro |
+| Colour | Light | Dark |
 |---|---|---|
-| Naranja | `#EA580C` | `#FB923C` |
-| Ámbar | `#D97706` | `#FBBF24` |
-| Lima | `#65A30D` | `#A3E635` |
-| Verde | `#16A34A` | `#4ADE80` |
-| Turquesa | `#0D9488` | `#2DD4BF` |
-| Cian | `#0891B2` | `#22D3EE` |
-| **Azul** | `#2563EB` | `#60A5FA` |
-| Índigo | `#4F46E5` | `#818CF8` |
-| Violeta | `#7C3AED` | `#A78BFA` |
-| Rosa | `#DB2777` | `#F472B6` |
-| Fucsia | `#C026D3` | `#E879F9` |
-| Pizarra | `#475569` | `#94A3B8` |
+| Orange | `#EA580C` | `#FB923C` |
+| Amber | `#D97706` | `#FBBF24` |
+| Lime | `#65A30D` | `#A3E635` |
+| Green | `#16A34A` | `#4ADE80` |
+| Teal | `#0D9488` | `#2DD4BF` |
+| Cyan | `#0891B2` | `#22D3EE` |
+| **Blue** | `#2563EB` | `#60A5FA` |
+| Indigo | `#4F46E5` | `#818CF8` |
+| Violet | `#7C3AED` | `#A78BFA` |
+| Pink | `#DB2777` | `#F472B6` |
+| Fuchsia | `#C026D3` | `#E879F9` |
+| Slate | `#475569` | `#94A3B8` |
 
-No hay "frambuesa" en la paleta: se confundía con el rojo de fallo (`error`).
+There is no "raspberry" in the palette: it was too close to the error red.
 
-**Colores en gráficas (aciertos / fallos):** aciertos `#15803D` y fallos `#FB7185` en tema claro; aciertos `#16A34A` y fallos `#FB7185` en tema oscuro. El rojo de fallo se aclara en las gráficas para que se distinga del verde también por luminosidad: con `#BE123C` junto a `#15803D` una persona con daltonismo rojo-verde no los diferencia. Las gráficas llevan siempre leyenda con ✓/✗ y valores, y un espacio de 2 px entre segmentos apilados.
+**Chart colours (correct / wrong):** correct `#15803D` and wrong `#FB7185` in light theme; correct `#16A34A` and wrong `#FB7185` in dark theme. The wrong-answer red is lightened in charts so it also differs from the green in lightness: with `#BE123C` next to `#15803D`, a person with red-green colour blindness cannot tell them apart. Charts always have a legend with ✓/✗ and values, and a 2 px gap between stacked segments.
 
-### 3.2 Tipografía
+### 3.2 Typography
 
-- **Plus Jakarta Sans** (Google Fonts), pesos 400, 500, 600, 700 y 800. Buena legibilidad y soporte completo de acentos.
-- Escala orientativa: Display 32 · Título 22 · Subtítulo 17 · Cuerpo 15 · Etiqueta 13 · Pie 12.
-- **Texto de la tarjeta de estudio:** grande (24–28 pt en móvil, 32–36 pt en escritorio), centrado. El usuario puede escalarlo del 80% al 160%, así que el diseño de la tarjeta debe aguantar textos largos (hasta ~300 caracteres) con desplazamiento interno.
+- **Plus Jakarta Sans** (Google Fonts), weights 400, 500, 600, 700 and 800. Good legibility and full support for Spanish accents.
+- Indicative scale: Display 32 · Title 22 · Subtitle 17 · Body 15 · Label 13 · Caption 12.
+- **Study card text:** large (24–28 pt on mobile, 32–36 pt on desktop), centred. The user can scale it from 80% to 160%, so the card must handle long text (up to ~300 characters) with internal scrolling.
 
-### 3.3 Forma y espaciado
+### 3.3 Shape and spacing
 
-- Rejilla de 4 px (espaciados de 4, 8, 12, 16, 24, 32, 48).
-- Radios: tarjeta de estudio 24 · tarjetas de lista 16 · botones y campos 12 · chips 999.
-- Sombras muy suaves en modo claro; en modo oscuro, elevación mediante superficies más claras en lugar de sombras.
-- Áreas táctiles mínimas de 48 px.
+- 4 px grid (spacing of 4, 8, 12, 16, 24, 32, 48).
+- Radii: study card 24 · list cards 16 · buttons and fields 12 · chips 999.
+- Very soft shadows in light mode; in dark mode, elevation through lighter surfaces instead of shadows.
+- Minimum touch targets of 48 px.
 
-### 3.4 Iconografía
+### 3.4 Iconography
 
-Iconos de línea redondeados y consistentes (estilo Lucide, trazo 2). Los proyectos se representan con un icono de una selección curada dentro de un cuadrado con el color del proyecto al 12% de opacidad. En los diseños no se usan emojis; la app puede permitir elegir emoji como alternativa.
+Rounded, consistent line icons (Lucide style, 2 px stroke). Projects are represented by an icon from a curated set inside a square filled with the project colour at 12% opacity. The designs do not use emoji; the app may allow picking an emoji as an alternative.
 
-## 4. Estructura y navegación
+## 4. Structure and navigation
 
-- **Móvil (390 × 844):** navegación en pila Dashboard → Proyecto → Baraja. El menú general (Archivados, Papelera, Estadísticas, Importar, Exportar todo, Ajustes) está en un cajón lateral o menú desde el dashboard. Botón flotante para crear.
-- **Escritorio (1440 × 900):** barra lateral izquierda fija (~280 px) con logo, buscador, lista de proyectos (favoritos arriba) y, al pie, Archivados, Papelera, Estadísticas y Ajustes. A la derecha, el contenido del proyecto o baraja seleccionados.
-- **Sin atajos de teclado:** en escritorio todas las acciones son botones visibles.
+- **Mobile (390 × 844):** stack navigation Dashboard → Project → Deck. The general menu (Archivados, Papelera, Estadísticas, Importar, Exportar todo, Ajustes) is in a side drawer or a menu on the dashboard. Floating button to create.
+- **Desktop (1440 × 900):** fixed left sidebar (~280 px) with logo, search, project list (favourites on top) and, at the bottom, Archivados, Papelera, Estadísticas and Ajustes. The selected project or deck on the right.
+- **No keyboard shortcuts:** on desktop every action is a visible button.
 
-## 5. Contenido de ejemplo
+## 5. Sample content
 
-Usar datos realistas en español para todas las pantallas:
+Use realistic Spanish data on every screen:
 
-| Proyecto | Color / icono | Tipo | Barajas |
+| Project | Colour / icon | Type | Decks |
 |---|---|---|---|
-| Inglés B2 | Azul · icono globo | Idioma (inglés → español) | Verbos irregulares (84), Phrasal verbs (52), Vocabulario viajes (120) |
-| Oposiciones · Tema 3 | Naranja · icono balanza | General | Constitución (65), Ley 39/2015 (40) |
-| Biología 2º Bach. | Verde · icono matraz | General | Célula (38), Genética (45) |
-| Alemán A1 | Ámbar · icono globo | Idioma (alemán → español) | Saludos (20) — **archivado** |
+| Inglés B2 | Blue · globe icon | Language (English → Spanish) | Verbos irregulares (84), Phrasal verbs (52), Vocabulario viajes (120) |
+| Oposiciones · Tema 3 | Orange · scales icon | General | Constitución (65), Ley 39/2015 (40) |
+| Biología 2º Bach. | Green · flask icon | General | Célula (38), Genética (45) |
+| Alemán A1 | Amber · globe icon | Language (German → Spanish) | Saludos (20) — **archived** |
 
-Tarjetas de ejemplo:
-- **Simple (idioma):** "to bring" → "traer (brought, brought)". Ejemplo: "Can you **bring** me some water?". Notas: "Verbo irregular".
-- **Test, una correcta:** "¿Cuál es la capital de Australia?" → Sídney / **Canberra** / Melbourne / Perth. Explicación: "Canberra es la capital desde 1913".
-- **Test, varias correctas:** "¿Qué números son primos?" → **2** / 4 / **7** / 9.
-- **Simple (general, larga):** "¿Qué establece el artículo 14 de la Constitución?" → "Los españoles son iguales ante la ley, sin que pueda prevalecer discriminación alguna…".
+Sample cards:
+- **Simple (language):** "to bring" → "traer (brought, brought)". Example: "Can you **bring** me some water?". Notes: "Verbo irregular".
+- **Test, one correct:** "¿Cuál es la capital de Australia?" → Sídney / **Canberra** / Melbourne / Perth. Explanation: "Canberra es la capital desde 1913".
+- **Test, several correct:** "¿Qué números son primos?" → **2** / 4 / **7** / 9.
+- **Simple (general, long):** "¿Qué establece el artículo 14 de la Constitución?" → "Los españoles son iguales ante la ley, sin que pueda prevalecer discriminación alguna…".
 
-Estadísticas de ejemplo: racha 12 días, objetivo diario 14/20, 78% de aciertos, 9 errores pendientes.
+Sample statistics: 12-day streak, daily goal 14/20, 78% correct, 9 pending errors.
 
-## 6. Pantallas a diseñar
+## 6. Screens to design
 
-Todas en **móvil y escritorio**, en **tema claro y oscuro**.
+All on **mobile and desktop**, in **light and dark theme**.
 
 ### 6.1 Dashboard
-- Cabecera: saludo breve, **racha** (icono de llama + "12 días") y **anillo de objetivo diario** (14/20).
-- Buscador por título.
-- Lista de proyectos: favoritos primero (con estrella), después por último uso. Cada tarjeta de proyecto muestra icono con su color, nombre, "3 barajas · 256 tarjetas", % de aciertos, "Estudiado hace 2 días" y, si tiene errores, un botón pequeño **"Repasar errores (9)"**. Menú ⋮: Editar, Compartir, Favorito, Archivar, Eliminar.
-- Botón flotante "Nuevo proyecto".
-- **Estado vacío:** ilustración mínima + "Crea tu primer proyecto" + botón + enlace "o importa uno".
+- Header: short greeting, **streak** (flame icon + "12 días") and **daily goal ring** (14/20).
+- Search by title.
+- Project list: favourites first (with a star), then by last use. Each project card shows the icon in its colour, name, "3 barajas · 256 tarjetas", % correct, "Estudiado hace 2 días" and, if it has errors, a small **"Repasar errores (9)"** button. ⋮ menu: Editar, Compartir, Favorito, Archivar, Eliminar.
+- Floating "Nuevo proyecto" button.
+- **Empty state:** minimal illustration + "Crea tu primer proyecto" + button + "o importa uno" link.
 
-### 6.2 Crear / editar proyecto (hoja inferior en móvil, diálogo en escritorio)
-Nombre, descripción, selector de color (12 círculos), selector de icono/emoji y tipo (segmentado: General / Idioma). Si es Idioma, aparecen idioma origen y destino.
+### 6.2 Create / edit project (bottom sheet on mobile, dialog on desktop)
+Name, description, colour picker (12 circles), icon/emoji picker and type (segmented: General / Idioma). If Idioma, source and target language appear.
 
-### 6.3 Proyecto
-- Cabecera con el color del proyecto: icono, nombre, descripción y métricas (tarjetas, % aciertos, errores).
-- Acciones principales: **Estudiar** (botón primario) y **Repasar errores (9)**. Secundarias: Editar, Compartir, Importar.
-- Pestañas **Barajas** | **Estadísticas**.
-- Lista de barajas: franja de color, nombre, nº de tarjetas, % aciertos y errores. Menú ⋮ por baraja. Botón "Nueva baraja".
-- Estado vacío sin barajas.
+### 6.3 Project
+- Header in the project colour: icon, name, description and metrics (cards, % correct, errors).
+- Main actions: **Estudiar** (primary button) and **Repasar errores (9)**. Secondary: Editar, Compartir, Importar.
+- **Barajas** | **Estadísticas** tabs.
+- Deck list: colour band, name, number of cards, % correct and errors. ⋮ menu per deck. "Nueva baraja" button.
+- Empty state with no decks.
 
-### 6.4 Estadísticas del proyecto (pestaña)
-Gráfica de barras apiladas aciertos/fallos por día (30 días), % de aciertos por baraja (barras horizontales), top 10 de tarjetas más falladas e historial de sesiones (fecha, barajas, resultado, duración).
+### 6.4 Project statistics (tab)
+Stacked bar chart of correct/wrong per day (30 days), % correct per deck (horizontal bars), top 10 most missed cards and session history (date, decks, result, duration).
 
-### 6.5 Baraja
-- Cabecera con nombre, nº de tarjetas y acciones: **Añadir tarjeta** (primario), **Estudiar**, **Repasar errores**, **Importar tarjetas**, **Descargar plantilla**, **Copiar prompt para IA**, **Compartir**.
-- Buscador y selector de orden (Recientes / A–Z / Más falladas).
-- Filas de tarjeta: pregunta (1–2 líneas), icono de tipo (simple / test) y % de aciertos con una pequeña barra.
-- **Modo selección múltiple:** casillas y barra de acciones (Copiar a…, Mover a…, Eliminar).
-- Diálogo "Mover a…" / "Copiar a…" con la lista de barajas del proyecto.
-- Estado vacío: "Añade tu primera tarjeta", con "Importar desde CSV" y "Descargar plantilla".
+### 6.5 Deck
+- Header with name, number of cards and actions: **Añadir tarjeta** (primary), **Estudiar**, **Repasar errores**, **Importar tarjetas**, **Descargar plantilla**, **Copiar prompt para IA**, **Compartir**.
+- Search and sort selector (Recientes / A–Z / Más falladas).
+- Card rows: question (1–2 lines), type icon (simple / test) and % correct with a small bar.
+- **Multi-select mode:** checkboxes and an action bar (Copiar a…, Mover a…, Eliminar).
+- "Mover a…" / "Copiar a…" dialog with the project's decks.
+- Empty state: "Añade tu primera tarjeta", with "Importar desde CSV" and "Descargar plantilla".
 
-### 6.6 Editor de tarjeta
-- Campo **Pregunta** con mini barra de formato (negrita, cursiva) y botón para añadir imagen.
-- Toggle **Tipo test**.
-  - Desactivado: campo **Respuesta** (+ imagen).
-  - Activado: lista de **opciones** (2–6) con botón "Añadir opción", quitar opción y selector de correcta. Check **"Permitir varias correctas"**: cambia los selectores de radio a casillas. Campo **Explicación** (opcional, + imagen).
-- En proyectos de idioma: **Frase de ejemplo** y **Notas**.
-- **Vista previa en vivo** de la tarjeta, que se gira al pulsarla: debajo del formulario en móvil y en una columna a la derecha en escritorio.
-- Botones: **Guardar** y **Guardar y añadir otra**.
-- Mostrar los estados de validación: pregunta vacía, menos de 2 opciones, ninguna correcta marcada.
+### 6.6 Card editor
+- **Pregunta** (question) field with a mini formatting bar (bold, italic) and a button to add an image.
+- **Tipo test** toggle.
+  - Off: **Respuesta** (answer) field (+ image).
+  - On: list of **options** (2–6) with an "Añadir opción" button, remove option and correct-answer selector. **"Permitir varias correctas"** check: switches the radio selectors to checkboxes. **Explicación** field (optional, + image).
+- In language projects: **Frase de ejemplo** and **Notas**.
+- **Live preview** of the card, which flips when tapped: below the form on mobile and in a right-hand column on desktop.
+- Buttons: **Guardar** and **Guardar y añadir otra**.
+- Show validation states: empty question, fewer than 2 options, no correct option ticked.
 
-### 6.7 Importar (asistente de 3 pasos)
-1. Elegir fichero (JSON o CSV).
-2. Elegir destino, según desde dónde se abre: proyecto nuevo / baraja nueva / añadir a esta baraja.
-3. **Vista previa:** resumen "42 nuevas · 3 duplicadas · 1 con errores", lista de filas con error ("Fila 7: falta la respuesta") y botón Importar.
+### 6.7 Import (3-step wizard)
+1. Choose file (JSON or CSV).
+2. Choose destination, depending on where it was opened from: new project / new deck / add to this deck.
+3. **Preview:** summary "42 nuevas · 3 duplicadas · 1 con errores", list of rows with errors ("Fila 7: falta la respuesta") and an Import button.
 
-Resumen final como aviso: "42 añadidas, 3 omitidas".
+Final summary as a snackbar: "42 añadidas, 3 omitidas".
 
-### 6.8 Configurar sesión
-Hoja o pantalla con:
-- Barajas: chips de selección múltiple + "Todo el proyecto".
-- Nº de tarjetas: segmentado 10 / 20 / 50 / Todas / Personalizado.
-- Modo: Normal / Solo errores.
-- Sentido: Normal / Inverso (solo en idiomas).
-- Interruptores: "Priorizar las más falladas", "Repetir falladas al final".
-- Timer: Sin timer / Por pregunta (5–120 s) / General (1–120 min), con un control de valor.
-- Texto dinámico: "84 tarjetas disponibles".
-- Botón **Empezar**.
+### 6.8 Session setup
+Sheet or screen with:
+- Decks: multi-select chips + "Todo el proyecto".
+- Number of cards: segmented 10 / 20 / 50 / Todas / Otro.
+- Mode: Normal / Solo errores.
+- Direction: Normal / Inverso (languages only).
+- Switches: "Priorizar las más falladas", "Repetir falladas al final".
+- Timer: Sin timer / Por pregunta (5–120 s) / General (1–120 min), with a value control.
+- Dynamic text: "84 tarjetas disponibles".
+- **Empezar** button.
 
-### 6.9 Sesión de estudio
-- Barra superior: botón Salir, progreso "7 / 20" con barra, contador ✓ 5 ✗ 2, timer y botón Pausa.
-- Tarjeta grande centrada.
-- Botones inferiores según el estado:
-  - **Simple sin girar:** Girar (primario) · Ver respuesta · Dejar para el final.
-  - **Simple girada:** ✗ Fallé · ✓ Acerté (dos botones grandes, rojo y verde).
-  - **Test sin responder:** Comprobar (primario) · Ver respuesta · Dejar para el final.
-  - **Test respondida:** Siguiente.
-- En móvil, al arrastrar la tarjeta girada se insinúa el resultado: tinte verde con ✓ a la derecha y rojo con ✗ a la izquierda.
-- Si hay repeticiones pendientes: "+3 repasos" junto al progreso.
-- En escritorio, la tarjeta tiene un ancho máximo (~720 px) centrada, con los botones debajo.
+### 6.9 Study session
+- Top bar: Exit button, progress "7 / 20" with a bar, ✓ 5 ✗ 2 counter, timer and Pause button.
+- Large centred card.
+- Bottom buttons depending on the state:
+  - **Simple, not flipped:** Girar (primary) · Ver respuesta · Dejar para el final.
+  - **Simple, flipped:** ✗ Fallé · ✓ Acerté (two large buttons, red and green).
+  - **Test, unanswered:** Comprobar (primary) · Ver respuesta · Dejar para el final.
+  - **Test, answered:** Siguiente.
+- On mobile, dragging the flipped card hints at the result: green tint with ✓ to the right and red with ✗ to the left.
+- If repeats are pending: "+3 repasos" next to the progress.
+- On desktop, the card has a maximum width (~720 px), centred, with the buttons below.
 
-### 6.10 Pausa
-Superposición que **oculta completamente la tarjeta** (fondo opaco o muy desenfocado), con "En pausa", el tiempo transcurrido y los botones Continuar y Salir.
+### 6.10 Pause
+Overlay that **completely hides the card** (opaque or heavily blurred background), with "En pausa", the elapsed time, and the Continuar and Salir buttons.
 
-### 6.11 Resultados
-- Gran porcentaje de aciertos en un anillo, con aciertos, fallos y sin responder.
-- Tiempo total y tiempo medio por tarjeta.
-- Secciones plegables **Falladas** (pregunta + respuesta correcta) y **No respondidas**.
-- Botones: **Repasar falladas ahora** (primario), Repetir sesión y Volver.
-- Variante con **celebración discreta** (≥ 80%): confeti ligero o destello naranja, sin sonido.
-- Variante con timer general agotado: "Se acabó el tiempo" y la lista de no respondidas destacada.
+### 6.11 Results
+- Large % correct in a ring, with correct, wrong and unanswered.
+- Total time and average time per card.
+- Collapsible **Falladas** (question + correct answer) and **No respondidas** sections.
+- Buttons: **Repasar falladas ahora** (primary), Repetir sesión and Volver.
+- Variant with a **subtle celebration** (≥ 80%): light confetti or an orange flash, no sound.
+- Variant with the global timer run out: "Se acabó el tiempo" and the unanswered list highlighted.
 
-### 6.12 Estadísticas globales
-Racha actual y récord, tarjetas hoy / 7 días / 30 días, gráfica de 30 días de todos los proyectos y resumen por proyecto. Sin botones de repaso.
+### 6.12 Global statistics
+Current and best streak, cards today / 7 days / 30 days, 30-day chart across all projects and a summary per project. No review buttons.
 
-### 6.13 Archivados, Papelera y Ajustes
-- **Archivados:** lista con Desarchivar y Eliminar.
-- **Papelera:** proyectos y barajas con etiqueta "Se elimina en 12 días", Restaurar, Eliminar definitivamente y Vaciar papelera.
-- **Ajustes:** Tema (Sistema / Claro / Oscuro), tamaño de texto de las tarjetas (deslizador con vista previa), objetivo diario, estado de voces TTS, Exportar todo, Restaurar copia y Acerca de.
+### 6.13 Archived, Trash and Settings
+- **Archivados:** list with Desarchivar and Eliminar.
+- **Papelera:** projects and decks labelled "Se elimina en 12 días", Restaurar, Eliminar definitivamente and Vaciar papelera.
+- **Ajustes:** Tema (Sistema / Claro / Oscuro), card text size (slider with preview), daily goal, TTS voice status, Exportar todo, Restaurar copia and Acerca de.
 
-### 6.14 Diálogos y avisos
-- Eliminar proyecto: "Se moverán a la papelera 3 barajas y 256 tarjetas. Podrás recuperarlo durante 15 días."
-- Eliminar tarjeta: confirmación simple.
-- Aviso inferior con **Deshacer** (5 s).
-- Restaurar copia con datos existentes: **Reemplazar todo** / **Fusionar**.
-- Compartir: elegir **JSON** (para la app) o **CSV** (para Excel).
-- Salir de la sesión: "Se guardarán tus respuestas".
-- Voz no instalada: aviso con instrucciones.
+### 6.14 Dialogs and snackbars
+- Delete project: "Se moverán a la papelera 3 barajas y 256 tarjetas. Podrás recuperarlo durante 15 días."
+- Delete card: simple confirmation.
+- Bottom snackbar with **Deshacer** (5 s).
+- Restore backup when data exists: **Reemplazar todo** / **Fusionar**.
+- Share: choose **JSON** (for the app) or **CSV** (for Excel).
+- Exit session: "Se guardarán tus respuestas".
+- Voice not installed: notice with instructions.
 
-## 7. Hoja de estilos de la tarjeta
+## 7. Card style sheet
 
-Además de las pantallas, una lámina con **todas las variantes de la tarjeta de estudio**, en claro y oscuro:
+Besides the screens, one sheet with **every variant of the study card**, in light and dark:
 
-1. Simple — anverso.
-2. Simple — reverso.
-3. Test — antes de comprobar (una opción seleccionada).
-4. Test — después, acierto (correcta en verde con ✓).
-5. Test — después, fallo (marcada en rojo con ✗, correcta en verde con ✓, explicación visible).
-6. Test multirespuesta — con casillas y la indicación "Varias respuestas correctas".
-7. Idioma — anverso con botón de altavoz; reverso con traducción, frase de ejemplo y notas.
-8. Con imagen en la pregunta y en la respuesta.
-9. Con timer por pregunta activo y en sus últimos 5 s (anillo o barra en `warning`).
-10. Pantalla de pausa.
-11. Texto largo con desplazamiento interno.
-12. Momento del arrastre en móvil (tinte de acierto y de fallo).
+1. Simple — front.
+2. Simple — back.
+3. Test — before checking (one option selected).
+4. Test — after, correct (the correct one in green with ✓).
+5. Test — after, wrong (the ticked one in red with ✗, the correct one in green with ✓, explanation visible).
+6. Multiple-answer test — with checkboxes and the label "Varias respuestas correctas".
+7. Language — front with a speaker button; back with translation, example sentence and notes.
+8. With an image in the question and in the answer.
+9. With the per-question timer running and in its last 5 s (ring or bar in `warning`).
+10. Pause screen.
+11. Long text with internal scrolling.
+12. Mobile drag moment (correct and wrong tint).
 
-**Anatomía de la tarjeta:** superficie `surface`, radio 24, franja o borde superior con el color del proyecto, etiqueta pequeña arriba (nombre de la baraja y tipo), contenido centrado y un indicador sutil "Toca para girar".
+**Card anatomy:** `surface` background, radius 24, top band or border in the project colour, small label at the top (deck name and type), centred content and a subtle "Toca para girar" (tap to flip) hint.
 
-## 8. Movimiento
+## 8. Motion
 
-| Interacción | Animación |
+| Interaction | Animation |
 |---|---|
-| Girar tarjeta | Giro 3D sobre el eje vertical, ~350 ms, curva suave |
-| Acierto / fallo | Destello breve del borde en verde o rojo con icono, y vibración ligera en móvil |
-| Siguiente tarjeta | La tarjeta sale hacia el lado de la respuesta y entra la siguiente |
-| Timer en aviso | Pulso suave en color `warning` |
-| Resultados | Anillo que se rellena; confeti ligero si ≥ 80% |
+| Flip card | 3D flip on the vertical axis, ~350 ms, smooth curve |
+| Correct / wrong | Brief border flash in green or red with an icon, and light haptics on mobile |
+| Next card | The card leaves towards the answer side and the next one comes in |
+| Timer warning | Gentle pulse in the `warning` colour |
+| Results | Ring fills up; light confetti if ≥ 80% |
 
-Respetar la opción del sistema de reducir movimiento (sustituir por fundidos).
+Respect the system's reduce-motion setting (replace with fades).
 
-## 9. Accesibilidad
+## 9. Accessibility
 
-- Contraste mínimo WCAG AA en claro y oscuro.
-- Acierto y fallo con icono y texto, nunca solo color.
-- El diseño debe funcionar con el texto del sistema al 200% y el texto de tarjeta al 160%.
-- Áreas táctiles de al menos 48 px.
-- Foco visible en escritorio.
+- Minimum WCAG AA contrast in light and dark.
+- Correct and wrong with an icon and text, never colour alone.
+- The design must work with system text at 200% and card text at 160%.
+- Touch targets of at least 48 px.
+- Visible focus on desktop.
 
-## 10. Entregables esperados
+## 10. Expected deliverables
 
-1. **Tokens de diseño:** colores (claro/oscuro), tipografía, espaciado, radios, sombras y paleta de proyectos.
-2. **Componentes:** botones (primario, secundario, texto, peligro), campos, toggles, chips, segmentados, tarjeta de proyecto, fila de baraja, fila de tarjeta, tarjeta de estudio, barra de progreso, timer, anillo de objetivo, gráficas, avisos con Deshacer, diálogos y estados vacíos.
-3. **Todas las pantallas de la sección 6** en móvil (390 × 844) y escritorio (1440 × 900), en claro y oscuro, incluidos estados vacíos y diálogos.
-4. **Hoja de estilos de la tarjeta** (sección 7).
-5. **Propuesta de icono de app y logotipo** para "EstudiCards", simple, reconocible a 48 px y basado en el naranja de marca. **Aprobado:** placa `#C2410C`, tarjeta trasera `#FDBA74` girada y tarjeta delantera blanca con un ✓ en `#C2410C` (variante oscura: placa `#1C1917`, tarjetas `#9A3412` y `#FB923C`). Logotipo: la marca sin placa + "Estudi**Cards**" en Plus Jakarta Sans 800, con "Cards" en naranja. Ficheros exportados en `assets/branding/`: iconos SVG y PNG de 1024 px para iOS, Android (primer plano adaptativo y monocromo), macOS y Windows.
+1. **Design tokens:** colours (light/dark), typography, spacing, radii, shadows and project palette.
+2. **Components:** buttons (primary, secondary, text, danger), fields, toggles, chips, segmented controls, project card, deck row, card row, study card, progress bar, timer, goal ring, charts, snackbars with undo, dialogs and empty states.
+3. **Every screen in section 6** on mobile (390 × 844) and desktop (1440 × 900), in light and dark, including empty states and dialogs.
+4. **Card style sheet** (section 7).
+5. **App icon and logo proposal** for "EstudiCards", simple, recognisable at 48 px and based on the brand orange. **Approved:** `#C2410C` plate, back card `#FDBA74` rotated and a white front card with a ✓ in `#C2410C` (dark variant: `#1C1917` plate, cards `#9A3412` and `#FB923C`). Logo: the mark without a plate + "Estudi**Cards**" in Plus Jakarta Sans 800, with "Cards" in orange. Exported files in `assets/branding/`: 1024 px SVG and PNG icons for iOS, Android (adaptive foreground and monochrome), macOS and Windows.
 
-## 11. Qué evitar
+## 11. What to avoid
 
-- Estética infantil, mascotas o exceso de gamificación.
-- Emojis como iconos de interfaz.
-- Degradados fuertes, efecto cristal pesado o sombras duras.
-- Usar el naranja para indicar errores (el error es rojo frambuesa).
-- Pantallas de estudio con elementos que distraigan de la tarjeta.
-- Controles específicos de iOS o Android que no existan en la otra plataforma.
-- Atajos de teclado o indicaciones de teclas en la interfaz.
+- Childish look, mascots or excessive gamification.
+- Emoji as UI icons.
+- Strong gradients, heavy glass effects or hard shadows.
+- Using orange to signal errors (errors are raspberry red).
+- Study screens with elements that distract from the card.
+- iOS- or Android-specific controls that do not exist on the other platform.
+- Keyboard shortcuts or key hints in the UI.

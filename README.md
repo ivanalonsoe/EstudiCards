@@ -1,166 +1,190 @@
 # EstudiCards
 
-App de tarjetas de estudio (flashcards) para **Windows, macOS, Android e iOS**, hecha con **Flutter**. Organiza lo que estudias en proyectos y barajas, practica con sesiones aleatorias con temporizador y repasa tus errores.
+Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. Organise what you study into projects and decks, practise with random, optionally timed sessions, and review your mistakes.
 
-> **Estado:** en diseño. La especificación está cerrada y el desarrollo empieza por la fase 0 (ver [Hoja de ruta](#hoja-de-ruta)).
+> **Status:** specification and design finalised. Development starts with phase 0 in [`docs/TASKS.md`](docs/TASKS.md).
+>
+> **Languages:** the app UI is in Spanish. Documentation, code and tests are in English.
 
 ---
 
-## Características (v1)
+## Features (v1)
 
-- **Proyectos → barajas → tarjetas.** Por ejemplo, el proyecto "Inglés B2" con las barajas "Verbos irregulares" y "Phrasal verbs".
-- **Dos tipos de tarjeta:**
-  - **Simple:** pregunta, palabra o frase, y su respuesta o traducción. Se gira al pulsarla.
-  - **Test:** de 2 a 6 opciones, con una o varias correctas. La app corrige automáticamente.
-- **Proyectos de idioma:** voz (TTS del sistema, gratis y sin conexión), frase de ejemplo, notas y **modo inverso**.
-- **Sesiones de estudio** configurables:
-  - número de tarjetas, barajas, modo normal o **solo errores**;
-  - **timer por pregunta** o **timer general**;
-  - tarjetas y opciones siempre desordenadas;
-  - pausa (oculta la pregunta), "Ver respuesta" y "Dejar para el final".
-- **Seguimiento de aciertos y fallos** por tarjeta. Una tarjeta entra en la lista de errores al fallarla y sale al acertarla dos veces seguidas.
-- **Estadísticas** por proyecto y globales, **racha diaria** y objetivo diario opcional.
-- **Importar y exportar:**
-  - copia de seguridad completa en JSON;
-  - compartir un proyecto o una baraja en JSON o CSV (por WhatsApp, email…);
-  - importar tarjetas desde CSV, con plantilla descargable y un **prompt para generarlas con IA**.
-- **Papelera** de 15 días para proyectos y barajas.
-- **Tema claro y oscuro.** 100% offline, sin cuentas ni login.
+- **Projects → decks → cards.** For example, the project "Inglés B2" with the decks "Verbos irregulares" and "Phrasal verbs".
+- **Two card types:**
+  - **Simple:** a question, word or sentence, and its answer or translation. Tap to flip.
+  - **Test:** 2 to 6 options, with one or several correct. The app grades it automatically.
+- **Language projects:** text-to-speech (system TTS, free and offline), example sentence, notes and **reverse mode**.
+- Configurable **study sessions**:
+  - number of cards, decks, normal mode or **errors only**;
+  - **per-question timer** or **global timer**;
+  - cards and options always shuffled;
+  - pause (hides the question), "show answer" and "leave for later".
+- **Correct and wrong tracking** per card. A card enters the error list when answered wrong and leaves it after two correct answers in a row.
+- Per-project and global **statistics**, **daily streak** and an optional daily goal.
+- **Import and export:**
+  - full backup as JSON;
+  - share a project or deck as JSON or CSV (via WhatsApp, email…);
+  - import cards from CSV, with a downloadable template and an **AI prompt to generate them**.
+- 15-day **trash** for projects and decks.
+- **Light and dark theme.** 100% offline, no accounts or login.
 
-## Documentación
+## Documentation
 
-| Documento | Contenido |
+| Document | Contents |
 |---|---|
-| [`docs/SPEC.md`](docs/SPEC.md) | Especificación funcional y técnica: modelo de datos, pantallas, historias de usuario, reglas de negocio, formatos de importación y exportación y plan por fases. |
-| [`docs/DESIGN_BRIEF.md`](docs/DESIGN_BRIEF.md) | Brief visual para Claude Design: colores, tipografía, pantallas, variantes de tarjeta y animaciones. |
-| [`AGENTS.md`](AGENTS.md) | Instrucciones para agentes de código (Claude Code, Codex, Cursor…). |
-| [`CLAUDE.md`](CLAUDE.md) | Punto de entrada para Claude Code; importa `AGENTS.md`. |
+| [`docs/SPEC.md`](docs/SPEC.md) | Functional and technical specification: data model, screens, user stories, business rules, import and export formats, quality strategy and phased plan. |
+| [`docs/DESIGN_BRIEF.md`](docs/DESIGN_BRIEF.md) | Visual brief: colours, typography, screens, card variants and animations. |
+| [`docs/design/`](docs/design/) | Screenshots of every screen in the design (mobile and desktop, light and dark) and the icon. |
+| [`docs/TASKS.md`](docs/TASKS.md) | Phased task plan, with the tests to write first in each task. |
+| [`AGENTS.md`](AGENTS.md) | Instructions for coding agents (Claude Code, Codex, Cursor…). |
+| [`CLAUDE.md`](CLAUDE.md) | Entry point for Claude Code; imports `AGENTS.md`. |
 
-## Tecnología
+## Technology
 
-| Pieza | Paquete |
+| Piece | Package |
 |---|---|
 | Framework | Flutter (stable) + Dart 3 |
-| Base de datos local | `drift` (SQLite) |
-| Estado | `flutter_riverpod` |
-| Navegación | `go_router` |
-| Voz | `flutter_tts` |
-| Ficheros y compartir | `file_picker`, `share_plus`, `path_provider`, `image_picker`, `image` |
-| CSV y gráficas | `csv`, `fl_chart` |
-| Textos (español) | `flutter_localizations`, `intl` |
-| Tests | `flutter_test`, `mocktail` |
+| Local database | `drift` (SQLite) |
+| State | `flutter_riverpod` |
+| Navigation | `go_router` |
+| Voice | `flutter_tts` |
+| Files and sharing | `file_picker`, `share_plus`, `path_provider`, `image_picker`, `image` |
+| CSV and charts | `csv`, `fl_chart` |
+| UI strings (Spanish) | `flutter_localizations`, `intl` |
+| Tests | `flutter_test`, `mocktail`, `fake_async`, `integration_test`, `patrol` (E2E) |
+| Git hooks | Lefthook |
+| CI/CD | GitHub Actions |
 
-## Requisitos para desarrollar
+## Development requirements
 
-- **Flutter SDK** (canal stable). Guía de instalación: <https://docs.flutter.dev/get-started/install>
-- Un editor: **VS Code** con la extensión *Flutter*, o **Android Studio**.
-- Según la plataforma que quieras compilar:
+- **Flutter SDK** (stable channel). Installation guide: <https://docs.flutter.dev/get-started/install>
+- An editor: **VS Code** with the *Flutter* extension, or **Android Studio**.
+- Depending on the platform you want to build:
 
-| Plataforma | Necesitas |
+| Platform | You need |
 |---|---|
-| Android | Android Studio (SDK de Android y un emulador o un móvil con depuración USB) |
-| Windows | Un PC con Windows y **Visual Studio 2022** con la carga de trabajo *Desarrollo para el escritorio con C++* |
-| macOS / iOS | Un **Mac** con **Xcode** (y CocoaPods). iOS y macOS solo se pueden compilar desde un Mac. |
+| Android | Android Studio (Android SDK and an emulator or a phone with USB debugging) |
+| Windows | A Windows PC with **Visual Studio 2022** and the *Desktop development with C++* workload |
+| macOS / iOS | A **Mac** with **Xcode** (and CocoaPods). iOS and macOS can only be built on a Mac. |
 
-Comprueba que todo está bien instalado con:
+Check that everything is installed correctly with:
 
 ```bash
 flutter doctor
 ```
 
-## Puesta en marcha
+## Getting started
 
 ```bash
-# 1. Clonar el repositorio
-git clone <url-del-repositorio> estudicards
-cd estudicards
+# 1. Clone the repository
+git clone https://github.com/ivanalonsoe/EstudiCards.git
+cd EstudiCards
 
-# 2. Instalar dependencias
+# 2. Install dependencies
 flutter pub get
 
-# 3. Generar código (tablas de Drift, providers) y textos
+# 3. Generate code (Drift tables, providers) and UI strings
 dart run build_runner build --delete-conflicting-outputs
 flutter gen-l10n
 
-# 4. Ejecutar
-flutter run -d windows     # o: macos, android, ios
+# 4. Enable the git hooks (once per machine; requires Lefthook to be installed)
+lefthook install
+
+# 5. Run
+flutter run -d windows     # or: macos, android, ios
 ```
 
-> Cada vez que cambies las tablas de la base de datos o los providers, vuelve a ejecutar el paso 3.
-> Durante el desarrollo puedes dejarlo en modo automático con `dart run build_runner watch`.
+> Whenever you change the database tables or the providers, run step 3 again.
+> During development you can keep it running automatically with `dart run build_runner watch`.
 
-## Comandos útiles
+## Useful commands
 
-| Comando | Para qué sirve |
+| Command | What it does |
 |---|---|
-| `flutter analyze` | Revisa el código en busca de errores y malas prácticas. Debe quedar sin avisos. |
-| `flutter test` | Ejecuta los tests. |
-| `flutter devices` | Lista los dispositivos y emuladores disponibles. |
-| `flutter build apk` | Genera el instalador de Android. |
-| `flutter build windows` | Genera el ejecutable de Windows. |
-| `flutter build macos` / `flutter build ios` | Genera la app para Mac o iPhone (desde un Mac). |
+| `flutter analyze` | Checks the code for errors and bad practices. It must report no warnings. |
+| `flutter test` | Runs the unit and widget tests. |
+| `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |
+| `flutter test integration_test -d windows` | Runs the integration tests on desktop. |
+| `patrol test` | Runs the E2E tests on an emulator or connected device. |
+| `flutter devices` | Lists the available devices and emulators. |
+| `flutter build apk` | Builds the Android installer. |
+| `flutter build windows` | Builds the Windows executable. |
+| `flutter build macos` / `flutter build ios` | Builds the app for Mac or iPhone (on a Mac). |
 
-## Estructura del proyecto
+## Project structure
 
 ```
-estudicards/
+EstudiCards/
 ├── lib/
 │   ├── main.dart
-│   ├── app/            # arranque, tema, rutas, textos (app_es.arb)
-│   ├── core/           # base de datos, IDs, reloj, ficheros, widgets comunes
-│   └── features/       # una carpeta por funcionalidad
-│       ├── projects/       # dashboard, proyectos, archivados, papelera
-│       ├── decks/          # barajas y lista de tarjetas
-│       ├── cards/          # editor de tarjetas y vista previa
-│       ├── study/          # configuración, sesión de estudio, resultados
-│       ├── stats/          # estadísticas, errores, racha
-│       ├── import_export/  # JSON, CSV, plantilla, prompt IA
-│       └── settings/       # ajustes
-├── test/               # tests (misma estructura que lib/)
-├── docs/               # SPEC.md, DESIGN_BRIEF.md
+│   ├── app/            # startup, theme, routes, UI strings (app_es.arb)
+│   ├── core/           # database, IDs, clock, files, shared widgets
+│   └── features/       # one folder per feature
+│       ├── projects/       # dashboard, projects, archived, trash
+│       ├── decks/          # decks and card list
+│       ├── cards/          # card editor and preview
+│       ├── study/          # setup, study session, results
+│       ├── stats/          # statistics, errors, streak
+│       ├── import_export/  # JSON, CSV, template, AI prompt
+│       └── settings/       # settings
+├── test/               # unit and widget tests (same structure as lib/)
+├── integration_test/   # integration tests
+├── assets/branding/    # app icons
+├── docs/               # SPEC.md, DESIGN_BRIEF.md, TASKS.md, design/
 ├── AGENTS.md
 ├── CLAUDE.md
 └── README.md
 ```
 
-Cada funcionalidad se divide en `data/` (base de datos), `domain/` (reglas de negocio, sin Flutter) y `presentation/` (pantallas).
+Each feature is split into `data/` (database), `domain/` (business rules, no Flutter) and `presentation/` (screens).
 
-## Crear tarjetas con IA
+## How it is developed
 
-1. En una baraja, pulsa **Descargar plantilla** o **Copiar prompt para IA**.
-2. Pega el prompt en Claude, ChatGPT u otra IA, sustituyendo el tema, el número de tarjetas y el nivel.
-3. Guarda la respuesta como `.csv` y pulsa **Importar tarjetas**.
-4. Revisa la vista previa (nuevas, duplicadas y filas con errores) y confirma.
+- **TDD:** every feature starts with a failing test; then the code is written to make it pass and refactored (see [`docs/SPEC.md` §10](docs/SPEC.md#10-quality-tdd-tests-and-cicd)).
+- **Four test levels:** unit, widget, integration and E2E.
+- **Git hooks (Lefthook):** formatting and analysis are checked before each commit; tests before each push.
+- **CI (GitHub Actions):** every PR runs all tests on Linux, Windows and an Android emulator. Creating a `v*` tag builds the Android, Windows and macOS installers.
+- **Branches:** one per task in [`docs/TASKS.md`](docs/TASKS.md), with a PR to `main`.
 
-Formato CSV (separador `;`, UTF-8):
+## Creating cards with AI
+
+1. In a deck, tap **Descargar plantilla** (download template) or **Copiar prompt para IA** (copy AI prompt).
+2. Paste the prompt into Claude, ChatGPT or another AI, filling in the topic, number of cards, language and level.
+3. Save the answer as a `.csv` file and tap **Importar tarjetas** (import cards).
+4. Check the preview (new cards, duplicates and rows with errors) and confirm.
+
+CSV format (`;` separator, UTF-8, English column names):
 
 ```csv
-pregunta;respuesta;opcion1;opcion2;opcion3;opcion4;opcion5;opcion6;correctas;explicacion;ejemplo;notas
+question;answer;option1;option2;option3;option4;option5;option6;correct;explanation;example;notes
 to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irregular
 ¿Capital de Australia?;;Sídney;Canberra;Melbourne;;;;2;Canberra es la capital desde 1913.;;
 ¿Qué números son primos?;;2;4;7;9;;;1|3;;;
 ```
 
-Todos los detalles están en [`docs/SPEC.md` §8](docs/SPEC.md#8-importación-y-exportación).
+Full details in [`docs/SPEC.md` §8](docs/SPEC.md#8-import-and-export).
 
-## Hoja de ruta
+## Roadmap
 
-| Fase | Contenido | Estado |
+| Phase | Content | Status |
 |---|---|---|
-| 0. Base | Proyecto Flutter, tema, rutas, base de datos | ⏳ Pendiente |
-| 1. Proyectos y barajas | Dashboard, favoritos, archivar, papelera | ⏳ Pendiente |
-| 2. Tarjetas | Editor simple y test, vista previa, imágenes, voz | ⏳ Pendiente |
-| 3. Sesión de estudio | Selección aleatoria, timers, pausa, resultados | ⏳ Pendiente |
-| 4. Estadísticas y errores | Lista de errores, estadísticas, racha | ⏳ Pendiente |
-| 5. Importar y exportar | JSON, CSV, plantilla, prompt IA | ⏳ Pendiente |
-| 6. Pulido | Animaciones, accesibilidad, iconos, empaquetado | ⏳ Pendiente |
+| 0. Foundation | Flutter project, hooks, CI, Patrol, theme, routes, database | ⏳ Pending |
+| 1. Projects and decks | Dashboard, favourites, archive, trash | ⏳ Pending |
+| 2. Cards | Simple and test editor, preview, images, voice | ⏳ Pending |
+| 3. Study session | Random selection, timers, pause, results | ⏳ Pending |
+| 4. Statistics and errors | Error list, statistics, streak | ⏳ Pending |
+| 5. Import and export | JSON, CSV, template, AI prompt | ⏳ Pending |
+| 6. Polish | Animations, accessibility, icons, packaging | ⏳ Pending |
 
-**Próximos objetivos (después de la v1):** login y sincronización en la nube, versión web, voces de IA, repetición espaciada, modo "escribir la respuesta", fórmulas y código en las tarjetas, atajos de teclado y más idiomas de interfaz.
+Each phase is broken down task by task in [`docs/TASKS.md`](docs/TASKS.md).
 
-## Privacidad
+**Future goals (after v1):** login and cloud sync, web version, AI voices, spaced repetition, "type the answer" mode, formulas and code on cards, keyboard shortcuts and more UI languages.
 
-EstudiCards no usa cuentas, analíticas ni conexión a internet. Tus datos solo salen del dispositivo cuando tú los exportas o compartes.
+## Privacy
 
-## Licencia
+EstudiCards uses no accounts, analytics or internet connection. Your data only leaves the device when you export or share it.
 
-Por definir.
+## License
+
+To be decided.
