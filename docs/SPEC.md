@@ -812,7 +812,7 @@ pre-commit:
   commands:
     format:
       glob: "*.dart"
-      run: dart format --set-exit-if-changed {staged_files}
+      run: dart format --output=none --set-exit-if-changed {staged_files}
     analyze:
       run: flutter analyze
 pre-push:
@@ -921,3 +921,4 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 4. The results screen celebration appears at 80% correct or more.
 5. On desktop, "Share" saves the file with "Save as…" instead of a share menu.
 6. Images are compressed to 1600 px / JPEG 80 and travel as base64 inside the JSON.
+7. The pre-commit format check (§10.4) uses `dart format --output=none`: it only reports badly formatted files and does not rewrite them, so the working copy never silently differs from what was staged. The developer runs `dart format .` and stages again.

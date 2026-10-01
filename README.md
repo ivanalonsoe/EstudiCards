@@ -60,6 +60,7 @@ Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. O
 
 - **Flutter SDK** (stable channel). Installation guide: <https://docs.flutter.dev/get-started/install>
 - An editor: **VS Code** with the *Flutter* extension, or **Android Studio**.
+- **Lefthook** for the git hooks (see [Git hooks](#git-hooks)).
 - Depending on the platform you want to build:
 
 | Platform | You need |
@@ -97,6 +98,37 @@ flutter run -d windows     # or: macos, android, ios
 
 > Whenever you change the database tables or the providers, run step 3 again.
 > During development you can keep it running automatically with `dart run build_runner watch`.
+
+## Git hooks
+
+[Lefthook](https://lefthook.dev) runs quality checks automatically, configured in [`lefthook.yml`](lefthook.yml):
+
+| When | What runs | Blocks if |
+|---|---|---|
+| Before each **commit** | `dart format` on the staged `.dart` files, and `flutter analyze` | a file is badly formatted or the analyzer reports any issue |
+| Before each **push** | `flutter test` | any test fails |
+
+**Install Lefthook once per machine:**
+
+```bash
+npm install -g lefthook    # any OS with Node.js (pnpm add -g lefthook also works)
+brew install lefthook      # macOS with Homebrew
+```
+
+Then enable the hooks in your clone (once per clone):
+
+```bash
+lefthook install
+```
+
+**If a commit is blocked:**
+
+- Format: run `dart format .`, stage the files again (`git add`) and commit.
+- Analysis: fix the issues listed by `flutter analyze` (many can be fixed with `dart fix --apply`).
+
+> On Windows, git runs the hooks with Git Bash, so `flutter`, `dart` and `lefthook` must be on the `PATH`. If you have just installed them, restart your editor or terminal.
+>
+> Do not skip the hooks with `--no-verify`. CI runs the same checks anyway.
 
 ## Useful commands
 

@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 1 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 2 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -39,7 +39,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** 🧪 a trivial test `test/smoke_test.dart` that fails (`expect(1, 2)`) and is then fixed, to check that the test setup works.
   - **Done when:** `flutter run -d windows` and `-d android` show the sample app; `flutter analyze` and `flutter test` pass.
 
-- [ ] **T0.2 Git hooks with Lefthook** · Depends on: T0.1
+- [x] **T0.2 Git hooks with Lefthook** · Depends on: T0.1
   - Install Lefthook on the machine, create `lefthook.yml` (SPEC §10.4) and run `lefthook install`.
   - Document the installation in the README.
   - **Tests first:** try to commit a badly formatted `.dart` file and check the hook blocks it; try to push with a failing test and check it is blocked.
