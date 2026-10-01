@@ -1,6 +1,6 @@
 # Miscellaneous
+# Note: `*.lock` is intentionally NOT ignored: an app must commit pubspec.lock.
 *.class
-*.lock
 *.log
 *.pyc
 *.swp
@@ -117,3 +117,32 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# --- Flutter app template (flutter create) ---
+.DS_Store
+.atom/
+.build/
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder holds launch configurations you may want to share,
+# so it is not ignored.
+#.vscode/
+
+# Flutter/Dart/Pub related
+.pub-cache/
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release

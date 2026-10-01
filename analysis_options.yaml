@@ -1,0 +1,21 @@
+# Configures the analyzer: the tool behind `flutter analyze` and the squiggly
+# lines in the editor.
+#
+# We use very_good_analysis instead of flutter_lints because the task asks for
+# strict rules: it enables strict type checks (no implicit `dynamic`) and
+# many more lints, so mistakes are caught before they reach a test.
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**
+
+linter:
+  rules:
+    # This is an app, not a published library: requiring a doc comment on
+    # every public class and method would be noise.
+    public_member_api_docs: false
