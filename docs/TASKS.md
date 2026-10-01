@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 0 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 1 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -31,7 +31,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 Goal: a project that starts, with automated quality from day one.
 
-- [ ] **T0.1 Create the Flutter project**
+- [x] **T0.1 Create the Flutter project**
   - Create the `estudicards` project for Android, iOS, Windows and macOS inside the repository, without deleting `docs/`, `assets/` or the `.md` files.
   - Folder structure from SPEC §3.2 (`app/`, `core/`, `features/<feature>/{data,domain,presentation}`), even if empty (with `.gitkeep`).
   - Strict analysis rules in `analysis_options.yaml` (`flutter_lints` or `very_good_analysis`; pick one and justify it).
