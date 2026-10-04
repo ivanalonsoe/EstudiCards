@@ -46,7 +46,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Done when:** both hooks block and, with everything correct, let the change through.
 
 - [x] **T0.3 CI on GitHub Actions: quality** · Depends on: T0.1
-  - > **Note:** `main` could not be protected (private repository on the free plan). The owner decided to keep it private and unprotected; see SPEC §13.1.
+  - > **Note:** `main` could not be protected (private repository on the free plan). The owner decided to keep it private and unprotected for now and to make it public once the app is roughly half built; protect `main` then. See SPEC §13.1.
   - `.github/workflows/ci.yml` with the `quality` job (SPEC §10.5): Flutter stable with cache, `pub get`, format check, analysis, `flutter test --coverage`.
   - Script that checks the coverage thresholds (90% `domain/`, 70% overall) and fails if they are not met. Until there is code in `domain/`, the `domain/` threshold is skipped.
   - Protect `main` on GitHub: require a PR and a green `quality` job.
