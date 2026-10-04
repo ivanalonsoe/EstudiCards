@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 3 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 4 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -53,7 +53,8 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** open a PR with a failing test and check CI turns red.
   - **Done when:** a correct PR passes and one with failures cannot be merged.
 
-- [ ] **T0.4 Drift database with all tables** · Depends on: T0.1
+- [x] **T0.4 Drift database with all tables** · Depends on: T0.1
+  - > **Note:** generated code (`*.g.dart`) is not committed; it is generated locally and in CI. See SPEC §13.2 (assumption 8).
   - Tables from SPEC §4.2 with their indexes (§4.3), `schemaVersion = 1`, connection via `drift_flutter`.
   - Constructor that accepts an in-memory connection for tests.
   - **Tests first:**
