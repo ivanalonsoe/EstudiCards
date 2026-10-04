@@ -1,0 +1,57 @@
+# Continuous integration (SPEC §10.5).
+#
+# GitHub runs this workflow on a clean Linux machine for every pull request
+# and every push to main. If any step fails, the run turns red and the PR
+# shows it. The integration-windows and e2e-android jobs come in T0.9.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to the same PR cancels the run that is still in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # Same version as the development machines, so lint results match.
+          # Update it here when the team upgrades Flutter.
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Check coverage thresholds
+        run: dart run tool/check_coverage.dart
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
