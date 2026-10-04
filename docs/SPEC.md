@@ -826,7 +826,7 @@ pre-push:
 
 ### 10.5 CI/CD with GitHub Actions
 
-Workflow: each task on its own branch (`feature/T2.3-card-editor`), a PR to `main`, and `main` protected: merging is only allowed with CI green.
+Workflow: each task on its own branch (`feature/T2.3-card-editor`), a PR to `main`, and a PR is only merged with CI green. `main` is not technically protected: GitHub does not offer branch protection for private repositories on the free plan, so this rule is followed by discipline (see §13.1).
 
 **`ci.yml`** — on every PR and every push to `main`:
 
@@ -912,6 +912,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 | Design | Minimal, orange as the main colour, light/dark, sidebar on desktop. Plus Jakarta Sans typeface. Icon: two cards with a ✓. |
 | Languages | UI in Spanish. Documentation, code, tests, commits, CSV column names and the AI prompt in English. Coding agents talk to the owner in Spanish. |
 | Quality | Mandatory TDD. Unit, widget, integration (`integration_test`) and E2E (Patrol) tests. Lefthook for git hooks. GitHub Actions for CI/CD; integration and E2E tests on Android and Windows. |
+| Branch protection | The repository stays private on the free plan, which does not allow protecting `main`. CI still runs on every PR and shows red on failures, but a red PR could technically be merged: never merge one. Revisit if the repository becomes public or moves to GitHub Pro (decided in T0.3). |
 
 ### 13.2 Analyst assumptions (open to review)
 

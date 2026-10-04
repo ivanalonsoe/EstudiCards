@@ -137,6 +137,7 @@ lefthook install
 | `flutter analyze` | Checks the code for errors and bad practices. It must report no warnings. |
 | `flutter test` | Runs the unit and widget tests. |
 | `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |
+| `dart run tool/check_coverage.dart` | Checks the coverage report against the thresholds (≥ 70% overall, ≥ 90% in `domain/`), as CI does. |
 | `flutter test integration_test -d windows` | Runs the integration tests on desktop. |
 | `patrol test` | Runs the E2E tests on an emulator or connected device. |
 | `flutter devices` | Lists the available devices and emulators. |
