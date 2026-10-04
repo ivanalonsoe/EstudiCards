@@ -1,0 +1,22 @@
+# Git hooks managed by Lefthook (https://lefthook.dev).
+#
+# A git hook is a script that git runs automatically at certain moments,
+# such as just before a commit or a push. If the script fails, git cancels
+# the operation. Lefthook reads this file and installs those scripts for us:
+# run `lefthook install` once per machine after cloning (see README).
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.dart"
+      # --output=none only checks the format: it does not rewrite the file.
+      # Fix the format with `dart format .` and stage the files again.
+      run: dart format --output=none --set-exit-if-changed {staged_files}
+    analyze:
+      run: flutter analyze
+
+pre-push:
+  commands:
+    tests:
+      run: flutter test
