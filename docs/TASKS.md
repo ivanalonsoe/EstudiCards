@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 2 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 3 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -45,7 +45,8 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** try to commit a badly formatted `.dart` file and check the hook blocks it; try to push with a failing test and check it is blocked.
   - **Done when:** both hooks block and, with everything correct, let the change through.
 
-- [ ] **T0.3 CI on GitHub Actions: quality** · Depends on: T0.1
+- [x] **T0.3 CI on GitHub Actions: quality** · Depends on: T0.1
+  - > **Note:** `main` could not be protected (private repository on the free plan). The owner decided to keep it private and unprotected for now and to make it public once the app is roughly half built; protect `main` then. See SPEC §13.1.
   - `.github/workflows/ci.yml` with the `quality` job (SPEC §10.5): Flutter stable with cache, `pub get`, format check, analysis, `flutter test --coverage`.
   - Script that checks the coverage thresholds (90% `domain/`, 70% overall) and fails if they are not met. Until there is code in `domain/`, the `domain/` threshold is skipped.
   - Protect `main` on GitHub: require a PR and a green `quality` job.

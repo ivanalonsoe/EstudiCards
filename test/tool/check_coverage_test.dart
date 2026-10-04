@@ -1,0 +1,93 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../tool/check_coverage.dart';
+
+/// Builds one lcov record, the block a coverage report has per file.
+String record(String path, {required int found, required int hit}) =>
+    'SF:$path\nDA:1,1\nLF:$found\nLH:$hit\nend_of_record\n';
+
+void main() {
+  group('parseLcov', () {
+    test('reads the lines found and hit for each file', () {
+      final files = parseLcov(
+        record('lib/main.dart', found: 26, hit: 24) +
+            record('lib/features/study/domain/engine.dart', found: 10, hit: 9),
+      );
+
+      expect(files, hasLength(2));
+      expect(files['lib/main.dart']!.linesFound, 26);
+      expect(files['lib/main.dart']!.linesHit, 24);
+      expect(files['lib/features/study/domain/engine.dart']!.linesHit, 9);
+    });
+
+    test('normalises Windows paths to forward slashes', () {
+      final files = parseLcov(
+        record(r'lib\features\study\domain\engine.dart', found: 4, hit: 4),
+      );
+
+      expect(files.keys, ['lib/features/study/domain/engine.dart']);
+    });
+  });
+
+  group('checkCoverage', () {
+    test('computes the overall percentage from every file', () {
+      final result = checkCoverage(
+        parseLcov(
+          record('lib/a.dart', found: 30, hit: 30) +
+              record('lib/b.dart', found: 10, hit: 0),
+        ),
+      );
+
+      expect(result.overall, 75);
+    });
+
+    test('passes when overall and domain meet their thresholds', () {
+      final result = checkCoverage(
+        parseLcov(
+          record('lib/main.dart', found: 10, hit: 7) +
+              record('lib/features/cards/domain/card.dart', found: 10, hit: 9),
+        ),
+      );
+
+      expect(result.passed, isTrue);
+      expect(result.failures, isEmpty);
+    });
+
+    test('fails when overall coverage is below 70%', () {
+      final result = checkCoverage(
+        parseLcov(record('lib/main.dart', found: 100, hit: 69)),
+      );
+
+      expect(result.passed, isFalse);
+      expect(result.failures.single, contains('overall'));
+    });
+
+    test('fails when domain coverage is below 90% even if overall passes', () {
+      final result = checkCoverage(
+        parseLcov(
+          record('lib/main.dart', found: 100, hit: 100) +
+              record('lib/features/cards/domain/card.dart', found: 10, hit: 8),
+        ),
+      );
+
+      expect(result.overall, greaterThanOrEqualTo(70));
+      expect(result.passed, isFalse);
+      expect(result.failures.single, contains('domain'));
+    });
+
+    test('skips the domain threshold when there is no domain code', () {
+      final result = checkCoverage(
+        parseLcov(record('lib/main.dart', found: 10, hit: 8)),
+      );
+
+      expect(result.domain, isNull);
+      expect(result.passed, isTrue);
+    });
+
+    test('fails when the report has no lines at all', () {
+      final result = checkCoverage(parseLcov(''));
+
+      expect(result.passed, isFalse);
+    });
+  });
+}
