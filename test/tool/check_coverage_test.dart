@@ -84,6 +84,20 @@ void main() {
       expect(result.passed, isTrue);
     });
 
+    test('ignores generated files (*.g.dart)', () {
+      final result = checkCoverage(
+        parseLcov(
+          record('lib/main.dart', found: 10, hit: 8) +
+              record('lib/core/db/app_database.g.dart', found: 4000, hit: 0) +
+              record('lib/features/x/domain/model.g.dart', found: 50, hit: 0),
+        ),
+      );
+
+      expect(result.overall, 80);
+      expect(result.domain, isNull);
+      expect(result.passed, isTrue);
+    });
+
     test('fails when the report has no lines at all', () {
       final result = checkCoverage(parseLcov(''));
 

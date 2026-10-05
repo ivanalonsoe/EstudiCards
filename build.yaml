@@ -1,0 +1,9 @@
+# Options for the code generators run by `dart run build_runner build`.
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Store dates as ISO 8601 text (e.g. 2026-10-04T12:30:15.123Z)
+          # instead of Unix seconds: keeps milliseconds and UTC (SPEC §4).
+          store_date_time_values_as_text: true

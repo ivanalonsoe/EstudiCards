@@ -63,8 +63,17 @@ Map<String, FileCoverage> parseLcov(String content) {
   return files;
 }
 
-/// Compares the coverage of [files] with the thresholds.
-CoverageResult checkCoverage(Map<String, FileCoverage> files) {
+/// Whether [path] was written by a code generator (`build_runner`), so it is
+/// not our code to test.
+bool isGenerated(String path) => path.endsWith('.g.dart');
+
+/// Compares the coverage of [allFiles] with the thresholds, leaving out
+/// generated files.
+CoverageResult checkCoverage(Map<String, FileCoverage> allFiles) {
+  final files = {
+    for (final entry in allFiles.entries)
+      if (!isGenerated(entry.key)) entry.key: entry.value,
+  };
   final failures = <String>[];
 
   final overall = _percentage(files.values);

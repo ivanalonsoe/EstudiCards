@@ -98,6 +98,8 @@ flutter run -d windows     # or: macos, android, ios
 
 > Whenever you change the database tables or the providers, run step 3 again.
 > During development you can keep it running automatically with `dart run build_runner watch`.
+>
+> Generated files (`*.g.dart`) are **not committed** to git. After cloning or pulling, if `flutter analyze` complains about a missing `.g.dart` file, run step 3.
 
 ## Git hooks
 
@@ -134,6 +136,7 @@ lefthook install
 
 | Command | What it does |
 |---|---|
+| `dart run build_runner build --delete-conflicting-outputs` | Generates the database code (`*.g.dart`) from the table definitions. |
 | `flutter analyze` | Checks the code for errors and bad practices. It must report no warnings. |
 | `flutter test` | Runs the unit and widget tests. |
 | `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |
