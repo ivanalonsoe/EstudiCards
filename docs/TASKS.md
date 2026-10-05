@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 4 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 5 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -63,7 +63,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 deleting a card cascades to its options, statistics and attempts.
   - **Done when:** the tests pass and generated code is either ignored or committed according to the chosen convention (document it).
 
-- [ ] **T0.5 Core utilities: IDs, clock and randomness** · Depends on: T0.1
+- [x] **T0.5 Core utilities: IDs, clock and randomness** · Depends on: T0.1
+  - > **Note:** the "Done when" check is automated by `test/core/no_direct_time_or_random_test.dart`. The Riverpod providers that hand out the clock and the `Random` are added with Riverpod itself. See SPEC §13.2 (assumption 9).
   - `core/ids.dart` (UUID v4), `core/clock.dart` (injectable clock with real and fake implementations) and an injectable `Random` provider.
   - **Tests first:**
     - 🧪 two generated IDs are different and have UUID v4 format.
