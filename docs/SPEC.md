@@ -931,3 +931,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
    - Drift data classes end in `Row` (`ProjectRow`, `CardRow`…) to avoid clashing with Flutter widgets (`Card`) and with the domain models.
    - Columns with a fixed set of values (`type`, `status`, `direction`…) are plain TEXT for now; the domain models that later tasks add will map them to Dart enums.
    - Deleting a deck permanently also deletes its `session_decks` rows; the session and its totals stay.
+9. **Time, randomness and IDs (T0.5):**
+   - `core/clock.dart` defines a `Clock` interface with `SystemClock` (real, UTC) and `FakeClock` (for tests; only accepts UTC times). `core/random.dart` has `createRandom({seed})`. `core/ids.dart` has `newId()` (UUID v4).
+   - They are plain Dart for now. Riverpod is not in the project yet, so the providers that hand them to the app (`clockProvider`, `randomProvider`) are added with Riverpod, and tests override them with the fake or seeded versions.
+   - A test (`test/core/no_direct_time_or_random_test.dart`) fails if any file in `lib/` other than `clock.dart` and `random.dart` calls `DateTime.now()`, `DateTime.timestamp()`, `Random()` or `Random.secure()`.
