@@ -531,7 +531,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 | Deck | Confirmation → "Deshacer" 5 s → trash for 15 days | Yes, from the Trash. If its project is also in the trash, the project is restored too. |
 | Card | Confirmation → "Deshacer" 5 s → permanent deletion | Only during those 5 s |
 
-- Items older than 15 days are purged when the app starts.
+- Items older than 15 days are purged when the app starts and every time the Trash screen is opened. Nothing runs in the background: `deleted_at` is stored, and each check compares it with the injectable clock. The second check covers an app left open for several days, so the Trash never shows an expired item. The remaining days (15 − days elapsed) are calculated when shown, not stored.
 - Permanent deletion cascades: decks, cards, options, statistics, attempts and images. Sessions of a deleted project are also deleted.
 - Items in the trash do not appear in search, statistics or sessions.
 
@@ -906,7 +906,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 | Platform | Windows, macOS, Android, iOS. Flutter. No login. 100% offline. |
 | Data | Local only. Export all (with statistics) and share a project/deck (without statistics) as JSON or CSV. Import as a new project, a new deck or by adding to a deck. |
 | Structure | Project → Decks → Cards. Type and languages set on the project. No tags. |
-| Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. |
+| Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. Expired items are purged on app start and again when the Trash screen is opened (no background process). |
 | Dashboard | Sorted by last use, favourites on top, archive, search by title, streak, "Review errors (N)" per project. |
 | Cards | Simple or test (2–6 options, check to allow several correct). Explanation on test cards. Image, system TTS, bold/italic. Example and notes for languages. |
 | Study | Random selection (option to prioritise missed cards), always shuffled, shuffled options. Self-grading. Multiple answer with no partial credit. Mutually exclusive timers. Pause hides the card. "Show answer" and "Leave for later". Buttons only, no shortcuts. |
@@ -935,3 +935,10 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
    - `core/clock.dart` defines a `Clock` interface with `SystemClock` (real, UTC) and `FakeClock` (for tests; only accepts UTC times). `core/random.dart` has `createRandom({seed})`. `core/ids.dart` has `newId()` (UUID v4).
    - They are plain Dart for now. Riverpod is not in the project yet, so the providers that hand them to the app (`clockProvider`, `randomProvider`) are added with Riverpod, and tests override them with the fake or seeded versions.
    - A test (`test/core/no_direct_time_or_random_test.dart`) fails if any file in `lib/` other than `clock.dart` and `random.dart` calls `DateTime.now()`, `DateTime.timestamp()`, `Random()` or `Random.secure()`.
+10. **Theme (T0.6):**
+    - The colour tokens live in `lib/app/theme/app_colors.dart` as a `ThemeExtension` (`AppColors.of(context)`); spacing and radii in `dimensions.dart`; the project palette in `project_palette.dart` (an enum whose name is the key stored in `projects.color`; an unknown key falls back to orange).
+    - Material's `colorScheme.primary` is the brief's `primary-strong`, because Material fills buttons, switches and focused fields with `primary`. The brief's `primary` (the accent) is `colorScheme.secondary` and `AppColors.primary`.
+    - Added tokens not listed in the brief: `onPrimaryStrong`, `onSuccess` and `onError` (white in light, `#1C1917` in dark, as in the screenshots), and `chartCorrect` / `chartWrong` (brief §3.1, chart colours).
+    - Light `text-muted` changed from `#78716C` to `#736C67` (decided with the owner): the original gave 4.25:1 on `surface-variant`, below AA. A test checks AA contrast for text on every surface and on primary-strong, success and error, in both themes.
+    - Plus Jakarta Sans ships as static TTF files (400, 500, 600, 700, 800, plus italic 400 and 700) in `assets/fonts/`, with its SIL OFL licence registered in the app's licence list.
+    - Until the router arrives (T0.8), the home screen is `ThemePreviewScreen`, a developer screen with the tokens. Its labels are token names, not UI copy, so they are not in the ARB file.
