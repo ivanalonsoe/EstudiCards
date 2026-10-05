@@ -99,7 +99,15 @@ flutter run -d windows     # or: macos, android, ios
 > Whenever you change the database tables or the providers, run step 3 again.
 > During development you can keep it running automatically with `dart run build_runner watch`.
 >
-> Generated files (`*.g.dart`) are **not committed** to git. After cloning or pulling, if `flutter analyze` complains about a missing `.g.dart` file, run step 3.
+> Generated files (`*.g.dart` and `lib/app/l10n/generated/`) are **not committed** to git. After cloning or pulling, if `flutter analyze` complains about a missing generated file, run step 3.
+
+### Adding a UI string
+
+All UI text is in Spanish in [`lib/app/l10n/app_es.arb`](lib/app/l10n/app_es.arb), never written directly in a widget:
+
+1. Add the key, its Spanish text and an `@key` entry with a `description` (and `placeholders` if it has variables) to `app_es.arb`.
+2. Run `flutter gen-l10n` (or `flutter pub get`).
+3. Use it in a widget: `AppLocalizations.of(context).myKey`.
 
 ## Git hooks
 

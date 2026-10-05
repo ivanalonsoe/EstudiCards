@@ -63,9 +63,10 @@ Map<String, FileCoverage> parseLcov(String content) {
   return files;
 }
 
-/// Whether [path] was written by a code generator (`build_runner`), so it is
-/// not our code to test.
-bool isGenerated(String path) => path.endsWith('.g.dart');
+/// Whether [path] was written by a code generator (`build_runner` or
+/// `flutter gen-l10n`), so it is not our code to test.
+bool isGenerated(String path) =>
+    path.endsWith('.g.dart') || path.contains('/l10n/generated/');
 
 /// Compares the coverage of [allFiles] with the thresholds, leaving out
 /// generated files.

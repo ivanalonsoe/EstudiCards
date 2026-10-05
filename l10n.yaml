@@ -1,0 +1,10 @@
+# Settings for `flutter gen-l10n`, which turns the ARB files into Dart
+# classes (SPEC §2.1). The generated code goes to lib/app/l10n/generated/
+# and is not committed: `flutter pub get` and `flutter gen-l10n` create it.
+arb-dir: lib/app/l10n
+template-arb-file: app_es.arb
+output-dir: lib/app/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# `AppLocalizations.of(context)` returns a non-null value: no `!` needed.
+nullable-getter: false

@@ -32,6 +32,11 @@ dependencies:
   drift_flutter: ^0.3.1
   flutter:
     sdk: flutter
+  # UI strings from ARB files (SPEC §2.1). `intl` stays at `any` because
+  # flutter_localizations pins the exact version it needs.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   uuid: ^4.6.0
 
 dev_dependencies:
@@ -48,6 +53,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Generate the UI string classes from l10n.yaml on `flutter pub get`.
+  generate: true
 
   # Licence of the bundled font, shown in the app's licence list.
   assets:

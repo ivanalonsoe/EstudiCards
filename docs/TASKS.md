@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 6 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 7 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -82,7 +82,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 a test widget changes colours when the theme changes.
   - **Done when:** the tests pass and a test screen shows the design's colours and typeface.
 
-- [ ] **T0.7 Localisation and UI strings** · Depends on: T0.1
+- [x] **T0.7 Localisation and UI strings** · Depends on: T0.1
+  - > **Note:** the generated classes (`lib/app/l10n/generated/`) are not committed; `flutter pub get` creates them and CI runs `flutter gen-l10n`. See SPEC §13.2 (assumption 11).
   - `flutter_localizations`, `l10n.yaml`, `lib/app/l10n/app_es.arb` with the first strings, locale `es`.
   - **Tests first:** 🧩 a test screen shows a string read from the ARB file.
   - **Done when:** `flutter gen-l10n` generates the classes and the test passes.

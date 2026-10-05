@@ -1,0 +1,44 @@
+{
+  "@@locale": "es",
+
+  "appTitle": "EstudiCards",
+  "@appTitle": {
+    "description": "App name, shown in the window title and the sidebar."
+  },
+
+  "projects": "Proyectos",
+  "@projects": {
+    "description": "Navigation: list of projects."
+  },
+  "archived": "Archivados",
+  "@archived": {
+    "description": "Navigation: archived projects (P14)."
+  },
+  "trash": "Papelera",
+  "@trash": {
+    "description": "Navigation: trash (P15)."
+  },
+  "statistics": "Estadísticas",
+  "@statistics": {
+    "description": "Navigation: global statistics (P13)."
+  },
+  "settings": "Ajustes",
+  "@settings": {
+    "description": "Navigation: settings."
+  },
+
+  "cardCount": "{count, plural, =1{1 tarjeta} other{{count} tarjetas}}",
+  "@cardCount": {
+    "description": "Number of cards in a deck or project, e.g. '84 tarjetas'.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewErrors": "Repasar errores ({count})",
+  "@reviewErrors": {
+    "description": "Button that starts an 'errors only' session; count = pending errors.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
+}
