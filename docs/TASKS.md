@@ -148,7 +148,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** 🧩 cannot save without a name; 🧩 the new deck appears in the list.
 
 - [ ] **T1.7 Trash: logic** · R 7.1 · US-03, US-04 · Depends on: T1.1, T1.4
-  - Move to trash, restore, delete permanently, empty, and purge on app start.
+  - Move to trash, restore, delete permanently, empty, and purge expired items (called on app start and when the Trash screen opens, see T1.8).
   - **Tests first:**
     - 🧪 deleting a project hides it from the list and shows it in the trash.
     - 🧪 with the fake clock at 14 days it is still in the trash; at 15 days the purge permanently deletes it with its decks, cards, attempts and images.
@@ -161,6 +161,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 the dialog states how many decks and cards will be moved.
     - 🧩 tapping "Deshacer" within 5 s leaves the project where it was.
     - 🧩 in the trash, an item with 2 days left is flagged as urgent.
+    - 🧩 opening the trash purges the items that expired while the app was open (fake clock moved past 15 days), so they are not listed.
 
 - [ ] **T1.9 Archived** · P14 · US-05 · Depends on: T1.1
   - **Tests first:** 🧩 archiving a project removes it from the dashboard and it appears under Archived; 🧩 unarchiving brings it back.

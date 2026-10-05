@@ -531,7 +531,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 | Deck | Confirmation → "Deshacer" 5 s → trash for 15 days | Yes, from the Trash. If its project is also in the trash, the project is restored too. |
 | Card | Confirmation → "Deshacer" 5 s → permanent deletion | Only during those 5 s |
 
-- Items older than 15 days are purged when the app starts.
+- Items older than 15 days are purged when the app starts and every time the Trash screen is opened. Nothing runs in the background: `deleted_at` is stored, and each check compares it with the injectable clock. The second check covers an app left open for several days, so the Trash never shows an expired item. The remaining days (15 − days elapsed) are calculated when shown, not stored.
 - Permanent deletion cascades: decks, cards, options, statistics, attempts and images. Sessions of a deleted project are also deleted.
 - Items in the trash do not appear in search, statistics or sessions.
 
@@ -906,7 +906,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 | Platform | Windows, macOS, Android, iOS. Flutter. No login. 100% offline. |
 | Data | Local only. Export all (with statistics) and share a project/deck (without statistics) as JSON or CSV. Import as a new project, a new deck or by adding to a deck. |
 | Structure | Project → Decks → Cards. Type and languages set on the project. No tags. |
-| Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. |
+| Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. Expired items are purged on app start and again when the Trash screen is opened (no background process). |
 | Dashboard | Sorted by last use, favourites on top, archive, search by title, streak, "Review errors (N)" per project. |
 | Cards | Simple or test (2–6 options, check to allow several correct). Explanation on test cards. Image, system TTS, bold/italic. Example and notes for languages. |
 | Study | Random selection (option to prioritise missed cards), always shuffled, shuffled options. Self-grading. Multiple answer with no partial credit. Mutually exclusive timers. Pause hides the card. "Show answer" and "Leave for later". Buttons only, no shortcuts. |
