@@ -1,0 +1,124 @@
+// The app's routes (SPEC §5.1), handled by go_router.
+//
+// A route maps a path such as `/project/123` to a screen. Routes are nested
+// so that the path describes the stack: opening `/project/p1/deck/d1` on
+// mobile puts the dashboard, the project and the deck on the stack, and the
+// back button walks back through them.
+//
+// The screens are empty placeholders for now; each one is replaced by the
+// real screen in the task that builds it.
+import 'package:estudicards/app/l10n/generated/app_localizations.dart';
+import 'package:estudicards/app/shell/app_shell.dart';
+import 'package:estudicards/app/shell/not_found_screen.dart';
+import 'package:estudicards/app/shell/placeholder_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+/// Paths of every screen. Build them with these helpers instead of writing
+/// strings by hand, so a typo is a compile error.
+abstract final class AppRoutes {
+  static const home = '/';
+  static const import = '/import';
+  static const statistics = '/statistics';
+  static const archived = '/archived';
+  static const trash = '/trash';
+  static const settings = '/settings';
+
+  static String project(String projectId) => '/project/$projectId';
+  static String sessionSetup(String projectId) => '/project/$projectId/study';
+  static String deck(String projectId, String deckId) =>
+      '/project/$projectId/deck/$deckId';
+  static String newCard(String projectId, String deckId) =>
+      '${deck(projectId, deckId)}/card/new';
+  static String editCard(String projectId, String deckId, String cardId) =>
+      '${deck(projectId, deckId)}/card/$cardId';
+  static String session(String sessionId) => '/session/$sessionId';
+  static String results(String sessionId) => '/results/$sessionId';
+}
+
+/// Creates the router. Tests pass an [initialLocation] to start on any
+/// screen.
+GoRouter createRouter({String initialLocation = AppRoutes.home}) {
+  // The root navigator holds everything; the shell navigator holds the
+  // screens shown next to the sidebar on desktop.
+  final rootKey = GlobalKey<NavigatorState>();
+  final shellKey = GlobalKey<NavigatorState>();
+
+  GoRoute screen(
+    String path,
+    String key,
+    String Function(AppLocalizations l10n) title, {
+    List<RouteBase> routes = const [],
+    bool fullScreen = false,
+  }) => GoRoute(
+    path: path,
+    parentNavigatorKey: fullScreen ? rootKey : null,
+    builder: (context, state) => PlaceholderScreen(
+      key: Key('screen.$key'),
+      title: title(AppLocalizations.of(context)),
+    ),
+    routes: routes,
+  );
+
+  return GoRouter(
+    navigatorKey: rootKey,
+    initialLocation: initialLocation,
+    errorBuilder: (context, state) => const NotFoundScreen(),
+    routes: [
+      // A ShellRoute wraps its screens in a common frame: the sidebar on
+      // desktop (see AppShell).
+      ShellRoute(
+        navigatorKey: shellKey,
+        builder: (context, state, child) =>
+            AppShell(location: state.uri.path, child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.home,
+            builder: (context, state) => const PlaceholderScreen(
+              key: Key('screen.dashboard'),
+              isHome: true,
+            ),
+            routes: [
+              screen(
+                'project/:projectId',
+                'project',
+                (l10n) => l10n.project,
+                routes: [
+                  screen('study', 'sessionSetup', (l10n) => l10n.sessionSetup),
+                  screen(
+                    'deck/:deckId',
+                    'deck',
+                    (l10n) => l10n.deck,
+                    routes: [
+                      // `card/new` is declared before `card/:cardId` so
+                      // "new" is not read as a card ID.
+                      screen('card/new', 'newCard', (l10n) => l10n.newCard),
+                      screen(
+                        'card/:cardId',
+                        'editCard',
+                        (l10n) => l10n.editCard,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // The study session covers the whole window, without sidebar.
+              screen(
+                'session/:sessionId',
+                'session',
+                (l10n) => l10n.studySession,
+                fullScreen: true,
+              ),
+              screen('results/:sessionId', 'results', (l10n) => l10n.results),
+              screen('import', 'import', (l10n) => l10n.importTitle),
+              screen('statistics', 'statistics', (l10n) => l10n.statistics),
+              screen('archived', 'archived', (l10n) => l10n.archived),
+              screen('trash', 'trash', (l10n) => l10n.trash),
+              screen('settings', 'settings', (l10n) => l10n.settings),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}

@@ -36,6 +36,7 @@ dependencies:
   # flutter_localizations pins the exact version it needs.
   flutter_localizations:
     sdk: flutter
+  go_router: ^18.0.2
   intl: any
   uuid: ^4.6.0
 

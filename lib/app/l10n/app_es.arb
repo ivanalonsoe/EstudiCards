@@ -6,6 +6,55 @@
     "description": "App name, shown in the window title and the sidebar."
   },
 
+  "home": "Inicio",
+  "@home": {
+    "description": "Navigation: the dashboard (P01)."
+  },
+  "searchProjects": "Buscar proyectos",
+  "@searchProjects": {
+    "description": "Hint of the project search field."
+  },
+  "project": "Proyecto",
+  "@project": {
+    "description": "Title of the project screen (P03)."
+  },
+  "deck": "Baraja",
+  "@deck": {
+    "description": "Title of the deck screen (P05)."
+  },
+  "newCard": "Nueva tarjeta",
+  "@newCard": {
+    "description": "Title of the card editor when creating a card (P06)."
+  },
+  "editCard": "Editar tarjeta",
+  "@editCard": {
+    "description": "Title of the card editor when editing a card (P06)."
+  },
+  "sessionSetup": "Configurar sesión",
+  "@sessionSetup": {
+    "description": "Title of the study session setup screen (P08)."
+  },
+  "studySession": "Sesión de estudio",
+  "@studySession": {
+    "description": "Title of the study session screen (P09)."
+  },
+  "results": "Resultados",
+  "@results": {
+    "description": "Title of the session results screen (P11)."
+  },
+  "importTitle": "Importar",
+  "@importTitle": {
+    "description": "Title of the import wizard (P07)."
+  },
+  "pageNotFound": "No se ha encontrado la página",
+  "@pageNotFound": {
+    "description": "Shown when the app is asked for a route that does not exist."
+  },
+  "backToHome": "Volver al inicio",
+  "@backToHome": {
+    "description": "Button on the not-found screen that opens the dashboard."
+  },
+
   "projects": "Proyectos",
   "@projects": {
     "description": "Navigation: list of projects."
