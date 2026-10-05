@@ -1,16 +1,38 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
+import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_theme.dart';
-import 'package:estudicards/app/theme/theme_preview_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 /// The root widget of the app.
-class EstudiCardsApp extends StatelessWidget {
-  const new({super.key});
+///
+/// It is a StatefulWidget so the router is created once and kept while the
+/// app runs, instead of on every rebuild.
+class EstudiCardsApp extends StatefulWidget {
+  /// Tests can pass their own [router], e.g. one that starts on another
+  /// screen.
+  const new({this.router, super.key});
+
+  final GoRouter? router;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  State<EstudiCardsApp> createState() => _EstudiCardsAppState();
+}
+
+class _EstudiCardsAppState extends State<EstudiCardsApp> {
+  late final GoRouter _router = widget.router ?? createRouter();
+
+  @override
+  void dispose() {
+    // Only dispose the router we created; a test disposes its own.
+    if (widget.router == null) _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => MaterialApp.router(
     onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
     debugShowCheckedModeBanner: false,
     // The UI is only in Spanish in v1, whatever the device language.
@@ -24,8 +46,7 @@ class EstudiCardsApp extends StatelessWidget {
     // No `themeMode` given: it defaults to `ThemeMode.system`, so the app
     // follows the device's light/dark setting. Settings will let the user
     // override it later (SPEC §4.2, `theme_mode`).
-    // Temporary home until the router arrives in T0.8.
-    home: const ThemePreviewScreen(),
+    routerConfig: _router,
   );
 }
 
