@@ -40,6 +40,11 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
+      # UI string classes from the ARB files (pub get usually creates them
+      # too; running it explicitly makes a broken ARB file fail here).
+      - name: Generate UI strings
+        run: flutter gen-l10n
+
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
 

@@ -1,3 +1,4 @@
+import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_theme.dart';
 import 'package:estudicards/app/theme/theme_preview_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -10,8 +11,14 @@ class EstudiCardsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'EstudiCards',
+    onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
     debugShowCheckedModeBanner: false,
+    // The UI is only in Spanish in v1, whatever the device language.
+    locale: const Locale('es'),
+    // Delegates load the strings: ours (generated from app_es.arb) and
+    // Flutter's own (dialog buttons, date pickers, tooltips…) in Spanish.
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: AppTheme.light(),
     darkTheme: AppTheme.dark(),
     // No `themeMode` given: it defaults to `ThemeMode.system`, so the app

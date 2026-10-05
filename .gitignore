@@ -152,3 +152,6 @@ app.*.map.json
 # `dart run build_runner build --delete-conflicting-outputs` after cloning
 # or pulling. CI generates it too.
 *.g.dart
+# UI string classes generated from the ARB files by `flutter gen-l10n`
+# (also run by `flutter pub get`).
+/lib/app/l10n/generated/
