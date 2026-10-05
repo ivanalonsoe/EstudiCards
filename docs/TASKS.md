@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 8 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 9 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -97,7 +97,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 navigating to `/project/:id` shows the project screen.
   - **Done when:** you can navigate between the empty screens on mobile and desktop.
 
-- [ ] **T0.9 Integration and E2E tests: setup** · Depends on: T0.3, T0.8
+- [x] **T0.9 Integration and E2E tests: setup** · Depends on: T0.3, T0.8
+  - > **Note:** Patrol's iOS/macOS native setup is pending (it needs a Mac). See SPEC §13.2 (assumption 13).
   - Set up `integration_test` and Patrol following their documentation (test folder, native Android/iOS configuration).
   - Add the `integration-windows` and `e2e-android` (emulator) jobs to `ci.yml`.
   - **Tests first:**

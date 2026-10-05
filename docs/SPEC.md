@@ -169,7 +169,7 @@ integration_test/            # integration tests (one flow per epic)
 lefthook.yml                 # git hooks
 ```
 
-> Patrol E2E tests live in the folder set by its configuration; it is decided in phase 0 following the Patrol documentation.
+> Patrol E2E tests live in `patrol_test/`, Patrol's default folder (decided in T0.9).
 
 ### 3.3 Responsive layout
 
@@ -952,3 +952,8 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The study session (P09) covers the whole window, without the sidebar, as in `design/escritorio-claro/sesion.png`; the other screens, including results, sit next to the sidebar on desktop.
     - The desktop sidebar has the logo, project search, "Inicio", the "Proyectos" header and the bottom links. The project list and search work from phase 1, and the daily goal card from phase 4. On mobile and tablet the same links are in a drawer opened from the dashboard.
     - Icons are Material rounded/outlined icons, close to the brief's Lucide style, so no icon package is added. The logo is drawn in code from `assets/branding/marca-sin-placa.svg`, so no SVG package is needed.
+13. **Integration and E2E tests (T0.9):**
+    - Integration tests are in `integration_test/` and E2E tests in `patrol_test/`. `patrol test` generates `patrol_test/test_bundle.dart`, which is not committed.
+    - Patrol's native setup is done for Android (`PatrolJUnitRunner` with the test orchestrator, and `MainActivityTest.java`). The iOS and macOS setup needs Xcode, so it is done on a Mac when those platforms are tested.
+    - `patrol_cli` is installed per machine (`dart pub global activate patrol_cli`), not as a project dependency. CI pins its version.
+    - CI runs `integration-windows` (Windows runner) and `e2e-android` (Android emulator, API 34) only after `quality` passes. On a private repository, Windows minutes count double against the free quota, and these two jobs take most of each run's minutes. This is one more reason to make the repository public later (§13.1).

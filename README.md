@@ -150,7 +150,8 @@ lefthook install
 | `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |
 | `dart run tool/check_coverage.dart` | Checks the coverage report against the thresholds (≥ 70% overall, ≥ 90% in `domain/`), as CI does. |
 | `flutter test integration_test -d windows` | Runs the integration tests on desktop. |
-| `patrol test` | Runs the E2E tests on an emulator or connected device. |
+| `flutter test integration_test -d <device>` | Runs the integration tests on another device, e.g. an Android emulator (`flutter devices` lists the IDs). |
+| `patrol test` | Runs the E2E tests (`patrol_test/`) on a running emulator or connected device. Install the CLI once per machine with `dart pub global activate patrol_cli`, and add `%LOCALAPPDATA%\Pub\Cache\bin` (Windows) or `~/.pub-cache/bin` to the `PATH`. |
 | `flutter devices` | Lists the available devices and emulators. |
 | `flutter build apk` | Builds the Android installer. |
 | `flutter build windows` | Builds the Windows executable. |
@@ -174,6 +175,7 @@ EstudiCards/
 │       └── settings/       # settings
 ├── test/               # unit and widget tests (same structure as lib/)
 ├── integration_test/   # integration tests
+├── patrol_test/        # E2E tests (Patrol)
 ├── assets/branding/    # app icons
 ├── docs/               # SPEC.md, DESIGN_BRIEF.md, TASKS.md, design/
 ├── AGENTS.md
