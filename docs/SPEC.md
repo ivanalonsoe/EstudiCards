@@ -941,8 +941,14 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Added tokens not listed in the brief: `onPrimaryStrong`, `onSuccess` and `onError` (white in light, `#1C1917` in dark, as in the screenshots), and `chartCorrect` / `chartWrong` (brief §3.1, chart colours).
     - Light `text-muted` changed from `#78716C` to `#736C67` (decided with the owner): the original gave 4.25:1 on `surface-variant`, below AA. A test checks AA contrast for text on every surface and on primary-strong, success and error, in both themes.
     - Plus Jakarta Sans ships as static TTF files (400, 500, 600, 700, 800, plus italic 400 and 700) in `assets/fonts/`, with its SIL OFL licence registered in the app's licence list.
-    - Until the router arrives (T0.8), the home screen is `ThemePreviewScreen`, a developer screen with the tokens. Its labels are token names, not UI copy, so they are not in the ARB file.
+    - Until the router arrived (T0.8), the home screen was `ThemePreviewScreen`, a developer screen with the tokens; T0.8 removed it.
 11. **UI strings (T0.7):**
     - `l10n.yaml` generates `AppLocalizations` from `lib/app/l10n/app_es.arb` into `lib/app/l10n/generated/`, which is not committed (same convention as `*.g.dart`): `flutter pub get` creates it (`generate: true`) and CI runs `flutter gen-l10n`. The generated classes are left out of the coverage thresholds.
     - The app's locale is fixed to `es` whatever the device language, and Flutter's own strings (dialog buttons, date pickers) are in Spanish through `GlobalMaterialLocalizations`.
     - Every key has an `@key` entry with a `description`; counts use ICU plurals (`{count, plural, =1{1 tarjeta} other{{count} tarjetas}}`).
+12. **Navigation (T0.8):**
+    - Routes are nested so the path describes the screen stack and the back button works on mobile: `/` (P01) → `/project/:projectId` (P03) → `/project/:projectId/deck/:deckId` (P05) → `…/card/new` and `…/card/:cardId` (P06). Also `/project/:projectId/study` (P08), `/session/:sessionId` (P09), `/results/:sessionId` (P11), `/import` (P07), `/statistics` (P13), `/archived` (P14), `/trash` (P15) and `/settings` (P16). Paths are built with `AppRoutes` in `lib/app/router.dart`. Unknown paths show a "not found" screen with a button back to the dashboard.
+    - P02 and P04 (create/edit project and deck) are a bottom sheet or dialog, not routes. P10 (pause) is an overlay and P12 (project statistics) a tab of P03.
+    - The study session (P09) covers the whole window, without the sidebar, as in `design/escritorio-claro/sesion.png`; the other screens, including results, sit next to the sidebar on desktop.
+    - The desktop sidebar has the logo, project search, "Inicio", the "Proyectos" header and the bottom links. The project list and search work from phase 1, and the daily goal card from phase 4. On mobile and tablet the same links are in a drawer opened from the dashboard.
+    - Icons are Material rounded/outlined icons, close to the brief's Lucide style, so no icon package is added. The logo is drawn in code from `assets/branding/marca-sin-placa.svg`, so no SVG package is needed.

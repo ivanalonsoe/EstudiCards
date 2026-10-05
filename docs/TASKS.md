@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 7 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 8 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -73,7 +73,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Done when:** no file in `lib/` uses `DateTime.now()` or `Random()` directly (check with a search).
 
 - [x] **T0.6 Light and dark theme** · Depends on: T0.1
-  - > **Note:** light `text-muted` adjusted to `#736C67` for AA contrast. The test screen is `ThemePreviewScreen`, the home until T0.8. See SPEC §13.2 (assumption 10).
+  - > **Note:** light `text-muted` adjusted to `#736C67` for AA contrast. The test screen was `ThemePreviewScreen`, removed in T0.8. See SPEC §13.2 (assumption 10).
   - Colour tokens from `DESIGN_BRIEF.md` §3.1 as a `ThemeExtension`, project palette, Plus Jakarta Sans bundled in `assets/fonts/` (not downloaded at runtime), radii and spacing.
   - `ThemeMode.system` by default.
   - **Tests first:**
@@ -88,7 +88,8 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** 🧩 a test screen shows a string read from the ARB file.
   - **Done when:** `flutter gen-l10n` generates the classes and the test passes.
 
-- [ ] **T0.8 Navigation and responsive shell** · Depends on: T0.6, T0.7
+- [x] **T0.8 Navigation and responsive shell** · Depends on: T0.6, T0.7
+  - > **Note:** route table and shell decisions in SPEC §13.2 (assumption 12). The sidebar's project list, search and daily goal card are filled in by phases 1 and 4.
   - `go_router` with the routes from SPEC §5.1 (empty screens with their title).
   - Responsive shell (SPEC §3.3): stack navigation on mobile and a fixed sidebar on desktop (≥ 840 dp), with the elements from the design (`design/escritorio-claro/`).
   - **Tests first:**
