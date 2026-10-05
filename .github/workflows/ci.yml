@@ -1,8 +1,12 @@
 # Continuous integration (SPEC §10.5).
 #
-# GitHub runs this workflow on a clean Linux machine for every pull request
-# and every push to main. If any step fails, the run turns red and the PR
-# shows it. The integration-windows and e2e-android jobs come in T0.9.
+# GitHub runs this workflow on clean machines for every pull request and
+# every push to main. If any step fails, the run turns red and the PR shows
+# it. Three jobs:
+#   - quality: format, analysis, unit and widget tests, coverage (Linux).
+#   - integration-windows: integration tests in a real Windows window.
+#   - e2e-android: integration and Patrol E2E tests on an Android emulator.
+# The last two only start when quality passes, to save CI minutes.
 name: CI
 
 on:
@@ -64,3 +68,80 @@ jobs:
           name: coverage
           path: coverage/lcov.info
           if-no-files-found: ignore
+
+  integration-windows:
+    name: integration-windows
+    needs: quality
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run integration tests on Windows
+        run: flutter test integration_test -d windows
+
+  e2e-android:
+    name: e2e-android
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      # The Android build uses Java 17 (android/app/build.gradle.kts).
+      - name: Install Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Pinned so a new CLI release cannot break CI unexpectedly.
+      - name: Install Patrol CLI
+        run: dart pub global activate patrol_cli 4.8.0
+
+      # Hardware acceleration, so the emulator runs at usable speed.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Starts an emulator, runs the script on it and shuts it down.
+      - name: Run integration and E2E tests on an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            flutter test integration_test -d emulator-5554
+            patrol test --device emulator-5554

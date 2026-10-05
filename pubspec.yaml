@@ -45,6 +45,10 @@ dev_dependencies:
   drift_dev: ^2.35.1
   flutter_test:
     sdk: flutter
+  # Integration tests (integration_test/) and E2E tests (patrol_test/).
+  integration_test:
+    sdk: flutter
+  patrol: ^4.10.0
   # Strict lint rules (see analysis_options.yaml for why this one was chosen).
   very_good_analysis: ^11.0.0
 
@@ -114,3 +118,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Patrol E2E tests (SPEC §10.2). Run them with `patrol test` (patrol_cli).
+# Tests live in patrol_test/, Patrol's default folder. The iOS and macOS
+# native setup needs Xcode, so it is done on a Mac later.
+patrol:
+  app_name: EstudiCards
+  android:
+    package_name: com.ivanalonsoe.estudicards
