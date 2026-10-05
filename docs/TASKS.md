@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 5 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ⏳ 6 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -72,7 +72,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 two `Random` instances with the same seed produce the same sequence.
   - **Done when:** no file in `lib/` uses `DateTime.now()` or `Random()` directly (check with a search).
 
-- [ ] **T0.6 Light and dark theme** · Depends on: T0.1
+- [x] **T0.6 Light and dark theme** · Depends on: T0.1
+  - > **Note:** light `text-muted` adjusted to `#736C67` for AA contrast. The test screen is `ThemePreviewScreen`, the home until T0.8. See SPEC §13.2 (assumption 10).
   - Colour tokens from `DESIGN_BRIEF.md` §3.1 as a `ThemeExtension`, project palette, Plus Jakarta Sans bundled in `assets/fonts/` (not downloaded at runtime), radii and spacing.
   - `ThemeMode.system` by default.
   - **Tests first:**

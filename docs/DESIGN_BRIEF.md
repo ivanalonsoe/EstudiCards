@@ -42,7 +42,7 @@ Mood references (do not copy): the cleanliness of Things 3 or Linear, the clarit
 | `surface-variant` | `#F2F1EF` | `#282522` | Text fields, alternate rows |
 | `border` | `#E7E5E4` | `#35312D` | Borders and dividers |
 | `text` | `#1C1917` | `#F5F5F4` | Main text |
-| `text-muted` | `#78716C` | `#A8A29E` | Secondary text |
+| `text-muted` | `#736C67` | `#A8A29E` | Secondary text (light value darkened from `#78716C` in T0.6: it gave 4.25:1 on `surface-variant`, below AA) |
 | `success` | `#15803D` | `#4ADE80` | Correct (always with ✓) |
 | `error` | `#BE123C` | `#FB7185` | Wrong (always with ✗). Raspberry red so it is not confused with the orange brand colour |
 | `warning` | `#B45309` | `#FBBF24` | Timer about to run out |
