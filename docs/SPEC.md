@@ -963,3 +963,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Windows uses `windows-sin-placa.png` (the mark without the plate, cropped from the Android foreground), and macOS uses `macos-con-margen.png` (the plate scaled to 824 px on a 1024 px canvas, following Apple's grid; without the shadow). Both were derived from the approved images in T0.10. The Windows `.ico` holds a single 256 px image; Windows scales it down, and it stays legible at 16 px.
     - The tool also rewrites a setting in `ios/Runner.xcodeproj/project.pbxproj` (`ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS`). That change is wrong and must be reverted after each run.
     - The app's display name is "EstudiCards" on Android, iOS and the Windows window. On macOS it is still `estudicards`, because changing `PRODUCT_NAME` also renames the built `.app` and needs testing on a Mac. The iOS 18 dark and tinted icons also wait for a Mac.
+15. **Repositories (T1.1, T1.4):**
+    - Each feature's `data/` has a DAO (Drift queries only) and a repository (validation, IDs, clock, and conversion from Drift rows to domain models). Screens and providers only use repositories.
+    - Validation lives in the domain input classes (`ProjectInput.validate()`), so the editors can reuse it to enable the Save button. Saving an invalid input throws `InvalidProjectException` with the list of errors.
+    - Names and descriptions are stored without surrounding spaces; a name of only spaces counts as empty, and an empty description is stored as null. Lengths are counted in Dart characters (UTF-16 units), as Drift does.
+    - Dashboard order: favourites first, then by `last_used_at` descending; a project never used counts from its `created_at`, and ties are sorted by name.
+    - Favourite and archive changes update `updated_at`; marking a project as used only updates `last_used_at`.
