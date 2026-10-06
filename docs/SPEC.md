@@ -828,7 +828,7 @@ pre-push:
 
 ### 10.5 CI/CD with GitHub Actions
 
-Workflow: each task on its own branch (`feature/T2.3-card-editor`), a PR to `main`, and a PR is only merged with CI green. `main` is not technically protected: GitHub does not offer branch protection for private repositories on the free plan, so this rule is followed by discipline (see §13.1).
+Workflow: each task, or group of related tasks, on its own branch (`feature/T2.3-card-editor`, `feature/T1.1-T1.4-repositories`), a PR to `main`, and a PR is only merged with CI green. `main` is not technically protected: GitHub does not offer branch protection for private repositories on the free plan, so this rule is followed by discipline (see §13.1).
 
 **`ci.yml`** — on every PR and every push to `main`:
 
