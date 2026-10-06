@@ -120,7 +120,10 @@ Every behaviour change follows the **red → green → refactor** cycle (SPEC §
 
 1. Follow the **phased plan** in `docs/SPEC.md` §11 and the tasks in `docs/TASKS.md`, in order. Do not start a phase until the previous one meets its "Done when".
 2. Before implementing a user story, read it together with its acceptance criteria and the related business rules.
-3. Small, verifiable changes. After each change: `flutter analyze` with no warnings and `flutter test` green. Work on one branch per task (`feature/T2.3-card-editor`) and open a PR to `main`; CI must pass.
-4. Add or update tests for every business rule you touch.
-5. Commit messages in English, imperative and descriptive (e.g. `Add trash with 15-day purge`). Do not use `--no-verify` to skip the hooks.
-6. Do not mark a task as done if tests are failing or functionality is incomplete; explain what is missing. When finished, tick the box in `docs/TASKS.md` and check the definition of done (SPEC §10.6).
+3. Small, verifiable changes. After each change: `flutter analyze` with no warnings and `flutter test` green.
+4. **PRs:** a PR may group several related tasks. Work on one branch per PR, named `feature/<IDs>-<short-name>` (`feature/T2.3-card-editor` for one task, `feature/T1.1-T1.4-repositories` for several), and open a PR to `main`; CI must pass.
+   - One commit per task inside the PR, and TDD per task: red → green → refactor for one task before starting the next.
+   - Stop and wait for the owner's review when a PR is finished, not after each task.
+5. Add or update tests for every business rule you touch.
+6. Commit messages in English, imperative and descriptive (e.g. `Add trash with 15-day purge`). Do not use `--no-verify` to skip the hooks.
+7. Do not mark a task as done if tests are failing or functionality is incomplete; explain what is missing. When finished, tick the box in `docs/TASKS.md` and check the definition of done (SPEC §10.6).

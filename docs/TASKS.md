@@ -1,13 +1,14 @@
 # EstudiCards — Task plan (v1)
 
-Breakdown of the phases in [`SPEC.md` §11](SPEC.md#11-phased-implementation-plan) into small tasks, in execution order. Each task is one branch and one PR.
+Breakdown of the phases in [`SPEC.md` §11](SPEC.md#11-phased-implementation-plan) into small tasks, in execution order. Related tasks can be grouped into one branch and one PR.
 
 ## How to use this document
 
 - **Order:** top to bottom. A task only starts when the tasks listed under *Depends on* are finished.
-- **TDD:** in every task, first write the tests under **Tests first**, run them and see them fail. Then implement until they pass (SPEC §10.1).
+- **TDD:** in every task, first write the tests under **Tests first**, run them and see them fail. Then implement until they pass (SPEC §10.1). In a PR with several tasks, finish red → green → refactor for one task before starting the next.
+- **PRs:** a PR may group several related tasks. Each task is one commit inside the PR. The agent stops for review when the PR is finished, not after each task.
 - **Finishing:** tick the box `[x]` when the definition of done (SPEC §10.6) is met and the PR is merged.
-- **Branch:** `feature/<ID>-<short-name>`, e.g. `feature/T2.3-card-editor`.
+- **Branch:** one per PR, `feature/<IDs>-<short-name>`, e.g. `feature/T2.3-card-editor` for one task or `feature/T1.1-T1.4-repositories` for several.
 - **References:** US = user story (SPEC §6); R = business rule (SPEC §7); P = screen (SPEC §5.2).
 - **Language:** code, tests and commit messages in English; UI strings in Spanish in `app_es.arb` (SPEC §2.1).
 
@@ -18,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ⏳ 2 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -115,7 +116,7 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 1 — Projects and decks
 
-- [ ] **T1.1 Projects repository** · US-01, US-02 · Depends on: T0.4, T0.5
+- [x] **T1.1 Projects repository** · US-01, US-02 · Depends on: T0.4, T0.5
   - Create, edit, list, favourite and archive projects; update `last_used_at` (R 7.7).
   - **Tests first:**
     - 🧪 creating a project with no name fails; with 61 characters it fails.
@@ -137,7 +138,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 choosing "Idioma" shows the language selectors.
     - 🧩 switching from "Idioma" to "General" asks for confirmation.
 
-- [ ] **T1.4 Decks repository** · US-06 · Depends on: T1.1
+- [x] **T1.4 Decks repository** · US-06 · Depends on: T1.1
   - Create, edit and list a project's decks; colour inherited from the project when null.
   - **Tests first:**
     - 🧪 a deck without a colour returns the project's colour.
