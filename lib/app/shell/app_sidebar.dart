@@ -7,6 +7,7 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
+import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_search_field.dart';
@@ -82,7 +83,20 @@ class AppSidebar extends ConsumerWidget {
                     for (final project in favorites)
                       _SidebarProjectTile(project: project, location: location),
                   ],
-                  _SidebarHeading(l10n.projects),
+                  _SidebarHeading(
+                    l10n.projects,
+                    trailing: IconButton(
+                      key: const Key('sidebar.newProject'),
+                      tooltip: l10n.newProject,
+                      onPressed: () => showProjectForm(context, ref),
+                      icon: const Icon(Icons.add_rounded),
+                      iconSize: 18,
+                      color: colors.primaryStrong,
+                      style: IconButton.styleFrom(
+                        backgroundColor: colors.primarySoft,
+                      ),
+                    ),
+                  ),
                   for (final project in others)
                     _SidebarProjectTile(project: project, location: location),
                 ],
@@ -101,24 +115,34 @@ class AppSidebar extends ConsumerWidget {
 }
 
 class _SidebarHeading extends StatelessWidget {
-  const new(this.title);
+  const new(this.title, {this.trailing});
 
   final String title;
+
+  /// E.g. the "+" button next to "PROYECTOS".
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(
       AppSpacing.lg,
       AppSpacing.lg,
-      AppSpacing.lg,
+      AppSpacing.xs,
       AppSpacing.sm,
     ),
-    child: Text(
-      title.toUpperCase(),
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: AppColors.of(context).textMuted,
-        letterSpacing: 1.2,
-      ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.of(context).textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        ?trailing,
+      ],
     ),
   );
 }
@@ -138,7 +162,7 @@ class _SidebarProjectTile extends ConsumerWidget {
     return ListTile(
       key: Key('sidebar.project.${project.id}'),
       selected: location == path || location.startsWith('$path/'),
-      dense: true,
+      visualDensity: VisualDensity.compact,
       leading: ProjectIconTile(
         icon: project.icon,
         color: project.color,

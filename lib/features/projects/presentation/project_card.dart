@@ -6,6 +6,7 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
+import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:flutter/material.dart';
@@ -99,7 +100,7 @@ class ProjectCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
-                  Text(l10n.correctRate('—'), style: text.labelMedium),
+                  Text(l10n.correctRate('—'), style: text.titleSmall),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
@@ -127,8 +128,8 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-/// The ⋮ menu of a project card. "Editar" arrives with the project form
-/// (T1.3); "Archivar", "Eliminar" and "Compartir" with their tasks.
+/// The ⋮ menu of a project card. "Archivar", "Eliminar" and "Compartir"
+/// arrive with their tasks.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.summary});
 
@@ -144,7 +145,13 @@ class _ProjectMenu extends ConsumerWidget {
       icon: const Icon(Icons.more_vert_rounded),
       // Each item's value is the action to run when it is chosen.
       onSelected: (action) => action(),
-      itemBuilder: (context) => [
+      itemBuilder: (menuContext) => [
+        PopupMenuItem(
+          // `context` is the card's, which stays open after the menu closes.
+          value: () =>
+              unawaited(showProjectForm(context, ref, project: project)),
+          child: Text(l10n.edit),
+        ),
         PopupMenuItem(
           value: () => unawaited(
             ref

@@ -9,6 +9,7 @@ import 'package:estudicards/core/widgets/dashed_border.dart';
 import 'package:estudicards/features/projects/domain/greeting.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/project_card.dart';
+import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_search_field.dart';
 import 'package:flutter/material.dart';
@@ -74,17 +75,14 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-/// Opens the form to create a project; wired up by the project form (T1.3).
-void _newProject() {}
-
 /// Mobile and tablet: greeting, search and the list in two sections.
-class _MobileDashboard extends ConsumerWidget {
+class _MobileDashboard extends StatelessWidget {
   const new({required this.projects});
 
   final List<ProjectSummary> projects;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final favorites = [
       for (final s in projects)
@@ -133,7 +131,7 @@ class _MobileDashboard extends ConsumerWidget {
 
 /// Desktop: greeting with the "Nuevo proyecto" button, the streak, and the
 /// projects in a grid. The search is in the sidebar.
-class _DesktopDashboard extends StatelessWidget {
+class _DesktopDashboard extends ConsumerWidget {
   const new({required this.projects});
 
   final List<ProjectSummary> projects;
@@ -141,7 +139,7 @@ class _DesktopDashboard extends StatelessWidget {
   static const double _gap = AppSpacing.lg;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
@@ -166,7 +164,7 @@ class _DesktopDashboard extends StatelessWidget {
                   const Expanded(child: _GreetingText(large: true)),
                   FilledButton.icon(
                     key: const Key('dashboard.newProject'),
-                    onPressed: _newProject,
+                    onPressed: () => showProjectForm(context, ref),
                     icon: const Icon(Icons.add_rounded),
                     label: Text(l10n.newProject),
                   ),
@@ -352,11 +350,11 @@ class _NoResults extends ConsumerWidget {
 
 /// No projects yet: the logo, an explanation and the button to create the
 /// first one (SPEC §5.3, `docs/design/movil-claro/dashboard-vacio.png`).
-class _EmptyDashboard extends StatelessWidget {
+class _EmptyDashboard extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
@@ -395,7 +393,7 @@ class _EmptyDashboard extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const Key('dashboard.newProject'),
-                  onPressed: _newProject,
+                  onPressed: () => showProjectForm(context, ref),
                   icon: const Icon(Icons.add_rounded),
                   label: Text(l10n.newProject),
                 ),
@@ -408,15 +406,15 @@ class _EmptyDashboard extends StatelessWidget {
   }
 }
 
-class _NewProjectFab extends StatelessWidget {
+class _NewProjectFab extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     return FloatingActionButton.extended(
       key: const Key('dashboard.newProject'),
-      onPressed: _newProject,
+      onPressed: () => showProjectForm(context, ref),
       backgroundColor: scheme.primary,
       foregroundColor: scheme.onPrimary,
       icon: const Icon(Icons.add_rounded),
@@ -426,18 +424,18 @@ class _NewProjectFab extends StatelessWidget {
 }
 
 /// The dashed "Nuevo proyecto" tile at the end of the desktop grid.
-class _NewProjectTile extends StatelessWidget {
+class _NewProjectTile extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     return DashedBorder(
       color: colors.border,
       radius: AppRadii.listCard,
       child: InkWell(
         key: const Key('dashboard.newProjectTile'),
-        onTap: _newProject,
+        onTap: () => showProjectForm(context, ref),
         borderRadius: BorderRadius.circular(AppRadii.listCard),
         child: SizedBox(
           height: 160,
