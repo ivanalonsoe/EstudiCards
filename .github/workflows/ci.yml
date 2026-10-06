@@ -138,7 +138,12 @@ jobs:
       # The runner's disk is nearly full; the emulator needs room for its
       # data partition. Remove preinstalled tools this project never uses.
       - name: Free disk space
-        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY/CodeQL"
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift \
+            /usr/local/share/boost /usr/local/share/chromium /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force > /dev/null
+          df -h /
 
       # Hardware acceleration, so the emulator runs at usable speed.
       - name: Enable KVM
@@ -155,9 +160,9 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          # Smaller than the default (~7 GB), which does not fit on the
-          # runner's disk.
-          disk-size: 4096M
+          # The emulator needs 1.8 times this size free on the runner's disk,
+          # and the default does not fit. 2 GB is plenty for this app.
+          disk-size: 2048M
           # Leaves memory for the Gradle build that runs next to it.
           ram-size: 2048M
           script: |
