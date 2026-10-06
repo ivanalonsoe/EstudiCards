@@ -19,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ⏳ 2 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -116,7 +116,7 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 1 — Projects and decks
 
-- [ ] **T1.1 Projects repository** · US-01, US-02 · Depends on: T0.4, T0.5
+- [x] **T1.1 Projects repository** · US-01, US-02 · Depends on: T0.4, T0.5
   - Create, edit, list, favourite and archive projects; update `last_used_at` (R 7.7).
   - **Tests first:**
     - 🧪 creating a project with no name fails; with 61 characters it fails.
@@ -138,7 +138,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 choosing "Idioma" shows the language selectors.
     - 🧩 switching from "Idioma" to "General" asks for confirmation.
 
-- [ ] **T1.4 Decks repository** · US-06 · Depends on: T1.1
+- [x] **T1.4 Decks repository** · US-06 · Depends on: T1.1
   - Create, edit and list a project's decks; colour inherited from the project when null.
   - **Tests first:**
     - 🧪 a deck without a colour returns the project's colour.
