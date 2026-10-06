@@ -19,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 2 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ⏳ 4 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -124,14 +124,16 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the list returns favourites first, then by last use; it excludes archived and deleted projects.
     - 🧪 switching from language to general does not delete the stored languages.
 
-- [ ] **T1.2 Dashboard** · P01 · US-05 · Depends on: T1.1, T0.8
+- [x] **T1.2 Dashboard** · P01 · US-05 · Depends on: T1.1, T0.8
+  - > **Note:** adds Riverpod. Until phase 4 the header shows the greeting and the streak at 0 (no goal ring), and buttons of later tasks are hidden. The desktop sidebar lists and searches the projects. See SPEC §13.2 (assumption 16).
   - Project list with the design's project card, search by title, "Nuevo proyecto" button, empty state. Header with streak and goal (placeholder values until phase 4).
   - **Tests first:**
     - 🧩 with no projects, the empty state is shown.
     - 🧩 with 3 projects, 3 cards are shown, the favourite first.
     - 🧩 searching "ingles" finds "Inglés B2" (case- and accent-insensitive).
 
-- [ ] **T1.3 Create and edit project** · P02 · US-01, US-02 · Depends on: T1.2
+- [x] **T1.3 Create and edit project** · P02 · US-01, US-02 · Depends on: T1.2
+  - > **Note:** the confirmation only appears when editing a stored language project. Language list chosen with the owner. See SPEC §13.2 (assumption 17).
   - Bottom sheet on mobile and dialog on desktop, with colour, icon, type and languages.
   - **Tests first:**
     - 🧩 the Save button is disabled without a name.
