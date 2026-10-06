@@ -2,6 +2,10 @@ import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/ids.dart';
+import 'package:estudicards/features/decks/data/decks_dao.dart';
+import 'package:estudicards/features/decks/data/decks_repository.dart';
+import 'package:estudicards/features/decks/domain/deck_input.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/data/projects_repository.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
@@ -44,7 +48,9 @@ void main() {
   );
 
   Future<List<String>> listedNames() async =>
-      (await repository.watchProjects().first).map((p) => p.name).toList();
+      (await repository.watchProjects().first)
+          .map((s) => s.project.name)
+          .toList();
 
   group('create', () {
     test('stores the project with a new ID and the clock time', () async {
@@ -227,7 +233,7 @@ void main() {
 
     test('emits a new list when a project changes', () async {
       final lists = repository.watchProjects().map(
-        (projects) => projects.map((p) => p.name).toList(),
+        (summaries) => summaries.map((s) => s.project.name).toList(),
       );
 
       final expectation = expectLater(
@@ -242,6 +248,57 @@ void main() {
       await expectation;
     });
   });
+
+  test(
+    'counts the decks and cards of each project, ignoring decks in the trash',
+    () async {
+      final english = await repository.create(general('Inglés B2'));
+      final empty = await repository.create(general('Biología'));
+      final decks = DecksRepository(DecksDao(db), clock);
+      final verbs = await decks.create(
+        english.id,
+        const DeckInput(name: 'Verbos'),
+      );
+      final phrasal = await decks.create(
+        english.id,
+        const DeckInput(name: 'Phrasal verbs'),
+      );
+      final deleted = await decks.create(
+        english.id,
+        const DeckInput(name: 'Antiguos'),
+      );
+      // Cards and the trash arrive in later tasks; insert them by hand.
+      Future<void> addCard(String deckId) => db
+          .into(db.cards)
+          .insert(
+            CardsCompanion.insert(
+              id: newId(),
+              deckId: deckId,
+              type: 'simple',
+              question: 'to bring',
+              answer: const Value('traer'),
+              createdAt: start,
+              updatedAt: start,
+            ),
+          );
+      await addCard(verbs.id);
+      await addCard(verbs.id);
+      await addCard(phrasal.id);
+      await addCard(deleted.id);
+      await (db.update(db.decks)..where((d) => d.id.equals(deleted.id))).write(
+        DecksCompanion(deletedAt: Value(start)),
+      );
+
+      final summaries = {
+        for (final s in await repository.watchProjects().first) s.project.id: s,
+      };
+
+      expect(summaries[english.id]!.deckCount, 2);
+      expect(summaries[english.id]!.cardCount, 3);
+      expect(summaries[empty.id]!.deckCount, 0);
+      expect(summaries[empty.id]!.cardCount, 0);
+    },
+  );
 
   test('markUsed stores the clock time as the last use', () async {
     final project = await repository.create(general('Química'));

@@ -9,6 +9,7 @@ import 'package:estudicards/core/ids.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
+import 'package:estudicards/features/projects/domain/project_summary.dart';
 
 class ProjectsRepository {
   new(this._dao, this._clock);
@@ -70,8 +71,16 @@ class ProjectsRepository {
   }
 
   /// The dashboard list, updated whenever a project changes (US-05 AC1).
-  Stream<List<Project>> watchProjects() =>
-      _dao.watchActive().map((rows) => rows.map(_toProject).toList());
+  Stream<List<ProjectSummary>> watchProjects() => _dao.watchActive().map(
+    (rows) => [
+      for (final row in rows)
+        ProjectSummary(
+          project: _toProject(row.project),
+          deckCount: row.deckCount,
+          cardCount: row.cardCount,
+        ),
+    ],
+  );
 
   Future<void> setFavorite(String id, {required bool isFavorite}) =>
       _dao.updateProject(

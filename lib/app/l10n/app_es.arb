@@ -89,5 +89,106 @@
     "placeholders": {
       "count": { "type": "int" }
     }
+  },
+  "deckCount": "{count, plural, =1{1 baraja} other{{count} barajas}}",
+  "@deckCount": {
+    "description": "Number of decks in a project, e.g. '3 barajas'.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "projectContents": "{decks} · {cards}",
+  "@projectContents": {
+    "description": "Project card subtitle, e.g. '3 barajas · 256 tarjetas'. decks and cards are already formatted with deckCount and cardCount.",
+    "placeholders": {
+      "decks": { "type": "String" },
+      "cards": { "type": "String" }
+    }
+  },
+  "correctRate": "{value} aciertos",
+  "@correctRate": {
+    "description": "Percentage of correct answers, e.g. '78% aciertos'. value is '—' when there is no data yet.",
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "noPendingErrors": "Sin errores pendientes",
+  "@noPendingErrors": {
+    "description": "Project card: the project has no cards in the error list."
+  },
+
+  "greetingMorning": "Buenos días",
+  "@greetingMorning": {
+    "description": "Dashboard greeting from 6:00 to 13:59."
+  },
+  "greetingAfternoon": "Buenas tardes",
+  "@greetingAfternoon": {
+    "description": "Dashboard greeting from 14:00 to 20:59."
+  },
+  "greetingEvening": "Buenas noches",
+  "@greetingEvening": {
+    "description": "Dashboard greeting from 21:00 to 5:59."
+  },
+  "streakDays": "{count, plural, =1{1 día} other{{count} días}}",
+  "@streakDays": {
+    "description": "Current streak in days, next to a flame icon.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "currentStreak": "Racha actual",
+  "@currentStreak": {
+    "description": "Label under the streak on the desktop dashboard."
+  },
+  "newProject": "Nuevo proyecto",
+  "@newProject": {
+    "description": "Button that opens the project form to create one; also the form title."
+  },
+  "favorites": "Favoritos",
+  "@favorites": {
+    "description": "Heading of the favourite projects (dashboard and sidebar)."
+  },
+  "recent": "Recientes",
+  "@recent": {
+    "description": "Dashboard heading of the projects that are not favourites."
+  },
+  "yourProjects": "Tus proyectos",
+  "@yourProjects": {
+    "description": "Heading of the project grid on the desktop dashboard."
+  },
+  "projectsOrder": "Favoritos primero · después por último uso",
+  "@projectsOrder": {
+    "description": "Explains the order of the desktop project grid."
+  },
+  "emptyProjectsTitle": "Crea tu primer proyecto",
+  "@emptyProjectsTitle": {
+    "description": "Empty dashboard title."
+  },
+  "emptyProjectsBody": "Un proyecto agrupa las barajas de un tema: un idioma, una asignatura o un temario de oposición.",
+  "@emptyProjectsBody": {
+    "description": "Empty dashboard explanation."
+  },
+  "noSearchResults": "Ningún proyecto coincide con «{query}»",
+  "@noSearchResults": {
+    "description": "Shown when the project search finds nothing.",
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "loadError": "No se han podido cargar los datos",
+  "@loadError": {
+    "description": "Shown when reading the database fails."
+  },
+  "projectOptions": "Opciones del proyecto",
+  "@projectOptions": {
+    "description": "Tooltip of the ⋮ button on a project card."
+  },
+  "markFavorite": "Marcar como favorito",
+  "@markFavorite": {
+    "description": "Project menu: add to favourites."
+  },
+  "unmarkFavorite": "Quitar de favoritos",
+  "@unmarkFavorite": {
+    "description": "Project menu: remove from favourites."
   }
 }
