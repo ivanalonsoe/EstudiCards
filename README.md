@@ -2,7 +2,7 @@
 
 Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. Organise what you study into projects and decks, practise with random, optionally timed sessions, and review your mistakes.
 
-> **Status:** specification and design finalised. Development starts with phase 0 in [`docs/TASKS.md`](docs/TASKS.md).
+> **Status:** phase 0 (foundation) complete. Next: phase 1, projects and decks, in [`docs/TASKS.md`](docs/TASKS.md).
 >
 > **Languages:** the app UI is in Spanish. Documentation, code and tests are in English.
 
@@ -153,6 +153,7 @@ lefthook install
 | `flutter test integration_test -d <device>` | Runs the integration tests on another device, e.g. an Android emulator (`flutter devices` lists the IDs). |
 | `patrol test` | Runs the E2E tests (`patrol_test/`) on a running emulator or connected device. Install the CLI once per machine with `dart pub global activate patrol_cli`, and add `%LOCALAPPDATA%\Pub\Cache\bin` (Windows) or `~/.pub-cache/bin` to the `PATH`. |
 | `flutter devices` | Lists the available devices and emulators. |
+| `dart run flutter_launcher_icons` | Regenerates the app icons from `assets/branding/` (config in `flutter_launcher_icons.yaml`). Afterwards, revert its change to `ios/Runner.xcodeproj/project.pbxproj`. |
 | `flutter build apk` | Builds the Android installer. |
 | `flutter build windows` | Builds the Windows executable. |
 | `flutter build macos` / `flutter build ios` | Builds the app for Mac or iPhone (on a Mac). |
@@ -215,7 +216,7 @@ Full details in [`docs/SPEC.md` §8](docs/SPEC.md#8-import-and-export).
 
 | Phase | Content | Status |
 |---|---|---|
-| 0. Foundation | Flutter project, hooks, CI, Patrol, theme, routes, database | ⏳ Pending |
+| 0. Foundation | Flutter project, hooks, CI, Patrol, theme, routes, database | ✅ Done |
 | 1. Projects and decks | Dashboard, favourites, archive, trash | ⏳ Pending |
 | 2. Cards | Simple and test editor, preview, images, voice | ⏳ Pending |
 | 3. Study session | Random selection, timers, pause, results | ⏳ Pending |

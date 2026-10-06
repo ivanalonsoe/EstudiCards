@@ -17,7 +17,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 0. Foundation | T0.1 – T0.10 | ⏳ 9 / 10 |
+| 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ⏳ 0 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
@@ -106,7 +106,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🤖 the app starts on the emulator and shows the home screen.
   - **Done when:** the three CI jobs are green.
 
-- [ ] **T0.10 App icons** · Depends on: T0.1
+- [x] **T0.10 App icons** · Depends on: T0.1
+  - > **Note:** configured in `flutter_launcher_icons.yaml`; Windows and macOS use two images derived from the approved ones. The iOS dark/tinted icons and the macOS app name wait for a Mac. See SPEC §13.2 (assumption 14).
   - Generate the icons for each platform from `assets/branding/` (e.g. with `flutter_launcher_icons`): iOS, Android adaptive + monochrome, macOS and Windows.
   - **Done when:** the installed app shows the right icon on Windows and Android.
 
