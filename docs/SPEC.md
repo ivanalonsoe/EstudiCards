@@ -969,3 +969,5 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Names and descriptions are stored without surrounding spaces; a name of only spaces counts as empty, and an empty description is stored as null. Lengths are counted in Dart characters (UTF-16 units), as Drift does.
     - Dashboard order: favourites first, then by `last_used_at` descending; a project never used counts from its `created_at`, and ties are sorted by name.
     - Favourite and archive changes update `updated_at`; marking a project as used only updates `last_used_at`.
+    - A deck's `color` stays null in the database while it inherits; the `Deck` model returns the resolved colour plus `inheritsColor`, so a deck follows its project's colour if the project changes. Saving a deck with no colour makes it inherit again.
+    - A project's decks are listed oldest first (by `created_at`, then by name).
