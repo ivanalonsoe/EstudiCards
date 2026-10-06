@@ -1,0 +1,37 @@
+# App icons for every platform, generated from assets/branding/ (brief §10,
+# docs/design/marca/icono-logotipo.png). Regenerate after changing them:
+#
+#   dart run flutter_launcher_icons
+#
+# The output (android/app/src/main/res/mipmap-*, ios/…/AppIcon.appiconset,
+# macos/…/AppIcon.appiconset, windows/runner/resources/app_icon.ico) is
+# committed: it is part of each platform's project, not Dart code.
+flutter_launcher_icons:
+  # Orange plate with rounded corners: the main icon.
+  image_path: assets/branding/icono-app.png
+
+  android: true
+  # Android 8+ adaptive icon: the system cuts the shape (circle, squircle…)
+  # from the plate colour, with the two cards on top.
+  adaptive_icon_background: "#C2410C"
+  adaptive_icon_foreground: assets/branding/android-primer-plano.png
+  # The default 16% inset keeps the mark at about half of the visible
+  # shape, as in the brand sheet (no `adaptive_icon_foreground_inset`).
+  # Android 13+ themed icons (the system tints it with the wallpaper colour).
+  adaptive_icon_monochrome: assets/branding/android-monocromo.png
+
+  ios: true
+  # iOS does not allow transparency and rounds the corners itself.
+  image_path_ios: assets/branding/icono-cuadrado-sin-esquinas.png
+  remove_alpha_ios: true
+
+  windows:
+    generate: true
+    # Windows 11 style: the mark without the plate.
+    image_path: assets/branding/windows-sin-placa.png
+    icon_size: 256
+
+  macos:
+    generate: true
+    # macOS icons leave a margin around the plate (Apple's icon grid).
+    image_path: assets/branding/macos-con-margen.png
