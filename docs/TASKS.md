@@ -19,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 6 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ⏳ 8 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -157,7 +157,8 @@ Goal: a project that starts, with automated quality from day one.
   - > **Note:** the colour picker starts on "Del proyecto", which keeps the deck on its project's colour (decided with the owner). See SPEC §13.2 (assumption 19).
   - **Tests first:** 🧩 cannot save without a name; 🧩 the new deck appears in the list.
 
-- [ ] **T1.7 Trash: logic** · R 7.1 · US-03, US-04 · Depends on: T1.1, T1.4
+- [x] **T1.7 Trash: logic** · R 7.1 · US-03, US-04 · Depends on: T1.1, T1.4
+  - > **Note:** image files are deleted through the `ImageFiles` interface; the app has no images until T2.6, which provides the real one. See SPEC §13.2 (assumption 20).
   - Move to trash, restore, delete permanently, empty, and purge expired items (called on app start and when the Trash screen opens, see T1.8).
   - **Tests first:**
     - 🧪 deleting a project hides it from the list and shows it in the trash.
@@ -165,7 +166,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 restoring a deck whose project is in the trash also restores the project.
     - 🧪 the remaining days are calculated correctly (15 − days elapsed).
 
-- [ ] **T1.8 Delete with undo and Trash screen** · P15 · US-03, US-04 · Depends on: T1.7
+- [x] **T1.8 Delete with undo and Trash screen** · P15 · US-03, US-04 · Depends on: T1.7
+  - > **Note:** projects can also be deleted from the project screen, and items with 3 days or fewer are urgent (both decided with the owner). See SPEC §13.2 (assumption 21).
   - Confirmation dialog with counts, 5-second "Deshacer" snackbar and trash screen.
   - **Tests first:**
     - 🧩 the dialog states how many decks and cards will be moved.
@@ -221,6 +223,7 @@ Goal: a project that starts, with automated quality from day one.
 
 - [ ] **T2.6 Images on cards** · Depends on: T2.3
   - Pick an image (gallery on mobile, file on desktop), resize to 1600 px and JPEG 80, store the relative path, delete the image when the card is deleted.
+  - Replace `NoImageFiles` in `imageFilesProvider` with a real `ImageFiles` over the images folder, so the trash purge also deletes the files (SPEC §13.2, assumption 20).
   - **Tests first:**
     - 🧪 a 4000 px image is stored with its long side at 1600 px.
     - 🧪 deleting the card deletes the image file.

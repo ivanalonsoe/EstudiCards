@@ -999,3 +999,17 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Colour (decided with the owner): a first option "Del proyecto", chosen by default, followed by the 12 colours. "Del proyecto" stores no colour, so the deck follows its project's colour if it changes; picking it again when editing makes the deck inherit again.
     - "Nueva baraja" is a dashed button under the list on mobile and tablet, and a button next to the "Barajas" heading on desktop. After creating, the user stays on the project screen with the new deck in the list (US-06 does not ask to open it).
     - The deck ⋮ menu has "Editar"; "Compartir", "Reiniciar estadísticas" and "Eliminar" arrive with their tasks.
+20. **Trash logic (T1.7):**
+    - The trash is its own feature (`lib/features/trash/`): `trash_rules.dart` (`daysLeft`, `isExpired`) and `TrashRepository`. Moving to the trash sets `deleted_at`; restoring sets it back to null, which is also what "Deshacer" does.
+    - Days left = 15 − whole days elapsed, never below 0; an item is purged once 15 full days have passed (e.g. deleted at 9:00 on the 1st, purged from 9:00 on the 16th).
+    - A project in the trash keeps its decks as they are. Its card count, like the dashboard's, leaves out decks that are in the trash themselves, which are listed as separate items. Restoring a deck whose project is in the trash also restores the project; the project's other trashed decks stay in the trash.
+    - Permanent deletion relies on the foreign keys' `ON DELETE CASCADE` (decks, cards, options, statistics, sessions, session decks and attempts), inside one transaction. Image files are deleted after the transaction, so a failed write never loses an image.
+    - Image files are deleted through the `ImageFiles` interface (`core/files/image_files.dart`). Cards cannot have images until T2.6, so the app uses `NoImageFiles` until then and T2.6 provides the real images folder.
+    - The purge runs when the app starts (`EstudiCardsApp`, without waiting for it) and when the Trash screen opens (T1.8).
+21. **Delete with undo and Trash screen (T1.8):**
+    - "Eliminar" moves the item to the trash right after the confirmation, and "Deshacer" restores it; the result is the same as waiting 5 seconds before moving it, and nothing is lost if the app closes meanwhile. The snackbar lasts 5 seconds: Flutter keeps a snackbar with an action until it is closed unless `persist: false` is given.
+    - Projects are deleted from the dashboard ⋮ menu and from the project screen ⋮ menu (decided with the owner); from the project screen the app goes back to the dashboard and shows "Deshacer" there. Decks are deleted from their ⋮ menu on the project screen.
+    - The confirmation dialog (`core/widgets/confirm_dialog.dart`) follows `design/movil-claro/dialogos.png`: an icon, title, explanation, "Cancelar" and a red confirm button.
+    - An item is urgent, with an amber label, when it has 3 days or fewer left (decided with the owner). "Se elimina hoy" is shown for 0 days.
+    - On a phone the days-left label goes above "Eliminar definitivamente" and "Restaurar", which do not fit on the same line at 390 px; from 360 px of card width they share one line. The trash hides expired items even before the purge finishes. The Trash screen keeps a maximum width of 640 px on tablet and desktop.
+    - "Eliminar definitivamente" and "Vaciar papelera" ask for confirmation (US-04 AC4). "Restaurar" acts at once, without a message.

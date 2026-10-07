@@ -13,6 +13,7 @@ import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
+import 'package:estudicards/features/trash/presentation/trash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -115,7 +116,11 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
               screen('import', 'import', (l10n) => l10n.importTitle),
               screen('statistics', 'statistics', (l10n) => l10n.statistics),
               screen('archived', 'archived', (l10n) => l10n.archived),
-              screen('trash', 'trash', (l10n) => l10n.trash),
+              GoRoute(
+                path: 'trash',
+                builder: (context, state) =>
+                    const TrashScreen(key: Key('screen.trash')),
+              ),
               screen('settings', 'settings', (l10n) => l10n.settings),
             ],
           ),

@@ -352,6 +352,121 @@
     "description": "Deck colour option: use the project's colour (the default)."
   },
 
+  "delete": "Eliminar",
+  "@delete": {
+    "description": "Menu item and confirm button that move a project or deck to the trash."
+  },
+  "deleteProject": "Eliminar proyecto",
+  "@deleteProject": {
+    "description": "Item of the ⋮ menu of the project screen."
+  },
+  "deleteTitle": "¿Eliminar «{name}»?",
+  "@deleteTitle": {
+    "description": "Title of the dialog that confirms moving a project or deck to the trash.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "deleteProjectBody": "Se moverán a la papelera {decks} y {cards}. Podrás recuperarlo durante 15 días.",
+  "@deleteProjectBody": {
+    "description": "Body of the dialog that confirms deleting a project (US-03 AC1). decks and cards are formatted with deckCount and cardCount.",
+    "placeholders": {
+      "decks": { "type": "String" },
+      "cards": { "type": "String" }
+    }
+  },
+  "deleteDeckBody": "Se moverán a la papelera {cards}. Podrás recuperarla durante 15 días.",
+  "@deleteDeckBody": {
+    "description": "Body of the dialog that confirms deleting a deck (US-06 AC2). cards is formatted with cardCount.",
+    "placeholders": {
+      "cards": { "type": "String" }
+    }
+  },
+  "movedToTrash": "«{name}» se ha movido a la papelera",
+  "@movedToTrash": {
+    "description": "Snackbar shown for 5 seconds after deleting a project or deck, next to 'Deshacer'.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "undo": "Deshacer",
+  "@undo": {
+    "description": "Snackbar action that undoes a deletion."
+  },
+  "trashInfo": "Los proyectos y barajas se eliminan definitivamente a los 15 días. Las tarjetas sueltas no pasan por la papelera.",
+  "@trashInfo": {
+    "description": "Notice at the top of the trash screen."
+  },
+  "trashProjectDetails": "Proyecto · {decks} · {cards}",
+  "@trashProjectDetails": {
+    "description": "Subtitle of a project in the trash, e.g. 'Proyecto · 4 barajas · 190 tarjetas'.",
+    "placeholders": {
+      "decks": { "type": "String" },
+      "cards": { "type": "String" }
+    }
+  },
+  "trashDeckDetails": "Baraja de {project} · {cards}",
+  "@trashDeckDetails": {
+    "description": "Subtitle of a deck in the trash, e.g. 'Baraja de Inglés B2 · 18 tarjetas'.",
+    "placeholders": {
+      "project": { "type": "String" },
+      "cards": { "type": "String" }
+    }
+  },
+  "deletesIn": "{count, plural, =0{Se elimina hoy} =1{Se elimina en 1 día} other{Se elimina en {count} días}}",
+  "@deletesIn": {
+    "description": "Days left before an item in the trash is deleted for good.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "restore": "Restaurar",
+  "@restore": {
+    "description": "Button that takes an item out of the trash."
+  },
+  "deletePermanently": "Eliminar definitivamente",
+  "@deletePermanently": {
+    "description": "Tooltip of the button that deletes a trash item for good."
+  },
+  "deletePermanentlyTitle": "¿Eliminar definitivamente «{name}»?",
+  "@deletePermanentlyTitle": {
+    "description": "Title of the dialog that confirms deleting a trash item for good.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "deletePermanentlyProjectBody": "Se borrarán sus barajas, tarjetas y estadísticas. No se puede deshacer.",
+  "@deletePermanentlyProjectBody": {
+    "description": "Body of the dialog that confirms deleting a project for good."
+  },
+  "deletePermanentlyDeckBody": "Se borrarán sus tarjetas y estadísticas. No se puede deshacer.",
+  "@deletePermanentlyDeckBody": {
+    "description": "Body of the dialog that confirms deleting a deck for good."
+  },
+  "emptyTrash": "Vaciar papelera",
+  "@emptyTrash": {
+    "description": "Button that deletes every trash item for good, and its confirm button."
+  },
+  "emptyTrashTitle": "¿Vaciar la papelera?",
+  "@emptyTrashTitle": {
+    "description": "Title of the dialog that confirms emptying the trash."
+  },
+  "emptyTrashBody": "{count, plural, =1{Se eliminará definitivamente 1 elemento} other{Se eliminarán definitivamente {count} elementos}} con sus tarjetas y estadísticas. No se puede deshacer.",
+  "@emptyTrashBody": {
+    "description": "Body of the dialog that confirms emptying the trash; count = items in the trash.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "trashEmptyTitle": "La papelera está vacía",
+  "@trashEmptyTitle": {
+    "description": "Empty state of the trash (SPEC §5.3)."
+  },
+  "trashEmptyBody": "Los proyectos y barajas que elimines se guardan aquí durante 15 días.",
+  "@trashEmptyBody": {
+    "description": "Empty state of the trash, under trashEmptyTitle."
+  },
+
   "colorOrange": "Naranja",
   "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
   "colorAmber": "Ámbar",

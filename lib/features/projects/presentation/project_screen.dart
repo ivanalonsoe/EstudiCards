@@ -14,6 +14,7 @@ import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -533,8 +534,8 @@ class _NoStatistics extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of the project. "Compartir", "Archivar" and "Eliminar"
-/// arrive with their tasks.
+/// The ⋮ menu of the project. "Compartir" and "Archivar" arrive with their
+/// tasks.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.project});
 
@@ -564,6 +565,25 @@ class _ProjectMenu extends ConsumerWidget {
           child: Text(
             project.isFavorite ? l10n.unmarkFavorite : l10n.markFavorite,
           ),
+        ),
+        PopupMenuItem(
+          value: () => unawaited(
+            confirmMoveProjectToTrash(
+              context,
+              ref,
+              project: project,
+              deckCount:
+                  ref.read(deckSummariesProvider(project.id)).value?.length ??
+                  0,
+              cardCount: ref.read(_cardCountProvider(project.id)),
+              // The project is gone: back to the dashboard, where
+              // "Deshacer" is shown (decided with the owner).
+              afterMove: () {
+                if (context.mounted) context.go(AppRoutes.home);
+              },
+            ),
+          ),
+          child: Text(l10n.deleteProject),
         ),
       ],
     );

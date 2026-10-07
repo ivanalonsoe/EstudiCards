@@ -9,6 +9,7 @@ import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,8 +129,8 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-/// The ⋮ menu of a project card. "Archivar", "Eliminar" and "Compartir"
-/// arrive with their tasks.
+/// The ⋮ menu of a project card. "Archivar" and "Compartir" arrive with
+/// their tasks.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.summary});
 
@@ -161,6 +162,18 @@ class _ProjectMenu extends ConsumerWidget {
           child: Text(
             project.isFavorite ? l10n.unmarkFavorite : l10n.markFavorite,
           ),
+        ),
+        PopupMenuItem(
+          value: () => unawaited(
+            confirmMoveProjectToTrash(
+              context,
+              ref,
+              project: project,
+              deckCount: summary.deckCount,
+              cardCount: summary.cardCount,
+            ),
+          ),
+          child: Text(l10n.delete),
         ),
       ],
     );
