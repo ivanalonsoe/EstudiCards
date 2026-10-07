@@ -19,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 4 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ⏳ 6 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -146,13 +146,15 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a deck without a colour returns the project's colour.
     - 🧪 the list excludes deleted decks.
 
-- [ ] **T1.5 Project screen** · P03 · Depends on: T1.4
+- [x] **T1.5 Project screen** · P03 · Depends on: T1.4
+  - > **Note:** until phase 4 the metrics show the real card count, "—" and 0, and the statistics tab and desktop summary show an empty state (decided with the owner). Buttons of later phases are hidden. See SPEC §13.2 (assumption 18).
   - Header, metrics (placeholders until phase 4), buttons, tabs and deck list; on desktop, decks and summary side by side.
   - **Tests first:**
     - 🧩 shows the project's decks with their number of cards.
     - 🧩 with no decks, the empty state is shown.
 
-- [ ] **T1.6 Create and edit deck** · P04 · US-06 · Depends on: T1.5
+- [x] **T1.6 Create and edit deck** · P04 · US-06 · Depends on: T1.5
+  - > **Note:** the colour picker starts on "Del proyecto", which keeps the deck on its project's colour (decided with the owner). See SPEC §13.2 (assumption 19).
   - **Tests first:** 🧩 cannot save without a name; 🧩 the new deck appears in the list.
 
 - [ ] **T1.7 Trash: logic** · R 7.1 · US-03, US-04 · Depends on: T1.1, T1.4
