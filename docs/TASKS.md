@@ -19,7 +19,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | Phase | Tasks | Status |
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
-| 1. Projects and decks | T1.1 – T1.9 | ⏳ 8 / 9 |
+| 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
@@ -175,7 +175,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 in the trash, an item with 2 days left is flagged as urgent.
     - 🧩 opening the trash purges the items that expired while the app was open (fake clock moved past 15 days), so they are not listed.
 
-- [ ] **T1.9 Archived** · P14 · US-05 · Depends on: T1.1
+- [x] **T1.9 Archived** · P14 · US-05 · Depends on: T1.1
+  - > **Note:** schema version 2 adds `projects.archived_at` for "Archivado el…" (first migration). Archiving works from the dashboard and project screen menus, with "Deshacer" (decided with the owner). The wrap-up tests passed on Windows and an Android emulator. See SPEC §13.2 (assumptions 22 and 23).
   - **Tests first:** 🧩 archiving a project removes it from the dashboard and it appears under Archived; 🧩 unarchiving brings it back.
   - **Phase wrap-up:** 🔗 create project → deck → archive → unarchive → delete → restore from the trash. 🤖 E2E-06.
 
