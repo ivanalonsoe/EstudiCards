@@ -31,13 +31,24 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'estudicards'));
 
   /// Bump this number on every schema change and add its migration.
+  ///
+  /// History:
+  /// 1. First schema (T0.4).
+  /// 2. `projects.archived_at` (T1.9).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   /// A migration tells Drift how to create the tables the first time and,
   /// later, how to upgrade an old database when `schemaVersion` grows.
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    // A new install gets every table as it is now.
+    onCreate: (m) => m.createAll(),
+    // An installed app with an older database gets each missing step, in
+    // order. A released step is never changed: installed apps rely on it.
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.addColumn(projects, projects.archivedAt);
+    },
     beforeOpen: (details) async {
       // SQLite ignores foreign keys unless they are switched on for every
       // connection. Without this, deleting a card would leave its options,

@@ -10,6 +10,7 @@ import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/decks/presentation/deck_tile.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
+import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
@@ -534,8 +535,7 @@ class _NoStatistics extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of the project. "Compartir" and "Archivar" arrive with their
-/// tasks.
+/// The ⋮ menu of the project. "Compartir" arrives in phase 5.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.project});
 
@@ -565,6 +565,20 @@ class _ProjectMenu extends ConsumerWidget {
           child: Text(
             project.isFavorite ? l10n.unmarkFavorite : l10n.markFavorite,
           ),
+        ),
+        PopupMenuItem(
+          value: () => unawaited(
+            archiveProject(
+              context,
+              ref,
+              project: project,
+              // Archived projects are not on the dashboard path any more.
+              afterArchive: () {
+                if (context.mounted) context.go(AppRoutes.home);
+              },
+            ),
+          ),
+          child: Text(l10n.archive),
         ),
         PopupMenuItem(
           value: () => unawaited(

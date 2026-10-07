@@ -44,7 +44,32 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
   ///
   /// `watch()` returns a stream that emits a new list every time one of the
   /// tables it reads changes, so the screen updates by itself.
-  Stream<List<ProjectWithCounts>> watchActive() {
+  Stream<List<ProjectWithCounts>> watchActive() => _watchWithCounts(
+    where: projects.isArchived.not() & projects.deletedAt.isNull(),
+    orderBy: [
+      OrderingTerm.desc(projects.isFavorite),
+      OrderingTerm.desc(coalesce([projects.lastUsedAt, projects.createdAt])),
+      OrderingTerm.asc(projects.name),
+    ],
+  );
+
+  /// The Archived list (US-05 AC2): archived and not in the trash, the most
+  /// recently archived first. Projects archived before `archived_at`
+  /// existed have no date and go last.
+  Stream<List<ProjectWithCounts>> watchArchived() => _watchWithCounts(
+    where: projects.isArchived & projects.deletedAt.isNull(),
+    orderBy: [
+      OrderingTerm(expression: projects.archivedAt, mode: OrderingMode.desc),
+      OrderingTerm.asc(projects.name),
+    ],
+  );
+
+  /// The projects that match [where], in [orderBy] order, each with its
+  /// number of decks and cards, leaving out decks in the trash.
+  Stream<List<ProjectWithCounts>> _watchWithCounts({
+    required Expression<bool> where,
+    required List<OrderingTerm> orderBy,
+  }) {
     final decks = attachedDatabase.decks;
     final cards = attachedDatabase.cards;
 
@@ -66,12 +91,8 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
 
     final query = select(projects).join([])
       ..addColumns([deckCount, cardCount])
-      ..where(projects.isArchived.not() & projects.deletedAt.isNull())
-      ..orderBy([
-        OrderingTerm.desc(projects.isFavorite),
-        OrderingTerm.desc(coalesce([projects.lastUsedAt, projects.createdAt])),
-        OrderingTerm.asc(projects.name),
-      ]);
+      ..where(where)
+      ..orderBy(orderBy);
     return query.watch().map(
       (rows) => [
         for (final row in rows)

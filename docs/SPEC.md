@@ -229,6 +229,7 @@ erDiagram
 | target_lang | TEXT? | BCP-47 (e.g. `es-ES`). Only if `type = language` |
 | is_favorite | BOOL | Default `false` |
 | is_archived | BOOL | Default `false` |
+| archived_at | DATETIME? | When it was archived; null when not archived (schema version 2) |
 | deleted_at | DATETIME? | Not null = in the trash |
 | last_used_at | DATETIME? | Updated when the project is opened or studied |
 | created_at / updated_at | DATETIME | |
@@ -1013,3 +1014,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - An item is urgent, with an amber label, when it has 3 days or fewer left (decided with the owner). "Se elimina hoy" is shown for 0 days.
     - On a phone the days-left label goes above "Eliminar definitivamente" and "Restaurar", which do not fit on the same line at 390 px; from 360 px of card width they share one line. The trash hides expired items even before the purge finishes. The Trash screen keeps a maximum width of 640 px on tablet and desktop.
     - "Eliminar definitivamente" and "Vaciar papelera" ask for confirmation (US-04 AC4). "Restaurar" acts at once, without a message.
+22. **Archived (T1.9):**
+    - Schema version 2 adds `projects.archived_at` (decided with the owner) to show "Archivado el 2 sept". It is the first migration: `onUpgrade` adds the column when `from < 2`, and `test/core/db/migration_test.dart` opens a version 1 database and checks it. Projects archived before the upgrade keep `is_archived` but have no date, so the date is not shown and they go last. Unarchiving clears `archived_at`.
+    - The date is the day and the short month from `intl` in Spanish, in local time. `intl` writes September as "sept" (the design shows "sep"); both are correct Spanish abbreviations.
+    - "Archivar" is in the dashboard ⋮ menu and the project screen ⋮ menu (decided with the owner). From the project screen the app goes back to the dashboard. Archiving asks nothing, since it deletes nothing, and shows "«name» se ha archivado" with "Deshacer" for 5 seconds (decided with the owner).
+    - The Archived screen lists archived projects not in the trash, the most recently archived first, with "Desarchivar" and "Eliminar". "Eliminar" works as on the dashboard (confirmation, trash, "Deshacer"). A project restored from the trash goes back to Archived if it was archived.
+    - The bottom row of the Trash and Archived cards shares `AdaptiveActionsRow` (`core/widgets/`), and both "Deshacer" snackbars share `showUndoSnackBar`.

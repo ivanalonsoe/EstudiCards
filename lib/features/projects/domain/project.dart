@@ -27,6 +27,7 @@ class Project {
     this.sourceLang,
     this.targetLang,
     this.lastUsedAt,
+    this.archivedAt,
   });
 
   final String id;
@@ -44,6 +45,10 @@ class Project {
   final String? targetLang;
   final bool isFavorite;
   final bool isArchived;
+
+  /// When it was archived; null if it is not, or if it was archived before
+  /// this was recorded.
+  final DateTime? archivedAt;
   final DateTime? lastUsedAt;
   final DateTime createdAt;
   final DateTime updatedAt;

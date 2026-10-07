@@ -5,6 +5,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
+import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
@@ -129,8 +130,7 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-/// The ⋮ menu of a project card. "Archivar" and "Compartir" arrive with
-/// their tasks.
+/// The ⋮ menu of a project card. "Compartir" arrives in phase 5.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.summary});
 
@@ -162,6 +162,11 @@ class _ProjectMenu extends ConsumerWidget {
           child: Text(
             project.isFavorite ? l10n.unmarkFavorite : l10n.markFavorite,
           ),
+        ),
+        PopupMenuItem(
+          value: () =>
+              unawaited(archiveProject(context, ref, project: project)),
+          child: Text(l10n.archive),
         ),
         PopupMenuItem(
           value: () => unawaited(
