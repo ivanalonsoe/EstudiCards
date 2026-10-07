@@ -11,6 +11,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
+import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -74,10 +75,8 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
         routes: [
           GoRoute(
             path: AppRoutes.home,
-            builder: (context, state) => const PlaceholderScreen(
-              key: Key('screen.dashboard'),
-              isHome: true,
-            ),
+            builder: (context, state) =>
+                const DashboardScreen(key: Key('screen.dashboard')),
             routes: [
               screen(
                 'project/:projectId',

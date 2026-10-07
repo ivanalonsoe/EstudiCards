@@ -971,3 +971,20 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Favourite and archive changes update `updated_at`; marking a project as used only updates `last_used_at`.
     - A deck's `color` stays null in the database while it inherits; the `Deck` model returns the resolved colour plus `inheritsColor`, so a deck follows its project's colour if the project changes. Saving a deck with no colour makes it inherit again.
     - A project's decks are listed oldest first (by `created_at`, then by name).
+16. **Dashboard (T1.2):**
+    - Riverpod (`flutter_riverpod`) is used without code generation. `lib/core/providers.dart` has `databaseProvider` and `clockProvider`; each feature has its own providers in `presentation/` (e.g. `projectsRepositoryProvider`). The `Random` provider is added when the first feature uses it. `main.dart` wraps the app in a `ProviderScope`.
+    - Header until phase 4 (decided with the owner): a greeting by local time ("Buenos días" 6:00–13:59, "Buenas tardes" 14:00–20:59, "Buenas noches" 21:00–5:59) and the streak at "0 días". The daily goal ring stays hidden, since the goal is off by default.
+    - Buttons whose feature comes in a later task are hidden until that task, not shown disabled (decided with the owner): "Importar" (phase 5), and "Compartir" (phase 5), "Archivar" (T1.9) and "Eliminar" (T1.8) in the ⋮ menu.
+    - Until phase 4 the project card shows "— aciertos" with an empty bar and "Sin errores pendientes"; the date it was last studied is hidden.
+    - The search filters as the user types, ignoring case and accents, and matches anywhere in the name. The dashboard field (mobile and tablet) and the sidebar field (desktop) share the same search, so the sidebar search also filters the desktop grid.
+    - Mobile: "Favoritos" and "Recientes" headings, each shown only when it has projects. Desktop: a grid of 3 columns (2 when the content is narrower than 900 px) ending with a dashed "Nuevo proyecto" tile. Tablet uses the mobile layout with a maximum width of 640 px.
+    - Opening a project from the dashboard or the sidebar marks it as used (R 7.7).
+    - Project icons: `globe`, `scales`, `flask`, `book`, `cards`, `layers`, `star` and `sparkles` (`ProjectIcon`); an unknown key falls back to `book`.
+    - Widget tests start the app with `test/helpers/test_app.dart`: an in-memory database opened with `closeStreamsSynchronously` (otherwise Drift leaves a timer pending when a watched query stops, and the test fails) and a `FakeClock`. Inside a widget test, read the database with plain queries (`get`, `getById`), not with `watch…().first`: a watched query waits for the test's fake time to move and the test hangs.
+17. **Create and edit project (T1.3):**
+    - The form is a bottom sheet on mobile (< 600 dp) and a dialog on tablet and desktop. After creating, the new project opens (US-01 AC3); after editing, the form just closes.
+    - A new project starts as orange, with the `book` icon and type "General".
+    - The confirmation when switching from "Idioma" to "General" (US-02 AC2) only appears when editing a project stored as a language project. While creating one, switching back just hides the language selectors.
+    - Name and description stop accepting text at 60 and 300 characters instead of showing an error; the Save button stays disabled until the input is valid (`ProjectInput.validate()`).
+    - Languages offered (decided with the owner): Español, Inglés (R. U.), Inglés (EE. UU.), Francés, Alemán, Italiano, Portugués, Portugués (Brasil), Catalán, Gallego, Euskera, Neerlandés, Chino and Japonés (`lib/features/projects/domain/languages.dart`). A stored code outside the list (e.g. from an import) is still shown, with the code as its name.
+    - Colours and icons have Spanish names in the ARB for screen readers. The icon picker keeps 48 px touch targets, so on a phone its 8 icons take two rows (the design fits them in one row with smaller squares).

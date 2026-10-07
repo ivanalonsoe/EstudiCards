@@ -34,18 +34,55 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
 
   /// The dashboard list (US-05 AC1): not archived and not in the trash,
   /// favourites first, then the most recently used. A project never used
-  /// counts from its creation time.
+  /// counts from its creation time. Each row comes with its number of decks
+  /// and cards, leaving out decks in the trash.
   ///
-  /// `watch()` returns a stream that emits a new list every time the table
-  /// changes, so the screen updates by itself.
-  Stream<List<ProjectRow>> watchActive() {
-    final query = select(projects)
-      ..where((p) => p.isArchived.not() & p.deletedAt.isNull())
+  /// `watch()` returns a stream that emits a new list every time one of the
+  /// tables it reads changes, so the screen updates by itself.
+  Stream<List<ProjectWithCounts>> watchActive() {
+    final decks = attachedDatabase.decks;
+    final cards = attachedDatabase.cards;
+
+    // Subqueries: small SELECTs run for every project row.
+    final deckCount = subqueryExpression<int>(
+      selectOnly(decks)
+        ..addColumns([countAll()])
+        ..where(decks.projectId.equalsExp(projects.id))
+        ..where(decks.deletedAt.isNull()),
+    );
+    final cardCount = subqueryExpression<int>(
+      selectOnly(cards).join([
+          innerJoin(decks, decks.id.equalsExp(cards.deckId), useColumns: false),
+        ])
+        ..addColumns([countAll()])
+        ..where(decks.projectId.equalsExp(projects.id))
+        ..where(decks.deletedAt.isNull()),
+    );
+
+    final query = select(projects).join([])
+      ..addColumns([deckCount, cardCount])
+      ..where(projects.isArchived.not() & projects.deletedAt.isNull())
       ..orderBy([
-        (p) => OrderingTerm.desc(p.isFavorite),
-        (p) => OrderingTerm.desc(coalesce([p.lastUsedAt, p.createdAt])),
-        (p) => OrderingTerm.asc(p.name),
+        OrderingTerm.desc(projects.isFavorite),
+        OrderingTerm.desc(coalesce([projects.lastUsedAt, projects.createdAt])),
+        OrderingTerm.asc(projects.name),
       ]);
-    return query.watch();
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          (
+            project: row.readTable(projects),
+            deckCount: row.read(deckCount)!,
+            cardCount: row.read(cardCount)!,
+          ),
+      ],
+    );
   }
 }
+
+/// A project row with how many decks and cards it has.
+typedef ProjectWithCounts = ({
+  ProjectRow project,
+  int deckCount,
+  int cardCount,
+});

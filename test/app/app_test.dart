@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/test_app.dart';
+
 /// Paints a box with the current theme's background token.
 class _ThemedBox extends StatelessWidget {
   const new();
@@ -46,7 +48,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
-    await tester.pumpWidget(const EstudiCardsApp());
+    await pumpTestApp(tester, size: mobile);
     expect(scaffoldColor(tester), AppColors.light.background);
 
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;

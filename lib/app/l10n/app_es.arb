@@ -89,5 +89,254 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "deckCount": "{count, plural, =1{1 baraja} other{{count} barajas}}",
+  "@deckCount": {
+    "description": "Number of decks in a project, e.g. '3 barajas'.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "projectContents": "{decks} · {cards}",
+  "@projectContents": {
+    "description": "Project card subtitle, e.g. '3 barajas · 256 tarjetas'. decks and cards are already formatted with deckCount and cardCount.",
+    "placeholders": {
+      "decks": { "type": "String" },
+      "cards": { "type": "String" }
+    }
+  },
+  "correctRate": "{value} aciertos",
+  "@correctRate": {
+    "description": "Percentage of correct answers, e.g. '78% aciertos'. value is '—' when there is no data yet.",
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "noPendingErrors": "Sin errores pendientes",
+  "@noPendingErrors": {
+    "description": "Project card: the project has no cards in the error list."
+  },
+
+  "greetingMorning": "Buenos días",
+  "@greetingMorning": {
+    "description": "Dashboard greeting from 6:00 to 13:59."
+  },
+  "greetingAfternoon": "Buenas tardes",
+  "@greetingAfternoon": {
+    "description": "Dashboard greeting from 14:00 to 20:59."
+  },
+  "greetingEvening": "Buenas noches",
+  "@greetingEvening": {
+    "description": "Dashboard greeting from 21:00 to 5:59."
+  },
+  "streakDays": "{count, plural, =1{1 día} other{{count} días}}",
+  "@streakDays": {
+    "description": "Current streak in days, next to a flame icon.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "currentStreak": "Racha actual",
+  "@currentStreak": {
+    "description": "Label under the streak on the desktop dashboard."
+  },
+  "newProject": "Nuevo proyecto",
+  "@newProject": {
+    "description": "Button that opens the project form to create one; also the form title."
+  },
+  "favorites": "Favoritos",
+  "@favorites": {
+    "description": "Heading of the favourite projects (dashboard and sidebar)."
+  },
+  "recent": "Recientes",
+  "@recent": {
+    "description": "Dashboard heading of the projects that are not favourites."
+  },
+  "yourProjects": "Tus proyectos",
+  "@yourProjects": {
+    "description": "Heading of the project grid on the desktop dashboard."
+  },
+  "projectsOrder": "Favoritos primero · después por último uso",
+  "@projectsOrder": {
+    "description": "Explains the order of the desktop project grid."
+  },
+  "emptyProjectsTitle": "Crea tu primer proyecto",
+  "@emptyProjectsTitle": {
+    "description": "Empty dashboard title."
+  },
+  "emptyProjectsBody": "Un proyecto agrupa las barajas de un tema: un idioma, una asignatura o un temario de oposición.",
+  "@emptyProjectsBody": {
+    "description": "Empty dashboard explanation."
+  },
+  "noSearchResults": "Ningún proyecto coincide con «{query}»",
+  "@noSearchResults": {
+    "description": "Shown when the project search finds nothing.",
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "loadError": "No se han podido cargar los datos",
+  "@loadError": {
+    "description": "Shown when reading the database fails."
+  },
+  "projectOptions": "Opciones del proyecto",
+  "@projectOptions": {
+    "description": "Tooltip of the ⋮ button on a project card."
+  },
+  "markFavorite": "Marcar como favorito",
+  "@markFavorite": {
+    "description": "Project menu: add to favourites."
+  },
+  "unmarkFavorite": "Quitar de favoritos",
+  "@unmarkFavorite": {
+    "description": "Project menu: remove from favourites."
+  },
+  "edit": "Editar",
+  "@edit": {
+    "description": "Menu item that opens the edit form of a project or deck."
+  },
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Button that closes a form or dialog without saving."
+  },
+  "save": "Guardar",
+  "@save": {
+    "description": "Button that saves the changes of an edit form."
+  },
+  "close": "Cerrar",
+  "@close": {
+    "description": "Tooltip of the ✕ button of a form."
+  },
+
+  "editProject": "Editar proyecto",
+  "@editProject": {
+    "description": "Title of the project form when editing (P02)."
+  },
+  "createProject": "Crear proyecto",
+  "@createProject": {
+    "description": "Save button of the project form when creating."
+  },
+  "nameLabel": "Nombre",
+  "@nameLabel": {
+    "description": "Label of the name field in the project and deck forms."
+  },
+  "descriptionOptionalLabel": "Descripción (opcional)",
+  "@descriptionOptionalLabel": {
+    "description": "Label of the description field in the project and deck forms."
+  },
+  "colorLabel": "Color",
+  "@colorLabel": {
+    "description": "Label of the colour picker."
+  },
+  "iconLabel": "Icono",
+  "@iconLabel": {
+    "description": "Label of the project icon picker."
+  },
+  "typeLabel": "Tipo",
+  "@typeLabel": {
+    "description": "Label of the project type selector."
+  },
+  "typeGeneral": "General",
+  "@typeGeneral": {
+    "description": "Project type: any subject."
+  },
+  "typeLanguage": "Idioma",
+  "@typeLanguage": {
+    "description": "Project type: learning a language (enables voice, reverse mode, example and notes)."
+  },
+  "sourceLanguageLabel": "Idioma origen",
+  "@sourceLanguageLabel": {
+    "description": "Label of the language being learnt."
+  },
+  "targetLanguageLabel": "Idioma destino",
+  "@targetLanguageLabel": {
+    "description": "Label of the language of the translations."
+  },
+  "chooseLanguage": "Elige un idioma",
+  "@chooseLanguage": {
+    "description": "Hint of a language selector with nothing chosen."
+  },
+  "switchToGeneralTitle": "¿Cambiar a General?",
+  "@switchToGeneralTitle": {
+    "description": "Title of the dialog shown when a language project is changed to general (US-02 AC2)."
+  },
+  "switchToGeneralBody": "Se ocultarán la voz, el modo inverso y los campos de ejemplo y notas. No se borrará ningún dato.",
+  "@switchToGeneralBody": {
+    "description": "Body of the dialog shown when a language project is changed to general."
+  },
+  "switchToGeneralConfirm": "Cambiar",
+  "@switchToGeneralConfirm": {
+    "description": "Confirm button of the dialog shown when a language project is changed to general."
+  },
+
+  "colorOrange": "Naranja",
+  "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
+  "colorAmber": "Ámbar",
+  "@colorAmber": { "description": "Project palette colour name, read by screen readers." },
+  "colorLime": "Lima",
+  "@colorLime": { "description": "Project palette colour name, read by screen readers." },
+  "colorGreen": "Verde",
+  "@colorGreen": { "description": "Project palette colour name, read by screen readers." },
+  "colorTeal": "Verde azulado",
+  "@colorTeal": { "description": "Project palette colour name, read by screen readers." },
+  "colorCyan": "Cian",
+  "@colorCyan": { "description": "Project palette colour name, read by screen readers." },
+  "colorBlue": "Azul",
+  "@colorBlue": { "description": "Project palette colour name, read by screen readers." },
+  "colorIndigo": "Índigo",
+  "@colorIndigo": { "description": "Project palette colour name, read by screen readers." },
+  "colorViolet": "Violeta",
+  "@colorViolet": { "description": "Project palette colour name, read by screen readers." },
+  "colorPink": "Rosa",
+  "@colorPink": { "description": "Project palette colour name, read by screen readers." },
+  "colorFuchsia": "Fucsia",
+  "@colorFuchsia": { "description": "Project palette colour name, read by screen readers." },
+  "colorSlate": "Pizarra",
+  "@colorSlate": { "description": "Project palette colour name, read by screen readers." },
+
+  "iconGlobe": "Mundo",
+  "@iconGlobe": { "description": "Project icon name, read by screen readers." },
+  "iconScales": "Balanza",
+  "@iconScales": { "description": "Project icon name, read by screen readers." },
+  "iconFlask": "Matraz",
+  "@iconFlask": { "description": "Project icon name, read by screen readers." },
+  "iconBook": "Libro",
+  "@iconBook": { "description": "Project icon name, read by screen readers." },
+  "iconCards": "Tarjetas",
+  "@iconCards": { "description": "Project icon name, read by screen readers." },
+  "iconLayers": "Capas",
+  "@iconLayers": { "description": "Project icon name, read by screen readers." },
+  "iconStar": "Estrella",
+  "@iconStar": { "description": "Project icon name, read by screen readers." },
+  "iconSparkles": "Destellos",
+  "@iconSparkles": { "description": "Project icon name, read by screen readers." },
+
+  "languageEsES": "Español",
+  "@languageEsES": { "description": "Language name (es-ES) in the language selectors." },
+  "languageEnGB": "Inglés (R. U.)",
+  "@languageEnGB": { "description": "Language name (en-GB) in the language selectors." },
+  "languageEnUS": "Inglés (EE. UU.)",
+  "@languageEnUS": { "description": "Language name (en-US) in the language selectors." },
+  "languageFrFR": "Francés",
+  "@languageFrFR": { "description": "Language name (fr-FR) in the language selectors." },
+  "languageDeDE": "Alemán",
+  "@languageDeDE": { "description": "Language name (de-DE) in the language selectors." },
+  "languageItIT": "Italiano",
+  "@languageItIT": { "description": "Language name (it-IT) in the language selectors." },
+  "languagePtPT": "Portugués",
+  "@languagePtPT": { "description": "Language name (pt-PT) in the language selectors." },
+  "languagePtBR": "Portugués (Brasil)",
+  "@languagePtBR": { "description": "Language name (pt-BR) in the language selectors." },
+  "languageCaES": "Catalán",
+  "@languageCaES": { "description": "Language name (ca-ES) in the language selectors." },
+  "languageGlES": "Gallego",
+  "@languageGlES": { "description": "Language name (gl-ES) in the language selectors." },
+  "languageEuES": "Euskera",
+  "@languageEuES": { "description": "Language name (eu-ES) in the language selectors." },
+  "languageNlNL": "Neerlandés",
+  "@languageNlNL": { "description": "Language name (nl-NL) in the language selectors." },
+  "languageZhCN": "Chino",
+  "@languageZhCN": { "description": "Language name (zh-CN) in the language selectors." },
+  "languageJaJP": "Japonés",
+  "@languageJaJP": { "description": "Language name (ja-JP) in the language selectors." }
 }

@@ -1,12 +1,9 @@
-import 'package:estudicards/app/app.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-const mobile = Size(390, 844);
-const tablet = Size(700, 1000);
-const desktop = Size(1440, 900);
+import '../helpers/test_app.dart';
 
 final Finder sidebar = find.byKey(const Key('shell.sidebar'));
 
@@ -18,18 +15,7 @@ Future<GoRouter> pumpApp(
   WidgetTester tester, {
   required Size size,
   String location = AppRoutes.home,
-}) async {
-  tester.view
-    ..physicalSize = size
-    ..devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  final router = createRouter(initialLocation: location);
-  addTearDown(router.dispose);
-  await tester.pumpWidget(EstudiCardsApp(router: router));
-  await tester.pumpAndSettle();
-  return router;
-}
+}) => pumpTestApp(tester, size: size, location: location);
 
 /// The title shown by the screen on top.
 Finder screenTitle(String title) =>
@@ -74,7 +60,7 @@ void main() {
       }
       // The sidebar replaces the mobile menu button, and holds the logo.
       expect(find.byTooltip(openMenuTooltip), findsNothing);
-      expect(screenTitle('Inicio'), findsOneWidget);
+      expect(find.byKey(const Key('screen.dashboard')), findsOneWidget);
     });
 
     testWidgets('on desktop the sidebar opens a screen and marks it', (
