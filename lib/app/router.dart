@@ -12,6 +12,7 @@ import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
+import 'package:estudicards/features/projects/presentation/project_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,10 +79,12 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
             builder: (context, state) =>
                 const DashboardScreen(key: Key('screen.dashboard')),
             routes: [
-              screen(
-                'project/:projectId',
-                'project',
-                (l10n) => l10n.project,
+              GoRoute(
+                path: 'project/:projectId',
+                builder: (context, state) => ProjectScreen(
+                  key: const Key('screen.project'),
+                  projectId: state.pathParameters['projectId']!,
+                ),
                 routes: [
                   screen('study', 'sessionSetup', (l10n) => l10n.sessionSetup),
                   screen(

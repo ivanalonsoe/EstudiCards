@@ -105,7 +105,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('screen.project')), findsOneWidget);
-      expect(screenTitle('Proyecto'), findsOneWidget);
 
       // Stack navigation: back returns to the dashboard.
       await tester.tap(find.byType(BackButton));
@@ -113,12 +112,12 @@ void main() {
       expect(find.byKey(const Key('screen.dashboard')), findsOneWidget);
     });
 
-    testWidgets('every route shows its screen with its title', (tester) async {
+    // The project screen has its own tests (project_screen_test.dart).
+    testWidgets('every placeholder route shows its title', (tester) async {
       final router = await pumpApp(tester, size: mobile);
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
-        AppRoutes.project('p1'): 'Proyecto',
         AppRoutes.deck('p1', 'd1'): 'Baraja',
         AppRoutes.newCard('p1', 'd1'): 'Nueva tarjeta',
         AppRoutes.editCard('p1', 'd1', 'c1'): 'Editar tarjeta',

@@ -1,9 +1,11 @@
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/data/projects_repository.dart';
+import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_search.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 final projectsRepositoryProvider = Provider<ProjectsRepository>(
   (ref) => ProjectsRepository(
@@ -18,6 +20,13 @@ final projectsRepositoryProvider = Provider<ProjectsRepository>(
 final projectSummariesProvider = StreamProvider<List<ProjectSummary>>(
   (ref) => ref.watch(projectsRepositoryProvider).watchProjects(),
 );
+
+/// One project, updated when it changes; null if it does not exist. One
+/// provider per project ID (see `deckSummariesProvider` for `.family`).
+final StreamProviderFamily<Project?, String> projectProvider =
+    StreamProvider.family(
+      (ref, id) => ref.watch(projectsRepositoryProvider).watchProject(id),
+    );
 
 /// What the user typed in the project search: the dashboard field on
 /// mobile, the sidebar field on desktop.

@@ -11,6 +11,8 @@ import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/test_data.dart';
+
 void main() {
   late AppDatabase db;
   late FakeClock clock;
@@ -37,7 +39,7 @@ void main() {
 
   Future<List<String>> listedNames([String? projectId]) async =>
       (await repository.watchDecks(projectId ?? project.id).first)
-          .map((d) => d.name)
+          .map((s) => s.deck.name)
           .toList();
 
   group('create', () {
@@ -93,7 +95,7 @@ void main() {
       expect(deck.inheritsColor, isTrue);
       expect((await repository.getById(deck.id))!.color, 'blue');
       expect(
-        (await repository.watchDecks(project.id).first).single.color,
+        (await repository.watchDecks(project.id).first).single.deck.color,
         'blue',
       );
     });
@@ -192,6 +194,26 @@ void main() {
 
       expect(await listedNames(), ['First', 'Second']);
       expect(await listedNames(other.id), ['Other']);
+    });
+
+    test('returns each deck with its number of cards', () async {
+      final verbs = await repository.create(
+        project.id,
+        const DeckInput(name: 'Verbos'),
+      );
+      final empty = await repository.create(
+        project.id,
+        const DeckInput(name: 'Vacía'),
+      );
+      await addTestCard(db, verbs.id);
+      await addTestCard(db, verbs.id);
+
+      final counts = {
+        for (final s in await repository.watchDecks(project.id).first)
+          s.deck.id: s.cardCount,
+      };
+
+      expect(counts, {verbs.id: 2, empty.id: 0});
     });
   });
 

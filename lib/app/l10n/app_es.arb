@@ -269,6 +269,69 @@
     "description": "Confirm button of the dialog shown when a language project is changed to general."
   },
 
+  "projectNotFound": "Este proyecto ya no existe",
+  "@projectNotFound": {
+    "description": "Project screen opened with the ID of a project that does not exist."
+  },
+  "languagePair": "{source} → {target}",
+  "@languagePair": {
+    "description": "Languages of a language project, e.g. 'Inglés → Español'.",
+    "placeholders": {
+      "source": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "detailsSeparator": " · ",
+  "@detailsSeparator": {
+    "description": "Separator between the parts of a subtitle, e.g. 'Inglés → Español · Nivel intermedio alto'."
+  },
+  "metricCards": "{count, plural, =1{tarjeta} other{tarjetas}}",
+  "@metricCards": {
+    "description": "Label under the number of cards in the project header metrics.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "metricCorrect": "aciertos",
+  "@metricCorrect": {
+    "description": "Label under the % correct in the project header metrics."
+  },
+  "metricErrors": "{count, plural, =1{error} other{errores}}",
+  "@metricErrors": {
+    "description": "Label under the number of pending errors in the project header metrics.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "decks": "Barajas",
+  "@decks": {
+    "description": "Project screen: tab and heading of the deck list."
+  },
+  "deckContents": "{cards} · {correct}",
+  "@deckContents": {
+    "description": "Deck row subtitle, e.g. '84 tarjetas · 81% aciertos'. cards and correct are already formatted with cardCount and correctRate.",
+    "placeholders": {
+      "cards": { "type": "String" },
+      "correct": { "type": "String" }
+    }
+  },
+  "emptyDecks": "Crea una baraja para empezar a añadir tarjetas",
+  "@emptyDecks": {
+    "description": "Empty state of a project with no decks (SPEC §5.3)."
+  },
+  "noStatisticsTitle": "Aún no hay estadísticas",
+  "@noStatisticsTitle": {
+    "description": "Empty state of the statistics: nothing studied yet."
+  },
+  "noStatisticsBody": "Estudia este proyecto para verlas aquí.",
+  "@noStatisticsBody": {
+    "description": "Empty state of the project statistics, under noStatisticsTitle."
+  },
+  "last30Days": "Últimos 30 días",
+  "@last30Days": {
+    "description": "Heading of the 30-day summary on the desktop project screen."
+  },
+
   "colorOrange": "Naranja",
   "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
   "colorAmber": "Ámbar",

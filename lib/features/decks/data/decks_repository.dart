@@ -7,6 +7,7 @@ import 'package:estudicards/core/ids.dart';
 import 'package:estudicards/features/decks/data/decks_dao.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
+import 'package:estudicards/features/decks/domain/deck_summary.dart';
 
 class DecksRepository {
   new(this._dao, this._clock);
@@ -58,10 +59,16 @@ class DecksRepository {
     return row == null ? null : _toDeck(row);
   }
 
-  /// A project's decks, not in the trash, updated whenever they change.
-  Stream<List<Deck>> watchDecks(String projectId) => _dao
+  /// A project's decks, not in the trash, with their number of cards;
+  /// updated whenever they change.
+  Stream<List<DeckSummary>> watchDecks(String projectId) => _dao
       .watchActiveByProject(projectId)
-      .map((rows) => rows.map(_toDeck).toList());
+      .map(
+        (rows) => [
+          for (final row in rows)
+            DeckSummary(deck: _toDeck(row.deck), cardCount: row.cardCount),
+        ],
+      );
 
   /// Records that the deck was opened or studied (R 7.7).
   Future<void> markUsed(String id) =>

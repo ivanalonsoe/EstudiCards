@@ -84,6 +84,19 @@ abstract final class AppTheme {
         errorBorder: fieldBorder(colors.error, width: 2),
         focusedErrorBorder: fieldBorder(colors.error, width: 2),
       ),
+      // Tabs as in the design: the chosen one in dark text with an orange
+      // bar under the whole tab.
+      tabBarTheme: TabBarThemeData(
+        labelColor: colors.text,
+        unselectedLabelColor: colors.textMuted,
+        labelStyle: buttonText.copyWith(fontSize: 17),
+        unselectedLabelStyle: buttonText.copyWith(fontSize: 17),
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: colors.primary, width: 3),
+        ),
+        dividerColor: colors.border,
+      ),
       cardTheme: CardThemeData(
         color: colors.surface,
         elevation: 0,
