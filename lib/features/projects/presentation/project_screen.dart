@@ -5,6 +5,8 @@ import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/core/widgets/dashed_border.dart';
+import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/decks/presentation/deck_tile.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
@@ -116,9 +118,10 @@ class _MobileProjectState extends State<_MobileProject>
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              if (_tabs.index == 0)
-                _DeckList(projectId: project.id)
-              else
+              if (_tabs.index == 0) ...[
+                _DeckList(project: project),
+                _NewDeckButton(project: project),
+              ] else
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
                   child: _NoStatistics(),
@@ -168,9 +171,22 @@ class _DesktopProject extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(l10n.decks, style: text.titleLarge),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(l10n.decks, style: text.titleLarge),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('projectScreen.newDeck'),
+                            onPressed: () =>
+                                showDeckForm(context, project: project),
+                            icon: const Icon(Icons.add_rounded),
+                            label: Text(l10n.newDeck),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: AppSpacing.lg),
-                      _DeckList(projectId: project.id),
+                      _DeckList(project: project),
                     ],
                   ),
                 ),
@@ -376,23 +392,59 @@ class _Metric extends StatelessWidget {
 
 /// The project's decks, or the empty state when it has none.
 class _DeckList extends ConsumerWidget {
-  const new({required this.projectId});
+  const new({required this.project});
 
-  final String projectId;
+  final Project project;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final summaries = ref.watch(deckSummariesProvider(projectId)).value;
+    final summaries = ref.watch(deckSummariesProvider(project.id)).value;
     if (summaries == null) return const SizedBox.shrink();
     if (summaries.isEmpty) return const _EmptyDecks();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final summary in summaries) ...[
-          DeckTile(summary: summary),
+          DeckTile(summary: summary, project: project),
           const SizedBox(height: AppSpacing.md),
         ],
       ],
+    );
+  }
+}
+
+/// The dashed "Nueva baraja" button under the mobile deck list.
+class _NewDeckButton extends StatelessWidget {
+  const new({required this.project});
+
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return DashedBorder(
+      color: colors.border,
+      radius: AppRadii.listCard,
+      child: InkWell(
+        key: const Key('projectScreen.newDeck'),
+        onTap: () => showDeckForm(context, project: project),
+        borderRadius: BorderRadius.circular(AppRadii.listCard),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_rounded, color: colors.primaryStrong),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                AppLocalizations.of(context).newDeck,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: colors.primaryStrong),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

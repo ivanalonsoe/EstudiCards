@@ -1,11 +1,11 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
-import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/projects/domain/languages.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
+import 'package:estudicards/features/projects/presentation/form_parts.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
@@ -22,30 +22,10 @@ Future<void> showProjectForm(
   WidgetRef ref, {
   Project? project,
 }) async {
-  final form = ProjectForm(project: project);
-  final isMobile =
-      FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
-      FormFactor.mobile;
-
-  // Both return the saved project, or null if the user cancelled.
-  final saved = isMobile
-      ? await showModalBottomSheet<Project>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          showDragHandle: true,
-          builder: (context) => form,
-        )
-      : await showDialog<Project>(
-          context: context,
-          builder: (context) => Dialog(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: form,
-            ),
-          ),
-        );
-
+  final saved = await showFormSheet<Project>(
+    context,
+    ProjectForm(project: project),
+  );
   if (saved != null && project == null && context.mounted) {
     openProject(context, ref, saved.id);
   }
@@ -144,267 +124,110 @@ class _ProjectFormState extends ConsumerState<ProjectForm> {
     final text = Theme.of(context).textTheme;
     final canSave = !_saving && _input.validate().isEmpty;
 
-    return Padding(
-      key: const Key('projectForm'),
-      // Keeps the buttons above the on-screen keyboard.
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.md,
-              0,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _isEditing ? l10n.editProject : l10n.newProject,
-                    style: text.headlineSmall,
-                  ),
-                ),
-                IconButton(
-                  key: const Key('projectForm.close'),
-                  tooltip: l10n.close,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Label(l10n.nameLabel),
-                  TextField(
-                    key: const Key('projectForm.name'),
-                    controller: _name,
-                    autofocus: !_isEditing,
-                    textCapitalization: TextCapitalization.sentences,
-                    // Typing stops at the maximum length instead of showing
-                    // an error (US-01 AC1).
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(
-                        ProjectInput.maxNameLength,
-                      ),
-                    ],
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _Label(l10n.descriptionOptionalLabel),
-                  TextField(
-                    key: const Key('projectForm.description'),
-                    controller: _description,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: null,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(
-                        ProjectInput.maxDescriptionLength,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _Label(l10n.colorLabel),
-                  _ColorPicker(
-                    selected: _color,
-                    onChanged: (color) => setState(() => _color = color),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _Label(l10n.iconLabel),
-                  _IconPicker(
-                    selected: _icon,
-                    color: _color,
-                    onChanged: (icon) => setState(() => _icon = icon),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _Label(l10n.typeLabel),
-                  SegmentedButton<ProjectType>(
-                    segments: [
-                      ButtonSegment(
-                        value: ProjectType.general,
-                        label: Text(
-                          l10n.typeGeneral,
-                          key: const Key('projectForm.type.general'),
-                        ),
-                      ),
-                      ButtonSegment(
-                        value: ProjectType.language,
-                        label: Text(
-                          l10n.typeLanguage,
-                          key: const Key('projectForm.type.language'),
-                        ),
-                      ),
-                    ],
-                    selected: {_type},
-                    showSelectedIcon: false,
-                    // A grey track with the chosen option in white, as in
-                    // the design.
-                    style: SegmentedButton.styleFrom(
-                      backgroundColor: AppColors.of(context).surfaceVariant,
-                      foregroundColor: AppColors.of(context).textMuted,
-                      selectedBackgroundColor: AppColors.of(context).surface,
-                      selectedForegroundColor: AppColors.of(context).text,
-                      side: BorderSide(color: AppColors.of(context).border),
-                      textStyle: text.labelLarge,
-                    ),
-                    onSelectionChanged: (selection) =>
-                        _changeType(selection.single),
-                  ),
-                  if (_type == ProjectType.language) ...[
-                    const SizedBox(height: AppSpacing.xl),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _LanguageField(
-                            key: const Key('projectForm.sourceLang'),
-                            label: l10n.sourceLanguageLabel,
-                            value: _sourceLang,
-                            onChanged: (code) =>
-                                setState(() => _sourceLang = code),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.lg),
-                        Expanded(
-                          child: _LanguageField(
-                            key: const Key('projectForm.targetLang'),
-                            label: l10n.targetLanguageLabel,
-                            value: _targetLang,
-                            onChanged: (code) =>
-                                setState(() => _targetLang = code),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+    return FormFrame(
+      keyPrefix: 'projectForm',
+      title: _isEditing ? l10n.editProject : l10n.newProject,
+      saveLabel: _isEditing ? l10n.save : l10n.createProject,
+      onSave: canSave ? _save : null,
+      fields: [
+        FormLabel(l10n.nameLabel),
+        TextField(
+          key: const Key('projectForm.name'),
+          controller: _name,
+          autofocus: !_isEditing,
+          textCapitalization: TextCapitalization.sentences,
+          // Typing stops at the maximum length instead of showing
+          // an error (US-01 AC1).
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(ProjectInput.maxNameLength),
+          ],
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FormLabel(l10n.descriptionOptionalLabel),
+        TextField(
+          key: const Key('projectForm.description'),
+          controller: _description,
+          textCapitalization: TextCapitalization.sentences,
+          maxLines: null,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(ProjectInput.maxDescriptionLength),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FormLabel(l10n.colorLabel),
+        ColorPicker(
+          keyPrefix: 'projectForm',
+          selected: _color,
+          // A project always has its own colour, so it is never
+          // null here.
+          onChanged: (color) => setState(() => _color = color!),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FormLabel(l10n.iconLabel),
+        _IconPicker(
+          selected: _icon,
+          color: _color,
+          onChanged: (icon) => setState(() => _icon = icon),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        FormLabel(l10n.typeLabel),
+        SegmentedButton<ProjectType>(
+          segments: [
+            ButtonSegment(
+              value: ProjectType.general,
+              label: Text(
+                l10n.typeGeneral,
+                key: const Key('projectForm.type.general'),
               ),
             ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppColors.of(context).border),
+            ButtonSegment(
+              value: ProjectType.language,
+              label: Text(
+                l10n.typeLanguage,
+                key: const Key('projectForm.type.language'),
               ),
             ),
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('projectForm.cancel'),
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.cancel),
-                  ),
+          ],
+          selected: {_type},
+          showSelectedIcon: false,
+          // A grey track with the chosen option in white, as in
+          // the design.
+          style: SegmentedButton.styleFrom(
+            backgroundColor: AppColors.of(context).surfaceVariant,
+            foregroundColor: AppColors.of(context).textMuted,
+            selectedBackgroundColor: AppColors.of(context).surface,
+            selectedForegroundColor: AppColors.of(context).text,
+            side: BorderSide(color: AppColors.of(context).border),
+            textStyle: text.labelLarge,
+          ),
+          onSelectionChanged: (selection) => _changeType(selection.single),
+        ),
+        if (_type == ProjectType.language) ...[
+          const SizedBox(height: AppSpacing.xl),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _LanguageField(
+                  key: const Key('projectForm.sourceLang'),
+                  label: l10n.sourceLanguageLabel,
+                  value: _sourceLang,
+                  onChanged: (code) => setState(() => _sourceLang = code),
                 ),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const Key('projectForm.save'),
-                    onPressed: canSave ? _save : null,
-                    icon: const Icon(Icons.check_rounded),
-                    label: Text(
-                      _isEditing ? l10n.save : l10n.createProject,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: _LanguageField(
+                  key: const Key('projectForm.targetLang'),
+                  label: l10n.targetLanguageLabel,
+                  value: _targetLang,
+                  onChanged: (code) => setState(() => _targetLang = code),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// The bold label above each field, as in the design.
-class _Label extends StatelessWidget {
-  const new(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: Text(text, style: Theme.of(context).textTheme.titleSmall),
-  );
-}
-
-/// The 12 colours of the project palette as circles; the chosen one has a
-/// ✓ and a ring.
-class _ColorPicker extends StatelessWidget {
-  const new({required this.selected, required this.onChanged});
-
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final brightness = Theme.of(context).brightness;
-    // At most 6 circles per row: two rows, as in the design.
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: minTouchTarget * 6 + AppSpacing.sm * 5,
-        ),
-        child: _colorWrap(l10n, brightness),
-      ),
-    );
-  }
-
-  Widget _colorWrap(AppLocalizations l10n, Brightness brightness) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: [
-        for (final color in ProjectColor.values)
-          Semantics(
-            label: colorName(l10n, color),
-            selected: color.key == selected,
-            button: true,
-            child: InkResponse(
-              key: Key('projectForm.color.${color.key}'),
-              onTap: () => onChanged(color.key),
-              child: Container(
-                width: minTouchTarget,
-                height: minTouchTarget,
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                decoration: color.key == selected
-                    ? BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: color.resolve(brightness),
-                          width: 2,
-                        ),
-                      )
-                    : null,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: color.resolve(brightness),
-                    shape: BoxShape.circle,
-                  ),
-                  child: color.key == selected
-                      ? Icon(
-                          Icons.check_rounded,
-                          // White in both themes, as in the design.
-                          color: AppColors.light.surface,
-                          size: 20,
-                        )
-                      : null,
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -492,7 +315,7 @@ class _LanguageField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Label(label),
+        FormLabel(label),
         DropdownButtonFormField<String>(
           initialValue: value,
           isExpanded: true,

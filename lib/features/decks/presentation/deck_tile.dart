@@ -6,7 +6,9 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
+import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
+import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,9 +20,12 @@ import 'package:go_router/go_router.dart';
 /// % correct and errors come from the statistics of phase 4; until then the
 /// row shows "— aciertos" and no errors chip.
 class DeckTile extends ConsumerWidget {
-  const new({required this.summary, super.key});
+  const new({required this.summary, required this.project, super.key});
 
   final DeckSummary summary;
+
+  /// The deck's project; the edit form offers its colour.
+  final Project project;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -73,6 +78,10 @@ class DeckTile extends ConsumerWidget {
                   ),
                 ),
               ),
+              Center(
+                child: _DeckMenu(summary: summary, project: project),
+              ),
+              const SizedBox(width: AppSpacing.sm),
             ],
           ),
         ),
@@ -86,5 +95,34 @@ class DeckTile extends ConsumerWidget {
     // The screen does not wait for the database write.
     unawaited(ref.read(decksRepositoryProvider).markUsed(deck.id));
     context.go(AppRoutes.deck(deck.projectId, deck.id));
+  }
+}
+
+/// The ⋮ menu of a deck. "Compartir", "Reiniciar estadísticas" and
+/// "Eliminar" arrive with their tasks.
+class _DeckMenu extends StatelessWidget {
+  const new({required this.summary, required this.project});
+
+  final DeckSummary summary;
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final deck = summary.deck;
+    return PopupMenuButton<VoidCallback>(
+      key: Key('deckTile.${deck.id}.menu'),
+      tooltip: l10n.deckOptions,
+      icon: const Icon(Icons.more_vert_rounded),
+      // Each item's value is the action to run when it is chosen.
+      onSelected: (action) => action(),
+      itemBuilder: (menuContext) => [
+        PopupMenuItem(
+          value: () =>
+              unawaited(showDeckForm(context, project: project, deck: deck)),
+          child: Text(l10n.edit),
+        ),
+      ],
+    );
   }
 }

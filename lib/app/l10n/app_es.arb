@@ -331,6 +331,26 @@
   "@last30Days": {
     "description": "Heading of the 30-day summary on the desktop project screen."
   },
+  "newDeck": "Nueva baraja",
+  "@newDeck": {
+    "description": "Button that opens the form to create a deck, and the form's title."
+  },
+  "editDeck": "Editar baraja",
+  "@editDeck": {
+    "description": "Title of the form to edit a deck."
+  },
+  "createDeck": "Crear baraja",
+  "@createDeck": {
+    "description": "Save button of the form to create a deck."
+  },
+  "deckOptions": "Opciones de la baraja",
+  "@deckOptions": {
+    "description": "Tooltip of the ⋮ menu of a deck."
+  },
+  "projectColor": "Del proyecto",
+  "@projectColor": {
+    "description": "Deck colour option: use the project's colour (the default)."
+  },
 
   "colorOrange": "Naranja",
   "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
