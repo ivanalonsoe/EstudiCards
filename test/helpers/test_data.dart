@@ -2,21 +2,71 @@ import 'package:drift/drift.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/ids.dart';
 
-/// Inserts a simple card into [deckId]. The cards repository arrives in
-/// phase 2; until then tests that need cards insert them by hand.
-Future<void> addTestCard(AppDatabase db, String deckId) {
-  final now = DateTime.utc(2026, 10, 6);
-  return db
+final _now = DateTime.utc(2026, 10, 6);
+
+/// Inserts a simple card into [deckId] and returns its ID. The cards
+/// repository arrives in phase 2; until then tests that need cards insert
+/// them by hand.
+Future<String> addTestCard(
+  AppDatabase db,
+  String deckId, {
+  String? questionImage,
+  String? answerImage,
+}) async {
+  final id = newId();
+  await db
       .into(db.cards)
       .insert(
         CardsCompanion.insert(
-          id: newId(),
+          id: id,
           deckId: deckId,
           type: 'simple',
           question: 'to bring',
           answer: const Value('traer'),
-          createdAt: now,
-          updatedAt: now,
+          questionImage: Value(questionImage),
+          answerImage: Value(answerImage),
+          createdAt: _now,
+          updatedAt: _now,
+        ),
+      );
+  return id;
+}
+
+/// Inserts a finished study session of [projectId] with one correct answer
+/// to [cardId]. Sessions arrive in phase 3.
+Future<void> addTestAttempt(
+  AppDatabase db, {
+  required String projectId,
+  required String cardId,
+}) async {
+  final sessionId = newId();
+  await db
+      .into(db.studySessions)
+      .insert(
+        StudySessionsCompanion.insert(
+          id: sessionId,
+          projectId: projectId,
+          mode: 'normal',
+          direction: 'normal',
+          prioritizeFailed: false,
+          repeatFailed: false,
+          timerType: 'none',
+          status: 'completed',
+          startedAt: _now,
+        ),
+      );
+  await db
+      .into(db.attempts)
+      .insert(
+        AttemptsCompanion.insert(
+          id: newId(),
+          sessionId: sessionId,
+          cardId: cardId,
+          direction: 'normal',
+          result: 'correct',
+          source: 'self_eval',
+          isFirstAttempt: true,
+          answeredAt: _now,
         ),
       );
 }

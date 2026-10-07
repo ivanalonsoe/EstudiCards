@@ -999,3 +999,10 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Colour (decided with the owner): a first option "Del proyecto", chosen by default, followed by the 12 colours. "Del proyecto" stores no colour, so the deck follows its project's colour if it changes; picking it again when editing makes the deck inherit again.
     - "Nueva baraja" is a dashed button under the list on mobile and tablet, and a button next to the "Barajas" heading on desktop. After creating, the user stays on the project screen with the new deck in the list (US-06 does not ask to open it).
     - The deck ⋮ menu has "Editar"; "Compartir", "Reiniciar estadísticas" and "Eliminar" arrive with their tasks.
+20. **Trash logic (T1.7):**
+    - The trash is its own feature (`lib/features/trash/`): `trash_rules.dart` (`daysLeft`, `isExpired`) and `TrashRepository`. Moving to the trash sets `deleted_at`; restoring sets it back to null, which is also what "Deshacer" does.
+    - Days left = 15 − whole days elapsed, never below 0; an item is purged once 15 full days have passed (e.g. deleted at 9:00 on the 1st, purged from 9:00 on the 16th).
+    - A project in the trash keeps its decks as they are. Its card count, like the dashboard's, leaves out decks that are in the trash themselves, which are listed as separate items. Restoring a deck whose project is in the trash also restores the project; the project's other trashed decks stay in the trash.
+    - Permanent deletion relies on the foreign keys' `ON DELETE CASCADE` (decks, cards, options, statistics, sessions, session decks and attempts), inside one transaction. Image files are deleted after the transaction, so a failed write never loses an image.
+    - Image files are deleted through the `ImageFiles` interface (`core/files/image_files.dart`). Cards cannot have images until T2.6, so the app uses `NoImageFiles` until then and T2.6 provides the real images folder.
+    - The purge runs when the app starts (`EstudiCardsApp`, without waiting for it) and when the Trash screen opens (T1.8).

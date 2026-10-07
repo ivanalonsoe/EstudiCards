@@ -7,6 +7,7 @@
 // `clockProvider` with a `FakeClock`.
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/image_files.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The app's database, opened once and closed when the app ends.
@@ -18,3 +19,6 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 /// The current time (see `core/clock.dart`).
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
+
+/// The card images on disk (see `core/files/image_files.dart`).
+final imageFilesProvider = Provider<ImageFiles>((ref) => const NoImageFiles());

@@ -1,16 +1,20 @@
+import 'dart:async';
+
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_theme.dart';
+import 'package:estudicards/features/trash/presentation/trash_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// The root widget of the app.
 ///
 /// It is a StatefulWidget so the router is created once and kept while the
 /// app runs, instead of on every rebuild.
-class EstudiCardsApp extends StatefulWidget {
+class EstudiCardsApp extends ConsumerStatefulWidget {
   /// Tests can pass their own [router], e.g. one that starts on another
   /// screen.
   const new({this.router, super.key});
@@ -18,11 +22,19 @@ class EstudiCardsApp extends StatefulWidget {
   final GoRouter? router;
 
   @override
-  State<EstudiCardsApp> createState() => _EstudiCardsAppState();
+  ConsumerState<EstudiCardsApp> createState() => _EstudiCardsAppState();
 }
 
-class _EstudiCardsAppState extends State<EstudiCardsApp> {
+class _EstudiCardsAppState extends ConsumerState<EstudiCardsApp> {
   late final GoRouter _router = widget.router ?? createRouter();
+
+  @override
+  void initState() {
+    super.initState();
+    // Items that expired while the app was closed are deleted on start
+    // (SPEC §7.1). The app does not wait for it.
+    unawaited(ref.read(trashRepositoryProvider).purgeExpired());
+  }
 
   @override
   void dispose() {
