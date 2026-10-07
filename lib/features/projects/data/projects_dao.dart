@@ -32,6 +32,11 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
   Future<ProjectRow?> findById(String id) =>
       (select(projects)..where((p) => p.id.equals(id))).getSingleOrNull();
 
+  /// The project with [id], emitted again every time it changes; null if
+  /// there is none.
+  Stream<ProjectRow?> watchById(String id) =>
+      (select(projects)..where((p) => p.id.equals(id))).watchSingleOrNull();
+
   /// The dashboard list (US-05 AC1): not archived and not in the trash,
   /// favourites first, then the most recently used. A project never used
   /// counts from its creation time. Each row comes with its number of decks

@@ -70,6 +70,11 @@ class ProjectsRepository {
     return row == null ? null : _toProject(row);
   }
 
+  /// The project with [id], updated whenever it changes (P03); null if
+  /// there is none.
+  Stream<Project?> watchProject(String id) =>
+      _dao.watchById(id).map((row) => row == null ? null : _toProject(row));
+
   /// The dashboard list, updated whenever a project changes (US-05 AC1).
   Stream<List<ProjectSummary>> watchProjects() => _dao.watchActive().map(
     (rows) => [

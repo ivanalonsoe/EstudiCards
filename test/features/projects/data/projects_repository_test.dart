@@ -324,4 +324,25 @@ void main() {
   test('getById returns null for an unknown ID', () async {
     expect(await repository.getById('missing'), isNull);
   });
+
+  group('watchProject', () {
+    test('emits the project again after it is edited', () async {
+      final project = await repository.create(general('Química'));
+      final names = repository
+          .watchProject(project.id)
+          .map((p) => p?.name)
+          .take(2)
+          .toList();
+      // Wait for the first value before editing.
+      await pumpEventQueue();
+
+      await repository.update(project.id, general('Química orgánica'));
+
+      expect(await names, ['Química', 'Química orgánica']);
+    });
+
+    test('emits null for an unknown ID', () async {
+      expect(await repository.watchProject('missing').first, isNull);
+    });
+  });
 }

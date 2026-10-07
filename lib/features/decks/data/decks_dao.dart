@@ -8,6 +8,9 @@ part 'decks_dao.g.dart';
 /// colour of its own inherits.
 typedef DeckWithProjectColor = ({DeckRow deck, String projectColor});
 
+/// A deck with its project's colour and its number of cards.
+typedef DeckWithCardCount = ({DeckWithProjectColor deck, int cardCount});
+
 @DriftAccessor(tables: [Decks, Projects])
 class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   new(super.attachedDatabase);
@@ -25,17 +28,30 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
     return row == null ? null : _read(row);
   }
 
-  /// A project's decks that are not in the trash, oldest first. Because the
-  /// query joins `projects`, the stream also emits when the project's colour
-  /// changes.
-  Stream<List<DeckWithProjectColor>> watchActiveByProject(String projectId) {
+  /// A project's decks that are not in the trash, oldest first, each with
+  /// its number of cards. Because the query joins `projects`, the stream
+  /// also emits when the project's colour changes.
+  Stream<List<DeckWithCardCount>> watchActiveByProject(String projectId) {
+    final cards = attachedDatabase.cards;
+    // A subquery counts each deck's cards (see `ProjectsDao.watchActive`).
+    final cardCount = subqueryExpression<int>(
+      selectOnly(cards)
+        ..addColumns([countAll()])
+        ..where(cards.deckId.equalsExp(decks.id)),
+    );
     final query = _withProjectColor()
+      ..addColumns([cardCount])
       ..where(decks.projectId.equals(projectId) & decks.deletedAt.isNull())
       ..orderBy([
         OrderingTerm.asc(decks.createdAt),
         OrderingTerm.asc(decks.name),
       ]);
-    return query.watch().map((rows) => rows.map(_read).toList());
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          (deck: _read(row), cardCount: row.read(cardCount)!),
+      ],
+    );
   }
 
   /// A join reads two tables in one query: every deck row comes with the
