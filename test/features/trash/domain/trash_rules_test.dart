@@ -27,6 +27,13 @@ void main() {
     });
   });
 
+  test('an item with 3 days left or fewer is urgent', () {
+    expect(isUrgent(4), isFalse);
+    expect(isUrgent(3), isTrue);
+    expect(isUrgent(2), isTrue);
+    expect(isUrgent(0), isTrue);
+  });
+
   group('isExpired', () {
     test('is false until 15 days have passed', () {
       expect(

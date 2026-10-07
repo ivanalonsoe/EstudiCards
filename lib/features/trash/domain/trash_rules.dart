@@ -9,6 +9,10 @@ int daysLeft(DateTime deletedAt, {required DateTime now}) {
   return left < 0 ? 0 : left;
 }
 
+/// Whether an item with [daysLeft] days left is flagged as urgent in the
+/// trash (3 days or fewer, decided with the owner).
+bool isUrgent(int daysLeft) => daysLeft <= 3;
+
 /// Whether an item deleted at [deletedAt] has spent 15 days in the trash and
 /// must be deleted permanently.
 bool isExpired(DateTime deletedAt, {required DateTime now}) =>
