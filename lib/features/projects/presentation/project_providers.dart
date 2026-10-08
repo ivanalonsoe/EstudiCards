@@ -21,6 +21,11 @@ final projectSummariesProvider = StreamProvider<List<ProjectSummary>>(
   (ref) => ref.watch(projectsRepositoryProvider).watchProjects(),
 );
 
+/// The Archived list (P14), with counts.
+final archivedProjectsProvider = StreamProvider<List<ProjectSummary>>(
+  (ref) => ref.watch(projectsRepositoryProvider).watchArchived(),
+);
+
 /// One project, updated when it changes; null if it does not exist. One
 /// provider per project ID (see `deckSummariesProvider` for `.family`).
 final StreamProviderFamily<Project?, String> projectProvider =

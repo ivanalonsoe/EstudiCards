@@ -4,6 +4,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/adaptive_actions_row.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/trash/domain/trash_item.dart';
@@ -169,60 +170,35 @@ class _TrashItemCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            // `LayoutBuilder` tells how wide the card is: on a phone the
-            // chip goes above the buttons; with room, all on one line.
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final chip = DaysLeftChip(
-                  key: Key('trashItem.${item.id}.daysLeft'),
-                  daysLeft: left,
-                  urgent: isUrgent(left),
-                );
-                final buttons = Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      key: Key('trashItem.${item.id}.delete'),
-                      tooltip: l10n.deletePermanently,
-                      color: colors.error,
-                      onPressed: () => _deletePermanently(context, ref),
-                      icon: const Icon(Icons.delete_outline_rounded),
+            AdaptiveActionsRow(
+              leading: DaysLeftChip(
+                key: Key('trashItem.${item.id}.daysLeft'),
+                daysLeft: left,
+                urgent: isUrgent(left),
+              ),
+              actions: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    key: Key('trashItem.${item.id}.delete'),
+                    tooltip: l10n.deletePermanently,
+                    color: colors.error,
+                    onPressed: () => _deletePermanently(context, ref),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  FilledButton.icon(
+                    key: Key('trashItem.${item.id}.restore'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colors.primarySoft,
+                      foregroundColor: colors.primaryStrong,
                     ),
-                    const SizedBox(width: AppSpacing.xs),
-                    FilledButton.icon(
-                      key: Key('trashItem.${item.id}.restore'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colors.primarySoft,
-                        foregroundColor: colors.primaryStrong,
-                      ),
-                      onPressed: () => unawaited(_restore(ref)),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(l10n.restore),
-                    ),
-                  ],
-                );
-                if (constraints.maxWidth < 360) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Align(alignment: Alignment.centerLeft, child: chip),
-                      const SizedBox(height: AppSpacing.sm),
-                      Align(alignment: Alignment.centerRight, child: buttons),
-                    ],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: chip,
-                      ),
-                    ),
-                    buttons,
-                  ],
-                );
-              },
+                    onPressed: () => unawaited(_restore(ref)),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(l10n.restore),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

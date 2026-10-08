@@ -40,6 +40,10 @@ class Projects extends Table {
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
 
+  /// When the project was archived; null if it is not archived, or if it
+  /// was archived before schema version 2 added this column.
+  DateTimeColumn get archivedAt => dateTime().nullable()();
+
   /// Not null = in the trash (SPEC §7.1).
   DateTimeColumn get deletedAt => dateTime().nullable()();
   DateTimeColumn get lastUsedAt => dateTime().nullable()();

@@ -56,8 +56,8 @@ void main() {
         );
   }
 
-  test('opens in memory with schema version 1 and every table empty', () async {
-    expect(db.schemaVersion, 1);
+  test('opens in memory with schema version 2 and every table empty', () async {
+    expect(db.schemaVersion, 2);
     expect(
       db.allTables.map((t) => t.actualTableName),
       unorderedEquals([

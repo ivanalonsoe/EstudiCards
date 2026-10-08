@@ -12,6 +12,8 @@ import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/test_data.dart';
+
 void main() {
   late AppDatabase db;
   late FakeClock clock;
@@ -323,6 +325,49 @@ void main() {
 
   test('getById returns null for an unknown ID', () async {
     expect(await repository.getById('missing'), isNull);
+  });
+
+  group('archive', () {
+    test('archiving stores the time; unarchiving clears it', () async {
+      final project = await repository.create(general('Alemán A1'));
+      clock.advance(const Duration(days: 2));
+
+      await repository.setArchived(project.id, isArchived: true);
+      final archived = (await repository.getById(project.id))!;
+      expect(archived.isArchived, isTrue);
+      expect(archived.archivedAt, clock.now());
+
+      await repository.setArchived(project.id, isArchived: false);
+      final back = (await repository.getById(project.id))!;
+      expect(back.isArchived, isFalse);
+      expect(back.archivedAt, isNull);
+    });
+
+    test('the archived list has the archived projects not in the trash, the '
+        'most recently archived first, with their counts', () async {
+      final german = await repository.create(general('Alemán A1'));
+      final chemistry = await repository.create(general('Química'));
+      final deleted = await repository.create(general('Deleted'));
+      await repository.create(general('Active'));
+      final decks = DecksRepository(DecksDao(db), clock);
+      final deck = await decks.create(
+        german.id,
+        const DeckInput(name: 'Saludos'),
+      );
+      await addTestCard(db, deck.id);
+
+      await repository.setArchived(german.id, isArchived: true);
+      clock.advance(const Duration(days: 1));
+      await repository.setArchived(chemistry.id, isArchived: true);
+      await repository.setArchived(deleted.id, isArchived: true);
+      await (db.update(db.projects)..where((p) => p.id.equals(deleted.id)))
+          .write(ProjectsCompanion(deletedAt: Value(clock.now())));
+
+      final archived = await repository.watchArchived().first;
+
+      expect(archived.map((s) => s.project.name), ['Química', 'Alemán A1']);
+      expect((archived[1].deckCount, archived[1].cardCount), (1, 1));
+    });
   });
 
   group('watchProject', () {

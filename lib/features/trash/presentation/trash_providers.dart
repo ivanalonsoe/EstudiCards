@@ -12,6 +12,14 @@ final trashRepositoryProvider = Provider<TrashRepository>(
   ),
 );
 
+/// Purges the expired trash once, when the app starts (SPEC §7.1), and
+/// gives how many items it deleted. A `FutureProvider` runs its function
+/// the first time it is read and keeps the result, so tests can wait for it
+/// with `container.read(startupPurgeProvider.future)`.
+final startupPurgeProvider = FutureProvider<int>(
+  (ref) => ref.read(trashRepositoryProvider).purgeExpired(),
+);
+
 /// The projects and decks in the trash, the most recently deleted first.
 final trashItemsProvider = StreamProvider<List<TrashItem>>(
   (ref) => ref.watch(trashRepositoryProvider).watchTrash(),

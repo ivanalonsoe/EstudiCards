@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/undo_snackbar.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/trash/presentation/trash_providers.dart';
@@ -38,10 +37,10 @@ Future<void> confirmMoveProjectToTrash(
 
   await trash.moveProjectToTrash(project.id);
   afterMove?.call();
-  _showUndo(
+  showUndoSnackBar(
     messenger,
     l10n,
-    name: project.name,
+    message: l10n.movedToTrash(project.name),
     undo: () => trash.restoreProject(project.id),
   );
 }
@@ -67,35 +66,11 @@ Future<void> confirmMoveDeckToTrash(
   if (!confirmed) return;
 
   await trash.moveDeckToTrash(deck.id);
-  _showUndo(
+  // The deck is already in the trash, so undoing just restores it.
+  showUndoSnackBar(
     messenger,
     l10n,
-    name: deck.name,
+    message: l10n.movedToTrash(deck.name),
     undo: () => trash.restoreDeck(deck.id),
   );
-}
-
-/// The snackbar with "Deshacer". The item is already in the trash, so
-/// undoing just restores it.
-void _showUndo(
-  ScaffoldMessengerState messenger,
-  AppLocalizations l10n, {
-  required String name,
-  required Future<void> Function() undo,
-}) {
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(l10n.movedToTrash(name)),
-        duration: const Duration(seconds: 5),
-        // A snackbar with an action stays until it is closed unless told
-        // otherwise; this one must go after its 5 seconds.
-        persist: false,
-        action: SnackBarAction(
-          label: l10n.undo,
-          onPressed: () => unawaited(undo()),
-        ),
-      ),
-    );
 }

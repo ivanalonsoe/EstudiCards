@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_theme.dart';
@@ -32,8 +30,8 @@ class _EstudiCardsAppState extends ConsumerState<EstudiCardsApp> {
   void initState() {
     super.initState();
     // Items that expired while the app was closed are deleted on start
-    // (SPEC §7.1). The app does not wait for it.
-    unawaited(ref.read(trashRepositoryProvider).purgeExpired());
+    // (SPEC §7.1). Reading the provider starts it; the app does not wait.
+    ref.read(startupPurgeProvider);
   }
 
   @override

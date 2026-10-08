@@ -76,16 +76,8 @@ class ProjectsRepository {
       _dao.watchById(id).map((row) => row == null ? null : _toProject(row));
 
   /// The dashboard list, updated whenever a project changes (US-05 AC1).
-  Stream<List<ProjectSummary>> watchProjects() => _dao.watchActive().map(
-    (rows) => [
-      for (final row in rows)
-        ProjectSummary(
-          project: _toProject(row.project),
-          deckCount: row.deckCount,
-          cardCount: row.cardCount,
-        ),
-    ],
-  );
+  Stream<List<ProjectSummary>> watchProjects() =>
+      _dao.watchActive().map(_toSummaries);
 
   Future<void> setFavorite(String id, {required bool isFavorite}) =>
       _dao.updateProject(
@@ -98,14 +90,22 @@ class ProjectsRepository {
 
   /// Archived projects leave the dashboard and are listed under "Archivados"
   /// (US-05 AC2).
-  Future<void> setArchived(String id, {required bool isArchived}) =>
-      _dao.updateProject(
-        id,
-        ProjectsCompanion(
-          isArchived: Value(isArchived),
-          updatedAt: Value(_clock.now()),
-        ),
-      );
+  Future<void> setArchived(String id, {required bool isArchived}) {
+    final now = _clock.now();
+    return _dao.updateProject(
+      id,
+      ProjectsCompanion(
+        isArchived: Value(isArchived),
+        archivedAt: Value(isArchived ? now : null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// P14: archived projects not in the trash, the most recently archived
+  /// first, with their counts.
+  Stream<List<ProjectSummary>> watchArchived() =>
+      _dao.watchArchived().map(_toSummaries);
 
   /// Records that the project was opened or studied (R 7.7). It does not
   /// change `updatedAt`, which only tracks edits.
@@ -119,6 +119,15 @@ class ProjectsRepository {
     if (errors.isNotEmpty) throw InvalidProjectException(errors);
   }
 
+  static List<ProjectSummary> _toSummaries(List<ProjectWithCounts> rows) => [
+    for (final row in rows)
+      ProjectSummary(
+        project: _toProject(row.project),
+        deckCount: row.deckCount,
+        cardCount: row.cardCount,
+      ),
+  ];
+
   static Project _toProject(ProjectRow row) => Project(
     id: row.id,
     name: row.name,
@@ -130,6 +139,7 @@ class ProjectsRepository {
     targetLang: row.targetLang,
     isFavorite: row.isFavorite,
     isArchived: row.isArchived,
+    archivedAt: row.archivedAt,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

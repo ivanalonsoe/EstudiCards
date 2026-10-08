@@ -11,6 +11,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
+import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
 import 'package:estudicards/features/trash/presentation/trash_screen.dart';
@@ -115,7 +116,11 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
               screen('results/:sessionId', 'results', (l10n) => l10n.results),
               screen('import', 'import', (l10n) => l10n.importTitle),
               screen('statistics', 'statistics', (l10n) => l10n.statistics),
-              screen('archived', 'archived', (l10n) => l10n.archived),
+              GoRoute(
+                path: 'archived',
+                builder: (context, state) =>
+                    const ArchivedScreen(key: Key('screen.archived')),
+              ),
               GoRoute(
                 path: 'trash',
                 builder: (context, state) =>

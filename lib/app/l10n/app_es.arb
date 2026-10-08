@@ -467,6 +467,41 @@
     "description": "Empty state of the trash, under trashEmptyTitle."
   },
 
+  "archive": "Archivar",
+  "@archive": {
+    "description": "Project ⋮ menu item that archives the project (US-05 AC2)."
+  },
+  "unarchive": "Desarchivar",
+  "@unarchive": {
+    "description": "Button on the Archived screen that brings a project back to the dashboard."
+  },
+  "archivedNotice": "«{name}» se ha archivado",
+  "@archivedNotice": {
+    "description": "Snackbar shown for 5 seconds after archiving a project, next to 'Deshacer'.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "archivedOn": "Archivado el {date}",
+  "@archivedOn": {
+    "description": "When a project was archived, e.g. 'Archivado el 2 sep'. date is already formatted.",
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "archivedInfo": "Los proyectos archivados no aparecen en el inicio ni se pueden estudiar. Sus estadísticas se conservan.",
+  "@archivedInfo": {
+    "description": "Notice at the top of the Archived screen."
+  },
+  "archivedEmptyTitle": "No hay proyectos archivados",
+  "@archivedEmptyTitle": {
+    "description": "Empty state of the Archived screen (SPEC §5.3)."
+  },
+  "archivedEmptyBody": "Archiva un proyecto desde su menú para quitarlo del inicio sin borrarlo.",
+  "@archivedEmptyBody": {
+    "description": "Empty state of the Archived screen, under archivedEmptyTitle."
+  },
+
   "colorOrange": "Naranja",
   "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
   "colorAmber": "Ámbar",
