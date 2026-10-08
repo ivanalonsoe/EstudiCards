@@ -179,6 +179,9 @@ Goal: a project that starts, with automated quality from day one.
   - > **Note:** schema version 2 adds `projects.archived_at` for "Archivado el…" (first migration). Archiving works from the dashboard and project screen menus, with "Deshacer" (decided with the owner). The wrap-up tests passed on Windows and an Android emulator. See SPEC §13.2 (assumptions 22 and 23).
   - **Tests first:** 🧩 archiving a project removes it from the dashboard and it appears under Archived; 🧩 unarchiving brings it back.
   - **Phase wrap-up:** 🔗 create project → deck → archive → unarchive → delete → restore from the trash. 🤖 E2E-06.
+  - > **Bugs found by the wrap-up tests (fixed in PR #16, see SPEC §13.2, assumption 23):**
+    > - **Migration repeated at start-up.** Drift saves the new schema version only after the whole opening finishes. An app closed in between (e.g. during its first start after an update) kept the new `archived_at` column but still reported version 1, so the next start ran the step again and failed with "duplicate column name". The app could no longer open. Fix: the step adds the column only if it is missing (`_hasColumn` in `app_database.dart`), and `migration_test.dart` covers the cut-short upgrade. Rule from now on: every migration step must be safe to repeat.
+    > - **Startup purge racing the database close.** The trash purge on app start ran in the background and could still be querying when the database was closed (seen when the integration tests replaced the app between tests: `ConnectionClosedException`). Fix: the purge is now `startupPurgeProvider` (a `FutureProvider`); the app starts it without waiting, and tests can wait for it with `container.read(startupPurgeProvider.future)`.
 
 ---
 
