@@ -2,7 +2,6 @@ import 'package:drift/drift.dart' show Table, TableInfo;
 import 'package:drift/native.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
-import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/features/decks/data/decks_dao.dart';
 import 'package:estudicards/features/decks/data/decks_repository.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
@@ -16,16 +15,8 @@ import 'package:estudicards/features/trash/data/trash_repository.dart';
 import 'package:estudicards/features/trash/domain/trash_item.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/fake_image_files.dart';
 import '../../../helpers/test_data.dart';
-
-/// Records the image paths it is asked to delete.
-class FakeImageFiles implements ImageFiles {
-  final deleted = <String>[];
-
-  @override
-  Future<void> delete(Iterable<String> relativePaths) async =>
-      deleted.addAll(relativePaths);
-}
 
 void main() {
   late AppDatabase db;
