@@ -32,6 +32,26 @@ Future<String> addTestCard(
   return id;
 }
 
+/// Inserts the statistics of [cardId] in one [direction]. They are written
+/// by the study session in phases 3 and 4.
+Future<void> addTestStats(
+  AppDatabase db,
+  String cardId, {
+  String direction = 'normal',
+  int correct = 0,
+  int wrong = 0,
+}) => db
+    .into(db.cardStats)
+    .insert(
+      CardStatsCompanion.insert(
+        cardId: cardId,
+        direction: direction,
+        correctCount: Value(correct),
+        wrongCount: Value(wrong),
+        inErrorList: Value(wrong > 0),
+      ),
+    );
+
 /// Inserts a finished study session of [projectId] with one correct answer
 /// to [cardId]. Sessions arrive in phase 3.
 Future<void> addTestAttempt(

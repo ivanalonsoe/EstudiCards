@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.9 | ⏳ 0 / 9 |
+| 2. Cards | T2.1 – T2.9 | ⏳ 2 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -187,7 +187,8 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 2 — Cards
 
-- [ ] **T2.1 Card model and validation** · US-08, US-09 · Depends on: T0.4
+- [x] **T2.1 Card model and validation** · US-08, US-09 · Depends on: T0.4
+  - > **Note:** the domain model is `Flashcard` (Flutter already has a `Card` widget). Empty options are not stored. See SPEC §13.2 (assumption 24).
   - Domain model for simple and test cards, with validation.
   - **Tests first:**
     - 🧪 a simple card with no answer is invalid.
@@ -196,7 +197,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a test card without "allow multiple" and with 2 correct options is invalid; with "allow multiple" it is valid.
     - 🧪 empty options do not count.
 
-- [ ] **T2.2 Cards repository** · US-11, US-12 · Depends on: T2.1
+- [x] **T2.2 Cards repository** · US-11, US-12 · Depends on: T2.1
+  - > **Note:** "Más falladas" sorts by number of misses (decided with the owner). Search and sorting run in Dart and ignore accents; edited options keep their ID; deleting a card also deletes its images. See SPEC §13.2 (assumption 24).
   - CRUD with options in a transaction, search and sorting.
   - **Tests first:**
     - 🧪 saving a test card saves its options with their position.
