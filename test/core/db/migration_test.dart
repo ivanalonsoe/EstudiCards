@@ -43,4 +43,26 @@ void main() {
     // Projects archived before the upgrade have no date.
     expect(project.archivedAt, isNull);
   });
+
+  test(
+    'an upgrade cut short (column added, version not saved) still opens',
+    () async {
+      // Drift saves the new version after the whole opening finishes. If the
+      // app is closed in between, the column exists but the version is still
+      // 1, and the next start runs the step again.
+      final db = AppDatabase(
+        NativeDatabase.memory(
+          setup: (raw) {
+            raw
+              ..execute(_projectsV1)
+              ..execute('ALTER TABLE projects ADD COLUMN archived_at TEXT NULL')
+              ..userVersion = 1;
+          },
+        ),
+      );
+      addTearDown(db.close);
+
+      expect(await db.select(db.projects).get(), isEmpty);
+    },
+  );
 }

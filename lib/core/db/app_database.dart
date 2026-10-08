@@ -46,8 +46,14 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) => m.createAll(),
     // An installed app with an older database gets each missing step, in
     // order. A released step is never changed: installed apps rely on it.
+    //
+    // Drift saves the new version only after the whole opening finishes, so
+    // an app closed in between runs a step again on its next start. Each
+    // step must therefore be safe to repeat.
     onUpgrade: (m, from, to) async {
-      if (from < 2) await m.addColumn(projects, projects.archivedAt);
+      if (from < 2 && !await _hasColumn('projects', 'archived_at')) {
+        await m.addColumn(projects, projects.archivedAt);
+      }
     },
     beforeOpen: (details) async {
       // SQLite ignores foreign keys unless they are switched on for every
@@ -56,4 +62,14 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Whether [table] already has [column] (SQLite's `table_info` lists the
+  /// columns of a table).
+  Future<bool> _hasColumn(String table, String column) async {
+    final rows = await customSelect(
+      'SELECT 1 FROM pragma_table_info(?) WHERE name = ?',
+      variables: [Variable.withString(table), Variable.withString(column)],
+    ).get();
+    return rows.isNotEmpty;
+  }
 }

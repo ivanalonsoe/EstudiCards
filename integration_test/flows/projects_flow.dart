@@ -1,16 +1,11 @@
-// Phase 1 wrap-up (TASKS.md T1.9): the whole life of a project, on a real
-// device or desktop window.
-//
-//   flutter test integration_test -d windows
+// Phase 1 wrap-up (TASKS.md T1.9): the whole life of a project. Run from
+// `integration_test/app_test.dart`.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
 
-import 'app_flow.dart';
+import '../app_flow.dart';
 
-void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
+void projectsFlowTests() {
   testWidgets('create project → deck → archive → unarchive → delete → '
       'restore from the trash', (tester) async {
     await tester.pumpWidget(appWithTestDatabase());
