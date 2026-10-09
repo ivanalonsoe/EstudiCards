@@ -690,6 +690,26 @@
   "@previewCaption": {
     "description": "Card editor on desktop: under the preview."
   },
+  "addImage": "Añadir imagen",
+  "@addImage": {
+    "description": "Card editor: button (and tooltip) that picks an image from the gallery or a file."
+  },
+  "removeImage": "Quitar imagen",
+  "@removeImage": {
+    "description": "Card editor: removes the image of a field."
+  },
+  "imageNotOpened": "No se ha podido abrir la imagen",
+  "@imageNotOpened": {
+    "description": "Snackbar when the picked file is not an image the app can read."
+  },
+  "questionImageLabel": "Imagen de la pregunta",
+  "@questionImageLabel": {
+    "description": "Screen reader label of the question image of a card."
+  },
+  "answerImageLabel": "Imagen de la respuesta",
+  "@answerImageLabel": {
+    "description": "Screen reader label of the answer image of a card."
+  },
   "saveAndAddAnother": "Guardar y añadir otra",
   "@saveAndAddAnother": {
     "description": "Card editor button: saves the card and clears the form for the next one (US-10)."

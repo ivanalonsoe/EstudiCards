@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/pump_widget.dart';
+import '../../../helpers/test_images.dart';
 
 final _now = DateTime.utc(2026, 10, 9);
 
@@ -268,6 +269,82 @@ void main() {
       expect(marker(0, Icons.check_box_outline_blank_rounded), findsOneWidget);
       expect(find.text('¡Correcto!'), findsNothing);
       expect(find.text('Incorrecto'), findsNothing);
+    });
+  });
+
+  group('images', () {
+    final image = MemoryImage(pngBytes(40, 30));
+
+    Finder imageIn(String face) => find.descendant(
+      of: find.byKey(Key('studyCard.$face')),
+      matching: find.byType(Image),
+    );
+
+    testWidgets('the question image is shown above the question', (
+      tester,
+    ) async {
+      await pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(),
+          label: 'Biología 2º Bach. · Célula',
+          color: 'green',
+          face: CardFace.front,
+          questionImage: image,
+        ),
+      );
+
+      expect(imageIn('front'), findsOneWidget);
+      expect(
+        tester.getTopLeft(imageIn('front')).dy,
+        lessThan(
+          tester
+              .getTopLeft(
+                find.text(
+                  '¿Qué órgano ejerce la potestad legislativa del Estado?',
+                ),
+              )
+              .dy,
+        ),
+      );
+    });
+
+    testWidgets('the answer image is shown on the back', (tester) async {
+      await pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(),
+          label: 'Biología 2º Bach. · Célula',
+          color: 'green',
+          face: CardFace.back,
+          answerImage: image,
+        ),
+      );
+
+      expect(imageIn('back'), findsOneWidget);
+    });
+
+    testWidgets('a test card shows the answer image with the explanation', (
+      tester,
+    ) async {
+      final card = testCard(explanation: 'La mitocondria.');
+      Future<void> pump({required bool checked}) => pumpComponent(
+        tester,
+        StudyCard(
+          card: card,
+          label: 'Biología 2º Bach. · Célula',
+          color: 'green',
+          face: CardFace.front,
+          checked: checked,
+          answerImage: image,
+        ),
+      );
+
+      await pump(checked: false);
+      expect(imageIn('front'), findsNothing);
+
+      await pump(checked: true);
+      expect(imageIn('front'), findsOneWidget);
     });
   });
 

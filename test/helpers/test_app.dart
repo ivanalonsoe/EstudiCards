@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:estudicards/app/app.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/card_image.dart';
+import 'package:estudicards/core/files/image_files.dart';
+import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+
+import 'fake_image_source.dart';
+import 'test_images.dart';
 
 const mobile = Size(390, 844);
 const tablet = Size(700, 1000);
@@ -32,13 +40,21 @@ AppDatabase createTestDatabase() {
 
 /// Starts the whole app on a screen of [size], at [location], with an
 /// in-memory database and a fake clock instead of the real ones.
+///
+/// Card images go to [imagesFolder] (a new temporary folder by default) and
+/// are prepared without a background isolate, which would never finish
+/// under the fake time of widget tests. [imageSource] stands for the
+/// gallery or file dialog; by default the user cancels.
 Future<GoRouter> pumpTestApp(
   WidgetTester tester, {
   required Size size,
   AppDatabase? db,
   Clock? clock,
   String location = AppRoutes.home,
+  Directory? imagesFolder,
+  ImageSource? imageSource,
 }) async {
+  final folder = imagesFolder ?? createTempFolder();
   tester.view
     ..physicalSize = size
     ..devicePixelRatio = 1;
@@ -53,6 +69,14 @@ Future<GoRouter> pumpTestApp(
         clockProvider.overrideWithValue(
           clock ?? FakeClock(DateTime.utc(2026, 10, 6, 12)),
         ),
+        imagesFolderProvider.overrideWith((ref) => folder),
+        imageFilesProvider.overrideWithValue(
+          DiskImageFiles(
+            () async => folder,
+            prepare: (bytes) async => prepareCardImage(bytes),
+          ),
+        ),
+        imageSourceProvider.overrideWithValue(imageSource ?? FakeImageSource()),
       ],
       child: EstudiCardsApp(router: router),
     ),

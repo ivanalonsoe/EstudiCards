@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/card_image.dart';
+import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/features/cards/data/cards_dao.dart';
 import 'package:estudicards/features/cards/data/cards_repository.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
@@ -19,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
 import '../../../helpers/test_data.dart';
+import '../../../helpers/test_images.dart';
 
 void main() {
   late AppDatabase db;
@@ -333,6 +338,72 @@ void main() {
       expect(await db.select(db.attempts).get(), isEmpty);
       expect(images.deleted, ['question.jpg', 'explanation.jpg']);
       expect(await repository.getById(kept.id), isNotNull);
+    });
+  });
+
+  group('image files on disk', () {
+    late Directory folder;
+    late DiskImageFiles disk;
+    late CardsRepository withDisk;
+
+    setUp(() {
+      folder = createTempFolder();
+      disk = DiskImageFiles(
+        () async => folder,
+        prepare: (bytes) async => prepareCardImage(bytes),
+      );
+      withDisk = CardsRepository(CardsDao(db), clock, disk);
+    });
+
+    bool exists(String relativePath) =>
+        File('${folder.path}/$relativePath').existsSync();
+
+    test('deleting the card deletes the image file', () async {
+      final image = (await disk.save(pngBytes(100, 100)))!;
+      final card = await withDisk.create(
+        deck.id,
+        CardInput(
+          type: CardType.simple,
+          question: '¿Qué orgánulo aparece en la imagen?',
+          answer: 'La mitocondria',
+          questionImage: image,
+        ),
+      );
+      expect(exists(image), isTrue);
+
+      await withDisk.delete(card.id);
+
+      expect(exists(image), isFalse);
+    });
+
+    test('replacing or removing an image deletes the old file', () async {
+      final first = (await disk.save(pngBytes(100, 100)))!;
+      final answerImage = (await disk.save(pngBytes(100, 100)))!;
+      final card = await withDisk.create(
+        deck.id,
+        CardInput(
+          type: CardType.simple,
+          question: 'Q',
+          answer: 'A',
+          questionImage: first,
+          answerImage: answerImage,
+        ),
+      );
+      final second = (await disk.save(pngBytes(100, 100)))!;
+
+      await withDisk.update(
+        card.id,
+        CardInput(
+          type: CardType.simple,
+          question: 'Q',
+          answer: 'A',
+          questionImage: second,
+        ),
+      );
+
+      expect(exists(first), isFalse);
+      expect(exists(answerImage), isFalse);
+      expect(exists(second), isTrue);
     });
   });
 

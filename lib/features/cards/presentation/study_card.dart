@@ -30,10 +30,18 @@ class StudyCard extends StatelessWidget {
     this.answeredCorrectly,
     this.showFlipHint = true,
     this.onTap,
+    this.questionImage,
+    this.answerImage,
     super.key,
   });
 
   final Flashcard card;
+
+  /// The card's images, already found on disk by the caller. The question
+  /// image goes above the question; the answer image above the answer, or
+  /// with the explanation on a test card (SPEC §4.2).
+  final ImageProvider? questionImage;
+  final ImageProvider? answerImage;
 
   /// "Proyecto · Baraja" at the top.
   final String label;
@@ -77,10 +85,16 @@ class StudyCard extends StatelessWidget {
               answeredCorrectly: face == CardFace.front
                   ? answeredCorrectly
                   : null,
+              questionImage: questionImage,
+              answerImage: answerImage,
             )
           : face == CardFace.front
-          ? _SimpleFront(card: card)
-          : _SimpleBack(card: card, isLanguage: languagePair != null),
+          ? _SimpleFront(card: card, image: questionImage)
+          : _SimpleBack(
+              card: card,
+              isLanguage: languagePair != null,
+              image: answerImage,
+            ),
     );
 
     return Semantics(
@@ -348,14 +362,51 @@ TextStyle? _bigText(BuildContext context) =>
     Theme.of(context).textTheme.headlineSmall
         ?.copyWith(fontSize: 26, fontWeight: FontWeight.w800);
 
+/// A card image (variant 8): up to 160 px high, whole and centred on a
+/// `surface-variant` box. A missing file shows an icon instead.
+class _CardImage extends StatelessWidget {
+  const new(this.image, {required this.semanticLabel});
+
+  final ImageProvider image;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadii.control),
+        child: Container(
+          height: 160,
+          color: colors.surfaceVariant,
+          child: Image(
+            image: image,
+            fit: BoxFit.contain,
+            semanticLabel: semanticLabel,
+            errorBuilder: (context, error, stackTrace) =>
+                Icon(Icons.broken_image_outlined, color: colors.textMuted),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SimpleFront extends StatelessWidget {
-  const new({required this.card});
+  const new({required this.card, this.image});
 
   final Flashcard card;
+  final ImageProvider? image;
 
   @override
   Widget build(BuildContext context) => _Scrolling(
     children: [
+      if (image case final image?)
+        _CardImage(
+          image,
+          semanticLabel: AppLocalizations.of(context).questionImageLabel,
+        ),
       FormattedText(
         card.question,
         textAlign: TextAlign.center,
@@ -371,10 +422,11 @@ const _longAnswer = 120;
 /// The answer under a small copy of the question; in a language project,
 /// also the example sentence and the notes (variants 2 and 7).
 class _SimpleBack extends StatelessWidget {
-  const new({required this.card, required this.isLanguage});
+  const new({required this.card, required this.isLanguage, this.image});
 
   final Flashcard card;
   final bool isLanguage;
+  final ImageProvider? image;
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +459,8 @@ class _SimpleBack extends StatelessWidget {
           style: text.titleSmall?.copyWith(color: colors.textMuted),
         ),
         const SizedBox(height: AppSpacing.lg),
+        if (image case final image?)
+          _CardImage(image, semanticLabel: l10n.answerImageLabel),
         FormattedText(
           answer,
           textAlign: isLong ? TextAlign.start : TextAlign.center,
@@ -445,12 +499,18 @@ class _TestContent extends StatelessWidget {
     required this.selectedOptionIds,
     required this.showSolution,
     required this.answeredCorrectly,
+    this.questionImage,
+    this.answerImage,
   });
 
   final Flashcard card;
   final Set<String> selectedOptionIds;
   final bool showSolution;
   final bool? answeredCorrectly;
+  final ImageProvider? questionImage;
+
+  /// Shown with the explanation, once the solution is shown.
+  final ImageProvider? answerImage;
 
   @override
   Widget build(BuildContext context) {
@@ -459,6 +519,8 @@ class _TestContent extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final result = showSolution ? answeredCorrectly : null;
     final explanation = card.explanation;
+    final questionImage = this.questionImage;
+    final answerImage = showSolution ? this.answerImage : null;
 
     return _Scrolling(
       centered: false,
@@ -483,6 +545,8 @@ class _TestContent extends StatelessWidget {
               ],
             ),
           ),
+        if (questionImage != null)
+          _CardImage(questionImage, semanticLabel: l10n.questionImageLabel),
         FormattedText(
           card.question,
           style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -533,6 +597,10 @@ class _TestContent extends StatelessWidget {
               anySelected: selectedOptionIds.isNotEmpty,
             ),
           ),
+        if (answerImage != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          _CardImage(answerImage, semanticLabel: l10n.answerImageLabel),
+        ],
         if (showSolution && explanation != null && explanation.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(top: AppSpacing.xs),

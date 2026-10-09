@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
+import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -117,6 +119,16 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   bool _saving = false;
   CardFace _previewFace = CardFace.front;
 
+  /// The card's images, as names in the images folder (see `ImageFiles`).
+  /// The answer image goes with the explanation on a test card.
+  late String? _questionImage = widget.card?.questionImage;
+  late String? _answerImage = widget.card?.answerImage;
+
+  /// Images picked in this editor and not saved in a card yet. They are
+  /// deleted if the user leaves without saving or replaces them; the images
+  /// of a saved card are deleted by the repository instead.
+  final _unsavedImages = <String>{};
+
   /// A new test card starts with 4 empty options (decided with the owner).
   static const _initialOptions = 4;
 
@@ -133,6 +145,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     _answer.text,
     _example.text,
     _notes.text,
+    '$_questionImage',
+    '$_answerImage',
     if (_type == CardType.test) ...[
       '$_allowMultiple',
       _explanation.text,
@@ -145,9 +159,9 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   CardInput get _input => CardInput(
     type: _type,
     question: _question.text,
-    questionImage: widget.card?.questionImage,
+    questionImage: _questionImage,
     answer: _answer.text,
-    answerImage: widget.card?.answerImage,
+    answerImage: _answerImage,
     explanation: _explanation.text,
     allowMultiple: _allowMultiple,
     // Example and notes are kept even in a general project, whose fields
@@ -287,6 +301,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+    // The picked images now belong to the saved card.
+    _unsavedImages.clear();
     if (!mounted) return;
     if (!addAnother) {
       context.pop();
@@ -300,6 +316,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       _example.clear();
       _notes.clear();
       _explanation.clear();
+      _questionImage = null;
+      _answerImage = null;
       if (_type == CardType.test) _resetOptions();
       _questionEdited = false;
       _answerEdited = false;
@@ -317,10 +335,65 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       );
   }
 
-  /// Leaves the editor, asking first if there are unsaved changes.
+  /// Leaves the editor, asking first if there are unsaved changes. The
+  /// images picked here are deleted: no card uses them.
   Future<void> _leave() async {
     if (_hasChanges && !await _confirmDiscard()) return;
+    await ref.read(imageFilesProvider).delete(_unsavedImages);
+    _unsavedImages.clear();
     if (mounted) context.pop();
+  }
+
+  /// Opens the gallery (mobile) or the file dialog (desktop) and stores the
+  /// picked image, resized (SPEC §3.4), as the question or answer image.
+  Future<void> _pickImage({required bool forQuestion}) async {
+    final bytes = await ref.read(imageSourceProvider).pick();
+    if (bytes == null || !mounted) return;
+    final path = await ref.read(imageFilesProvider).save(bytes);
+    if (!mounted) return;
+    if (path == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).imageNotOpened)),
+      );
+      return;
+    }
+    _unsavedImages.add(path);
+    _setImage(path, forQuestion: forQuestion);
+  }
+
+  /// Sets or removes ([path] null) an image. An image picked in this editor
+  /// and replaced is deleted at once, since nothing else uses it.
+  void _setImage(String? path, {required bool forQuestion}) {
+    final previous = forQuestion ? _questionImage : _answerImage;
+    if (previous != null && _unsavedImages.remove(previous)) {
+      unawaited(ref.read(imageFilesProvider).delete([previous]));
+    }
+    setState(() {
+      if (forQuestion) {
+        _questionImage = path;
+      } else {
+        _answerImage = path;
+      }
+    });
+  }
+
+  /// The image at [path] in the images folder, to show it; null while the
+  /// folder is not known yet.
+  ImageProvider? _imageFor(String? path) {
+    final folder = ref.watch(imagesFolderProvider).value;
+    if (path == null || folder == null) return null;
+    return FileImage(File('${folder.path}/$path'));
+  }
+
+  /// The thumbnail and "Quitar imagen" under a field with an image.
+  Widget? _imageRow(String keyPrefix, {required bool forQuestion}) {
+    final image = _imageFor(forQuestion ? _questionImage : _answerImage);
+    if (image == null) return null;
+    return _ImageThumbnail(
+      keyPrefix: keyPrefix,
+      image: image,
+      onRemove: () => _setImage(null, forQuestion: forQuestion),
+    );
   }
 
   Future<bool> _confirmDiscard() {
@@ -425,6 +498,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
               languageName(l10n, target),
             )
           : null,
+      questionImage: _imageFor(_questionImage),
+      answerImage: _imageFor(_answerImage),
       onTap: () => setState(
         () => _previewFace = _previewFace == CardFace.front
             ? CardFace.back
@@ -453,6 +528,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
           message: l10n.questionMissing,
         ),
         onChanged: () => setState(() => _questionEdited = true),
+        onPickImage: () => unawaited(_pickImage(forQuestion: true)),
+        imageRow: _imageRow('cardEditor.question', forQuestion: true),
       ),
       const SizedBox(height: AppSpacing.lg),
       _TypeSwitches(
@@ -474,6 +551,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
             message: l10n.answerMissing,
           ),
           onChanged: () => setState(() => _answerEdited = true),
+          onPickImage: () => unawaited(_pickImage(forQuestion: false)),
+          imageRow: _imageRow('cardEditor.answer', forQuestion: false),
         ),
       ] else ...[
         ..._optionsSection(l10n),
@@ -487,6 +566,17 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
           maxLines: null,
           onChanged: (_) => setState(() {}),
         ),
+        // On a test card the answer image goes with the explanation.
+        _imageRow('cardEditor.explanation', forQuestion: false) ??
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('cardEditor.explanation.image'),
+                onPressed: () => unawaited(_pickImage(forQuestion: false)),
+                icon: const Icon(Icons.image_outlined),
+                label: Text(l10n.addImage),
+              ),
+            ),
       ],
       if (_isLanguage) ...[
         const SizedBox(height: AppSpacing.xl),
@@ -564,6 +654,54 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
               ?.copyWith(color: colors.error),
         ),
     ];
+  }
+}
+
+/// A small picture of a field's image with "Quitar imagen". Keys:
+/// `<keyPrefix>.imagePreview` and `<keyPrefix>.removeImage`.
+class _ImageThumbnail extends StatelessWidget {
+  const new({
+    required this.keyPrefix,
+    required this.image,
+    required this.onRemove,
+  });
+
+  final String keyPrefix;
+  final ImageProvider image;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Row(
+        children: [
+          ClipRRect(
+            key: Key('$keyPrefix.imagePreview'),
+            borderRadius: BorderRadius.circular(AppRadii.control),
+            child: Container(
+              width: 64,
+              height: 64,
+              color: colors.surfaceVariant,
+              child: Image(
+                image: image,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.broken_image_outlined, color: colors.textMuted),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          TextButton.icon(
+            key: Key('$keyPrefix.removeImage'),
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: Text(AppLocalizations.of(context).removeImage),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1059,17 +1197,25 @@ class FormattedField extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.errorText,
+    this.onPickImage,
+    this.imageRow,
     super.key,
   });
 
-  /// Key of the text field; the buttons get `<fieldKey>.bold` and
-  /// `<fieldKey>.italic`.
+  /// Key of the text field; the buttons get `<fieldKey>.bold`,
+  /// `<fieldKey>.italic` and `<fieldKey>.image`.
   final String fieldKey;
   final FormattedTextController controller;
   final VoidCallback onChanged;
   final FocusNode? focusNode;
   final bool autofocus;
   final String? errorText;
+
+  /// The image button at the right of the bar; null hides it.
+  final VoidCallback? onPickImage;
+
+  /// The field's image with "Quitar imagen", shown under it.
+  final Widget? imageRow;
 
   @override
   State<FormattedField> createState() => _FormattedFieldState();
@@ -1146,6 +1292,14 @@ class _FormattedFieldState extends State<FormattedField> {
                         onPressed: () => _toggle(InlineStyle.italic),
                         icon: const Icon(Icons.format_italic_rounded),
                       ),
+                      const Spacer(),
+                      if (widget.onPickImage case final onPickImage?)
+                        IconButton(
+                          key: Key('${widget.fieldKey}.image'),
+                          tooltip: l10n.addImage,
+                          onPressed: onPickImage,
+                          icon: const Icon(Icons.image_outlined),
+                        ),
                     ],
                   ),
                 ),
@@ -1185,6 +1339,7 @@ class _FormattedFieldState extends State<FormattedField> {
                   ?.copyWith(color: colors.error),
             ),
           ),
+        ?widget.imageRow,
       ],
     );
   }

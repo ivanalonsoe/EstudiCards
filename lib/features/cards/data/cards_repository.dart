@@ -41,15 +41,27 @@ class CardsRepository {
 
   /// Replaces what the user edits (P06). The statistics and attempts stay
   /// (US-11 AC1). Options keep their ID when the input gives it, so past
-  /// attempts still point at them. Throws [InvalidCardException] if [input]
-  /// is not valid.
+  /// attempts still point at them. Images the card no longer uses (replaced
+  /// or removed) are deleted after saving. Throws [InvalidCardException] if
+  /// [input] is not valid.
   Future<Flashcard> update(String id, CardInput input) async {
     _checkValid(input);
-    await _dao.transaction(() async {
+    final unused = await _dao.transaction(() async {
+      final before = await _dao.findById(id);
       final changed = await _dao.updateCard(id, _fields(input, _clock.now()));
-      if (changed == 0) throw StateError('No card with id $id');
+      if (before == null || changed == 0) {
+        throw StateError('No card with id $id');
+      }
       await _saveOptions(id, input);
+      final kept = {input.questionImage, input.answerImage};
+      return [
+        for (final image in [before.questionImage, before.answerImage])
+          if (image != null && !kept.contains(image)) image,
+      ];
     });
+    // As in `delete`: only after the transaction, so a failed write never
+    // loses an image.
+    await _images.delete(unused);
     return (await getById(id))!;
   }
 

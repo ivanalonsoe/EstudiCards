@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/features/cards/data/cards_dao.dart';
 import 'package:estudicards/features/cards/data/cards_repository.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
@@ -17,7 +21,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/fake_image_source.dart';
 import '../../../helpers/test_app.dart';
+import '../../../helpers/test_images.dart';
 import 'card_editor_finders.dart';
 
 void main() {
@@ -66,6 +72,8 @@ void main() {
     WidgetTester tester, {
     Deck? deck,
     Size size = mobile,
+    Directory? imagesFolder,
+    ImageSource? imageSource,
   }) {
     final target = deck ?? constitution;
     return pumpTestApp(
@@ -74,6 +82,8 @@ void main() {
       db: db,
       clock: clock,
       location: AppRoutes.newCard(target.projectId, target.id),
+      imagesFolder: imagesFolder,
+      imageSource: imageSource,
     );
   }
 
@@ -479,6 +489,160 @@ void main() {
       ]);
       // The options that were already there keep their ID.
       expect(stored.options[1].id, card.options[1].id);
+    });
+  });
+
+  group('images', () {
+    late Directory folder;
+    late FakeImageSource gallery;
+
+    setUp(() {
+      folder = createTempFolder();
+      gallery = FakeImageSource(pngBytes(4000, 3000));
+    });
+
+    Future<void> open(WidgetTester tester) =>
+        openNewCard(tester, imagesFolder: folder, imageSource: gallery);
+
+    List<String> storedFiles() => [
+      for (final file in folder.listSync()) file.uri.pathSegments.last,
+    ];
+
+    Future<void> fillSimple(WidgetTester tester) async {
+      await tester.enterText(questionField, '¿Qué orgánulo aparece?');
+      await tester.enterText(answerField, 'La mitocondria');
+      await tester.pump();
+    }
+
+    testWidgets('an image picked for the question is shown and saved', (
+      tester,
+    ) async {
+      await open(tester);
+      await fillSimple(tester);
+
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.question.image')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(gallery.opened, 1);
+      expect(
+        find.byKey(const Key('cardEditor.question.imagePreview')),
+        findsOneWidget,
+      );
+      // The preview card shows it too.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('studyCard.front')),
+          matching: find.byType(Image),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [card] = await storedCards();
+      expect(card.questionImage, isNotNull);
+      expect(storedFiles(), [card.questionImage]);
+    });
+
+    testWidgets('removing the image before saving deletes its file', (
+      tester,
+    ) async {
+      await open(tester);
+      await fillSimple(tester);
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.answer.image')),
+      );
+      await tester.pumpAndSettle();
+      expect(storedFiles(), hasLength(1));
+
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.answer.removeImage')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect((await storedCards()).single.answerImage, isNull);
+      expect(storedFiles(), isEmpty);
+    });
+
+    testWidgets('leaving without saving deletes the picked images', (
+      tester,
+    ) async {
+      await open(tester);
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.question.image')),
+      );
+      await tester.pumpAndSettle();
+      expect(storedFiles(), hasLength(1));
+
+      await tester.tap(closeButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
+
+      expect(storedFiles(), isEmpty);
+    });
+
+    testWidgets('a test card adds its image with the explanation', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.enterText(questionField, '¿Capital de Australia?');
+      await tapVisible(tester, testTypeSwitch);
+      await tester.pumpAndSettle();
+      await tester.enterText(optionField(0), 'Canberra');
+      await tester.enterText(optionField(1), 'Sídney');
+      await tapVisible(tester, correctSelector(0));
+      await tester.pump();
+
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.explanation.image')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect((await storedCards()).single.answerImage, isNotNull);
+    });
+
+    testWidgets('cancelling the picker changes nothing', (tester) async {
+      gallery.next = null;
+      await open(tester);
+
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.question.image')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('cardEditor.question.imagePreview')),
+        findsNothing,
+      );
+      expect(storedFiles(), isEmpty);
+    });
+
+    testWidgets('a file that is not an image shows a message', (tester) async {
+      gallery.next = Uint8List.fromList([1, 2, 3]);
+      await open(tester);
+
+      await tapVisible(
+        tester,
+        find.byKey(const Key('cardEditor.question.image')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('No se ha podido abrir la imagen'), findsOneWidget);
+      expect(storedFiles(), isEmpty);
     });
   });
 
