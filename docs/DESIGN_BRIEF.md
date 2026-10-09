@@ -124,13 +124,15 @@ All on **mobile and desktop**, in **light and dark theme**.
 - **Empty state:** minimal illustration + "Crea tu primer proyecto" + button + "o importa uno" link.
 
 ### 6.2 Create / edit project (bottom sheet on mobile, dialog on desktop)
-Name, description, colour picker (12 circles), icon/emoji picker and type (segmented: General / Idioma). If Idioma, source and target language appear.
+Name, description, colour picker (12 circles) and icon/emoji picker.
+
+> Since T2.10 the type (segmented: General / Idioma) and, for Idioma, the source and target language are in the create / edit deck form, not here (`SPEC.md` §13.1, "Deck type"). The screenshots still show them in the project form.
 
 ### 6.3 Project
 - Header in the project colour: icon, name, description and metrics (cards, % correct, errors).
 - Main actions: **Estudiar** (primary button) and **Repasar errores (9)**. Secondary: Editar, Compartir, Importar.
 - **Barajas** | **Estadísticas** tabs.
-- Deck list: colour band, name, number of cards, % correct and errors. ⋮ menu per deck. "Nueva baraja" button.
+- Deck list: colour band, name, number of cards, % correct and errors, plus a chip with the language pair ("EN → ES") on language decks. ⋮ menu per deck. "Nueva baraja" button.
 - Empty state with no decks.
 
 ### 6.4 Project statistics (tab)
@@ -149,7 +151,7 @@ Stacked bar chart of correct/wrong per day (30 days), % correct per deck (horizo
 - **Tipo test** toggle.
   - Off: **Respuesta** (answer) field (+ image).
   - On: list of **options** (2–6) with an "Añadir opción" button, remove option and correct-answer selector. **"Permitir varias correctas"** check: switches the radio selectors to checkboxes. **Explicación** field (optional, + image).
-- In language projects: **Frase de ejemplo** and **Notas**.
+- In language decks: **Frase de ejemplo** and **Notas**.
 - **Live preview** of the card, which flips when tapped: below the form on mobile and in a right-hand column on desktop.
 - Buttons: **Guardar** and **Guardar y añadir otra**.
 - Show validation states: empty question, fewer than 2 options, no correct option ticked.
@@ -166,7 +168,7 @@ Sheet or screen with:
 - Decks: multi-select chips + "Todo el proyecto".
 - Number of cards: segmented 10 / 20 / 50 / Todas / Otro.
 - Mode: Normal / Solo errores.
-- Direction: Normal / Inverso (languages only).
+- Direction: Normal / Inverso (only when a chosen deck is a language deck).
 - Switches: "Priorizar las más falladas", "Repetir falladas al final".
 - Timer: Sin timer / Por pregunta (5–120 s) / General (1–120 min), with a value control.
 - Dynamic text: "84 tarjetas disponibles".

@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.9 | ⏳ 6 / 9 |
+| 2. Cards | T2.1 – T2.10 | ⏳ 6 / 10 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -238,10 +238,26 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a 4000 px image is stored with its long side at 1600 px.
     - 🧪 deleting the card deletes the image file.
 
-- [ ] **T2.7 Voice (TTS)** · US-13 · Depends on: T2.5
+- [ ] **T2.10 Type and languages per deck** · P02, P03, P04, P06 · US-01, US-06, US-08 · Depends on: T2.6
+  - > **Note:** design change decided by the owner after T2.6, done before T2.7: the type (general / language) and the languages move from the project to the deck, so one project can mix types. See SPEC §13.1 ("Deck type") and §13.2 (assumption 29).
+  - Schema version 3: add `type`, `source_lang` and `target_lang` to `decks`, give each deck its project's values and drop them from `projects`.
+  - Move the language validation from `ProjectInput` to `DeckInput`, and the type and language fields from the project form to the deck form.
+  - Language deck rows in P03 show the pair ("EN → ES"); the project header no longer shows languages. The card editor depends on the deck.
+  - **Tests first:**
+    - 🧪 migrating a version 2 database with a language project and a general project gives each deck its project's type and languages, removes the columns from `projects` and leaves the schema of a fresh install (Drift's `SchemaVerifier`).
+    - 🧪 the migration still works when an earlier start was cut short halfway.
+    - 🧪 a language deck without a source or target language is invalid; one with the same language on both sides is valid.
+    - 🧪 switching a deck from language to general does not delete its stored languages.
+    - 🧩 the project form no longer shows the type or the languages.
+    - 🧩 in the deck form, choosing "Idioma" shows the language selectors and Save waits for both; switching a stored language deck to "General" asks for confirmation.
+    - 🧩 a language deck's row shows "EN → ES" and a general deck's row shows no pair.
+    - 🧩 in a project with both types, the card editor shows "Frase de ejemplo" and "Notas" in the language deck and hides them in the general one.
+
+- [ ] **T2.7 Voice (TTS)** · US-13 · Depends on: T2.5, T2.10
   - Voice service behind an interface (so it can be faked in tests), speaker button and notice when the voice is missing.
   - **Tests first:**
-    - 🧪 the question is read in the source language and the answer in the target language.
+    - 🧪 the question is read in the deck's source language and the answer in its target language.
+    - 🧩 a card in a general deck has no speaker button.
     - 🧩 with no voice installed, the button is disabled and the notice is shown.
 
 - [ ] **T2.8 Deck screen** · P05 · US-12 · Depends on: T2.2
@@ -252,7 +268,8 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:**
     - 🧪 moving keeps the ID and statistics.
     - 🧪 copying creates cards with a new ID, copied options and no history.
-    - 🧩 "Mover a…" only offers decks from the same project.
+    - 🧩 "Mover a…" only offers decks from the same project, of either type.
+    - 🧪 moving a card with example and notes to a general deck keeps them.
     - 🧩 deleting a card and tapping "Deshacer" recovers it; without undo, it is gone for good.
   - **Phase wrap-up:** 🔗 create cards of both types, edit, move and delete them.
 
@@ -279,7 +296,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 "leave for later" moves the card to the end without recording anything and can be repeated.
     - 🧪 with "repeat missed", a missed card comes back at the end until answered correctly, and the repeat has `is_first_attempt = false`.
     - 🧪 on exit, pending cards are recorded as `unanswered`.
-    - 🧪 in reverse direction, test cards are recorded as `normal`.
+    - 🧪 in reverse direction, test cards and the cards of general decks are recorded as `normal`; simple cards of language decks as `reverse`.
 
 - [ ] **T3.3 Grading test cards** · US-16 · Depends on: T2.1
   - **Tests first:**
@@ -306,7 +323,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:**
     - 🧩 loads the project's last configuration.
     - 🧩 the number of available cards changes when the decks or mode change.
-    - 🧩 "Sentido" (direction) only appears in language projects.
+    - 🧩 "Sentido" (direction) only appears when at least one chosen deck is a language deck.
     - 🧩 with no cards available, "Empezar" is disabled.
 
 - [ ] **T3.7 Session screen** · P09 · US-15, US-16 · Depends on: T3.2, T3.3, T3.4, T2.5
@@ -381,6 +398,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:**
     - 🧪 exporting and re-importing a deck gives the same content (round trip).
     - 🧪 images travel as base64 and are restored as files.
+    - 🧪 each deck's type and languages survive the round trip.
     - 🧪 a JSON without `format` or with an unknown `version` is rejected with a clear error.
 
 - [ ] **T5.2 CSV parser** · SPEC §8.3 · Depends on: T2.1
@@ -400,10 +418,11 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 when adding to a deck, duplicates by ID or by normalised question and answer are skipped.
     - 🧪 if it fails midway, nothing is imported.
     - 🧪 the summary counts added, duplicates and errors.
+    - 🧪 a CSV imported as a new project gives every deck it creates the type and languages chosen once; adding to an existing deck keeps the deck's type.
 
 - [ ] **T5.4 Import screen** · P07 · US-27 · Depends on: T5.3
-  - 3-step wizard.
-  - **Tests first:** 🧩 the preview shows "42 nuevas · 3 duplicadas · 1 con errores" for the matching fixture.
+  - 3-step wizard. A CSV imported as a new project or a new deck asks for the type and, for "Idioma", the languages (SPEC §8.4 rule 6).
+  - **Tests first:** 🧩 the preview shows "42 nuevas · 3 duplicadas · 1 con errores" for the matching fixture; 🧩 a CSV as a new project asks for the type once.
 
 - [ ] **T5.5 Share project or deck** · US-26 · Depends on: T5.1, T5.2
   - JSON or CSV, without statistics; native share sheet on mobile and "Save as…" on desktop.
