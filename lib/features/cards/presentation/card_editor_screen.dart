@@ -88,15 +88,34 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   late final _answer = FormattedTextController(text: widget.card?.answer);
   late final _example = FormattedTextController(text: widget.card?.example);
   late final _notes = TextEditingController(text: widget.card?.notes);
+  late final _explanation = FormattedTextController(
+    text: widget.card?.explanation,
+  );
   final _questionFocus = FocusNode();
 
-  late final CardType _type = widget.card?.type ?? CardType.simple;
+  late CardType _type = widget.card?.type ?? CardType.simple;
+  late bool _allowMultiple = widget.card?.allowMultiple ?? false;
+
+  /// The options of a test card, in the order shown. They are kept while
+  /// "Tipo test" is off, so turning it on again brings them back.
+  late final List<_OptionDraft> _options = [
+    for (final option in widget.card?.options ?? const <CardOption>[])
+      _OptionDraft(
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+      ),
+  ];
 
   /// Whether the user has typed in each field, so "Escribe la pregunta" only
   /// appears after emptying it, not on a new card.
   bool _questionEdited = false;
   bool _answerEdited = false;
+  bool _optionsEdited = false;
   bool _saving = false;
+
+  /// A new test card starts with 4 empty options (decided with the owner).
+  static const _initialOptions = 4;
 
   /// The form as it was last loaded or saved, to tell if there are changes.
   late String _savedSignature = _signature;
@@ -111,6 +130,11 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     _answer.text,
     _example.text,
     _notes.text,
+    if (_type == CardType.test) ...[
+      '$_allowMultiple',
+      _explanation.text,
+      for (final option in _options) '${option.isCorrect}${option.text.text}',
+    ],
   ].join('\u0000');
 
   bool get _hasChanges => _signature != _savedSignature;
@@ -121,10 +145,20 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     questionImage: widget.card?.questionImage,
     answer: _answer.text,
     answerImage: widget.card?.answerImage,
+    explanation: _explanation.text,
+    allowMultiple: _allowMultiple,
     // Example and notes are kept even in a general project, whose fields
     // are hidden: switching back to "Idioma" shows them again (US-02 AC2).
     example: _example.text,
     notes: _notes.text,
+    options: [
+      for (final option in _options)
+        CardOptionInput(
+          id: option.id,
+          text: option.text.text,
+          isCorrect: option.isCorrect,
+        ),
+    ],
   );
 
   @override
@@ -133,8 +167,108 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     _answer.dispose();
     _example.dispose();
     _notes.dispose();
+    _explanation.dispose();
+    for (final option in _options) {
+      option.dispose();
+    }
     _questionFocus.dispose();
     super.dispose();
+  }
+
+  /// "Tipo test" (US-09 AC1): a new test card starts with 4 empty options.
+  void _setTestType({required bool isTest}) => setState(() {
+    _type = isTest ? CardType.test : CardType.simple;
+    if (isTest && _options.isEmpty) _resetOptions();
+  });
+
+  /// Replaces the options with 4 empty ones.
+  void _resetOptions() {
+    for (final option in _options) {
+      option.dispose();
+    }
+    _options
+      ..clear()
+      ..addAll([for (var i = 0; i < _initialOptions; i++) _OptionDraft()]);
+  }
+
+  /// Ticks or unticks the option at [index]. Without "Permitir varias
+  /// correctas" the options act as radio buttons: ticking one unticks the
+  /// rest (US-09 AC2).
+  void _tick(int index) => setState(() {
+    _optionsEdited = true;
+    if (_allowMultiple) {
+      _options[index].isCorrect = !_options[index].isCorrect;
+    } else {
+      for (final (i, option) in _options.indexed) {
+        option.isCorrect = i == index;
+      }
+    }
+  });
+
+  void _addOption() => setState(() => _options.add(_OptionDraft()));
+
+  void _removeOption(int index) => setState(() {
+    _optionsEdited = true;
+    _options.removeAt(index).dispose();
+  });
+
+  /// Turning "Permitir varias correctas" off with several options ticked
+  /// asks which one to keep (US-09 AC4).
+  Future<void> _setAllowMultiple({required bool allow}) async {
+    final ticked = [
+      for (final (i, option) in _options.indexed)
+        if (option.isCorrect) i,
+    ];
+    if (allow || ticked.length < 2) {
+      setState(() => _allowMultiple = allow);
+      return;
+    }
+    final keep = await _askWhichToKeep(ticked);
+    if (keep == null || !mounted) return;
+    setState(() {
+      _allowMultiple = false;
+      for (final (i, option) in _options.indexed) {
+        option.isCorrect = i == keep;
+      }
+    });
+  }
+
+  /// The index of the option to keep, or null if the user cancelled.
+  Future<int?> _askWhichToKeep(List<int> ticked) {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        key: const Key('keepCorrectDialog'),
+        title: Text(l10n.keepCorrectTitle),
+        children: [
+          for (final i in ticked)
+            SimpleDialogOption(
+              key: Key('keepCorrectDialog.option.$i'),
+              onPressed: () => Navigator.of(context).pop(i),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Text(
+                  _options[i].text.text.trim().isEmpty
+                      ? l10n.optionHint(i + 1)
+                      : _options[i].text.text.trim(),
+                ),
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.lg),
+              child: TextButton(
+                key: const Key('keepCorrectDialog.cancel'),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _save({required bool addAnother}) async {
@@ -155,14 +289,18 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       context.pop();
       return;
     }
-    // US-10: a clean form of the same type, ready for the next card.
+    // US-10: a clean form of the same type, with the same "Permitir varias
+    // correctas", ready for the next card.
     setState(() {
       _question.clear();
       _answer.clear();
       _example.clear();
       _notes.clear();
+      _explanation.clear();
+      if (_type == CardType.test) _resetOptions();
       _questionEdited = false;
       _answerEdited = false;
+      _optionsEdited = false;
       _savedSignature = _signature;
     });
     _questionFocus.requestFocus();
@@ -258,18 +396,40 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
         ),
         onChanged: () => setState(() => _questionEdited = true),
       ),
-      const SizedBox(height: AppSpacing.xl),
-      FormLabel(_isLanguage ? l10n.languageAnswerLabel : l10n.answerLabel),
-      FormattedField(
-        fieldKey: 'cardEditor.answer',
-        controller: _answer,
-        errorText: missing(
-          edited: _answerEdited,
-          field: _answer,
-          message: l10n.answerMissing,
-        ),
-        onChanged: () => setState(() => _answerEdited = true),
+      const SizedBox(height: AppSpacing.lg),
+      _TypeSwitches(
+        isTest: _type == CardType.test,
+        allowMultiple: _allowMultiple,
+        onTestTypeChanged: (isTest) => _setTestType(isTest: isTest),
+        onAllowMultipleChanged: (allow) =>
+            unawaited(_setAllowMultiple(allow: allow)),
       ),
+      const SizedBox(height: AppSpacing.xl),
+      if (_type == CardType.simple) ...[
+        FormLabel(_isLanguage ? l10n.languageAnswerLabel : l10n.answerLabel),
+        FormattedField(
+          fieldKey: 'cardEditor.answer',
+          controller: _answer,
+          errorText: missing(
+            edited: _answerEdited,
+            field: _answer,
+            message: l10n.answerMissing,
+          ),
+          onChanged: () => setState(() => _answerEdited = true),
+        ),
+      ] else ...[
+        ..._optionsSection(l10n),
+        const SizedBox(height: AppSpacing.xl),
+        FormLabel(l10n.explanationOptionalLabel),
+        TextField(
+          key: const Key('cardEditor.explanation'),
+          controller: _explanation,
+          textCapitalization: TextCapitalization.sentences,
+          minLines: 2,
+          maxLines: null,
+          onChanged: (_) => setState(() {}),
+        ),
+      ],
       if (_isLanguage) ...[
         const SizedBox(height: AppSpacing.xl),
         _LanguageFields(
@@ -279,6 +439,217 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
         ),
       ],
     ];
+  }
+
+  /// "Opciones" with its counter, one row per option, "Añadir opción" and,
+  /// once the user has touched the options, what is still missing.
+  List<Widget> _optionsSection(AppLocalizations l10n) {
+    final colors = AppColors.of(context);
+    final input = _input;
+    final correct = input.filledOptions.where((o) => o.isCorrect).length;
+    final errors = input.validate();
+    final problems = [
+      if (_optionsEdited) ...[
+        if (errors.contains(CardInputError.tooFewOptions)) l10n.optionsTooFew,
+        if (errors.contains(CardInputError.noCorrectOption))
+          l10n.noCorrectOption,
+      ],
+    ];
+    final canRemove = _options.length > CardInput.minOptions;
+
+    return [
+      Row(
+        children: [
+          Expanded(child: FormLabel(l10n.optionsLabel)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Text(
+              l10n.optionsCounter(
+                _options.length,
+                CardInput.maxOptions,
+                correct,
+              ),
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: colors.textMuted),
+            ),
+          ),
+        ],
+      ),
+      for (final (i, option) in _options.indexed)
+        Padding(
+          // The draft as key keeps each row's state with its option when
+          // one above it is removed.
+          key: ObjectKey(option),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: _OptionRow(
+            index: i,
+            option: option,
+            allowMultiple: _allowMultiple,
+            onTick: () => _tick(i),
+            onRemove: canRemove ? () => _removeOption(i) : null,
+            onChanged: () => setState(() => _optionsEdited = true),
+          ),
+        ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          key: const Key('cardEditor.addOption'),
+          onPressed: _options.length < CardInput.maxOptions ? _addOption : null,
+          icon: const Icon(Icons.add_rounded),
+          label: Text(l10n.addOption),
+        ),
+      ),
+      for (final problem in problems)
+        Text(
+          problem,
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: colors.error),
+        ),
+    ];
+  }
+}
+
+/// One option of a test card while it is being edited.
+class _OptionDraft {
+  new({this.id, String? text, this.isCorrect = false})
+    : text = TextEditingController(text: text);
+
+  /// The stored option's ID; null for a new one.
+  final String? id;
+  final TextEditingController text;
+  bool isCorrect;
+
+  void dispose() => text.dispose();
+}
+
+/// The "Tipo test" and "Permitir varias correctas" switches, in one box as
+/// in the design. The second one only appears on a test card.
+class _TypeSwitches extends StatelessWidget {
+  const new({
+    required this.isTest,
+    required this.allowMultiple,
+    required this.onTestTypeChanged,
+    required this.onAllowMultipleChanged,
+  });
+
+  final bool isTest;
+  final bool allowMultiple;
+  final ValueChanged<bool> onTestTypeChanged;
+  final ValueChanged<bool> onAllowMultipleChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final style = Theme.of(context).textTheme.titleMedium;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          SwitchListTile(
+            key: const Key('cardEditor.testType'),
+            title: Text(l10n.testTypeLabel, style: style),
+            value: isTest,
+            onChanged: onTestTypeChanged,
+          ),
+          if (isTest) ...[
+            const Divider(height: 1, indent: AppSpacing.lg),
+            SwitchListTile(
+              key: const Key('cardEditor.allowMultiple'),
+              title: Text(l10n.allowMultipleLabel, style: style),
+              value: allowMultiple,
+              onChanged: onAllowMultipleChanged,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The correct-answer selector, the text and the ✕ of one option. The
+/// selector is a radio button, or a checkbox with "Permitir varias
+/// correctas"; a ticked option is tinted green, always with its ✓.
+class _OptionRow extends StatelessWidget {
+  const new({
+    required this.index,
+    required this.option,
+    required this.allowMultiple,
+    required this.onTick,
+    required this.onRemove,
+    required this.onChanged,
+  });
+
+  final int index;
+  final _OptionDraft option;
+  final bool allowMultiple;
+  final VoidCallback onTick;
+
+  /// Null disables the ✕: a test card needs at least 2 options.
+  final VoidCallback? onRemove;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final ticked = option.isCorrect;
+    final icon = switch ((allowMultiple, ticked)) {
+      (true, true) => Icons.check_box_rounded,
+      (true, false) => Icons.check_box_outline_blank_rounded,
+      (false, true) => Icons.check_circle_rounded,
+      (false, false) => Icons.radio_button_unchecked_rounded,
+    };
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      borderSide: BorderSide(color: color, width: ticked ? 2 : 1),
+    );
+
+    return Row(
+      children: [
+        Semantics(
+          label: l10n.markCorrect,
+          checked: ticked,
+          inMutuallyExclusiveGroup: !allowMultiple,
+          child: InkResponse(
+            key: Key('cardEditor.option.$index.correct'),
+            onTap: onTick,
+            child: SizedBox.square(
+              dimension: minTouchTarget,
+              child: Icon(
+                icon,
+                size: 28,
+                color: ticked ? colors.success : colors.textMuted,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: TextField(
+            key: Key('cardEditor.option.$index'),
+            controller: option.text,
+            textCapitalization: TextCapitalization.sentences,
+            // A long option wraps instead of scrolling sideways.
+            maxLines: null,
+            style: Theme.of(context).textTheme.titleMedium,
+            decoration: InputDecoration(
+              hintText: l10n.optionHint(index + 1),
+              fillColor: ticked
+                  ? colors.success.withValues(alpha: 0.12)
+                  : colors.surface,
+              enabledBorder: border(ticked ? colors.success : colors.border),
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+        ),
+        IconButton(
+          key: Key('cardEditor.option.$index.remove'),
+          tooltip: l10n.removeOption,
+          onPressed: onRemove,
+          icon: const Icon(Icons.close_rounded),
+        ),
+      ],
+    );
   }
 }
 
@@ -319,18 +690,24 @@ class _MobileFrame extends StatelessWidget {
         child: ConstrainedBox(
           // On tablets the form keeps a comfortable width.
           constraints: const BoxConstraints(maxWidth: 640),
-          child: ListView(
+          // A Column builds every field, unlike a ListView, which only
+          // builds the visible ones and would lose a field's state when it
+          // scrolls away.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               0,
               AppSpacing.lg,
               AppSpacing.xl,
             ),
-            children: [
-              _DeckPath(project: project, deck: deck),
-              const SizedBox(height: AppSpacing.xl),
-              ...fields,
-            ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DeckPath(project: project, deck: deck),
+                const SizedBox(height: AppSpacing.xl),
+                ...fields,
+              ],
+            ),
           ),
         ),
       ),
@@ -591,21 +968,27 @@ class _FormattedFieldState extends State<FormattedField> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                child: Row(
-                  children: [
-                    IconButton(
-                      key: Key('${widget.fieldKey}.bold'),
-                      tooltip: l10n.bold,
-                      onPressed: () => _toggle(InlineStyle.bold),
-                      icon: const Icon(Icons.format_bold_rounded),
-                    ),
-                    IconButton(
-                      key: Key('${widget.fieldKey}.italic'),
-                      tooltip: l10n.italic,
-                      onPressed: () => _toggle(InlineStyle.italic),
-                      icon: const Icon(Icons.format_italic_rounded),
-                    ),
-                  ],
+                child: IconButtonTheme(
+                  // The B and I in the text colour, as in the design.
+                  data: IconButtonThemeData(
+                    style: IconButton.styleFrom(foregroundColor: colors.text),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        key: Key('${widget.fieldKey}.bold'),
+                        tooltip: l10n.bold,
+                        onPressed: () => _toggle(InlineStyle.bold),
+                        icon: const Icon(Icons.format_bold_rounded),
+                      ),
+                      IconButton(
+                        key: Key('${widget.fieldKey}.italic'),
+                        tooltip: l10n.italic,
+                        onPressed: () => _toggle(InlineStyle.italic),
+                        icon: const Icon(Icons.format_italic_rounded),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Divider(height: 1, color: colors.border),
@@ -616,7 +999,9 @@ class _FormattedFieldState extends State<FormattedField> {
                 autofocus: widget.autofocus,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: null,
-                style: Theme.of(context).textTheme.titleMedium,
+                // Regular weight, so the words marked bold stand out.
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(fontSize: 17),
                 decoration: const InputDecoration(
                   filled: false,
                   border: InputBorder.none,

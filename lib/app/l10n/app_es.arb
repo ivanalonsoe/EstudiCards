@@ -554,6 +554,62 @@
   "@answerMissing": {
     "description": "Card editor: shown under the answer field when it has been emptied."
   },
+  "testTypeLabel": "Tipo test",
+  "@testTypeLabel": {
+    "description": "Card editor switch: turns the card into a test card with options (US-09)."
+  },
+  "allowMultipleLabel": "Permitir varias correctas",
+  "@allowMultipleLabel": {
+    "description": "Card editor switch: several options of a test card can be correct."
+  },
+  "optionsLabel": "Opciones",
+  "@optionsLabel": {
+    "description": "Card editor: heading of the options of a test card."
+  },
+  "optionsCounter": "{count} de {max} · {correct, plural, =1{1 correcta} other{{correct} correctas}}",
+  "@optionsCounter": {
+    "description": "Card editor: options shown out of the maximum, and how many are ticked as correct, e.g. '4 de 6 · 2 correctas'.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" },
+      "correct": { "type": "int" }
+    }
+  },
+  "optionHint": "Opción {number}",
+  "@optionHint": {
+    "description": "Hint of an empty option field, e.g. 'Opción 3'.",
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "markCorrect": "Correcta",
+  "@markCorrect": {
+    "description": "Screen reader label of the selector that marks an option as correct."
+  },
+  "removeOption": "Quitar opción",
+  "@removeOption": {
+    "description": "Tooltip of the ✕ that removes an option."
+  },
+  "addOption": "Añadir opción",
+  "@addOption": {
+    "description": "Card editor button that adds an option (up to 6)."
+  },
+  "optionsTooFew": "Escribe al menos 2 opciones",
+  "@optionsTooFew": {
+    "description": "Card editor: a test card has fewer than 2 options with text."
+  },
+  "noCorrectOption": "Marca la opción correcta",
+  "@noCorrectOption": {
+    "description": "Card editor: no option with text is ticked as correct."
+  },
+  "explanationOptionalLabel": "Explicación (opcional)",
+  "@explanationOptionalLabel": {
+    "description": "Card editor: label of the explanation of a test card."
+  },
+  "keepCorrectTitle": "¿Qué opción es la correcta?",
+  "@keepCorrectTitle": {
+    "description": "Dialog shown when 'Permitir varias correctas' is turned off with several options ticked (US-09 AC4)."
+  },
   "saveAndAddAnother": "Guardar y añadir otra",
   "@saveAndAddAnother": {
     "description": "Card editor button: saves the card and clears the form for the next one (US-10)."
