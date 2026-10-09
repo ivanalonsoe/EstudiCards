@@ -112,15 +112,14 @@ void main() {
       expect(find.byKey(const Key('screen.dashboard')), findsOneWidget);
     });
 
-    // The project screen has its own tests (project_screen_test.dart).
+    // The project screen and the card editor have their own tests
+    // (project_screen_test.dart, card_editor_test.dart).
     testWidgets('every placeholder route shows its title', (tester) async {
       final router = await pumpApp(tester, size: mobile);
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
         AppRoutes.deck('p1', 'd1'): 'Baraja',
-        AppRoutes.newCard('p1', 'd1'): 'Nueva tarjeta',
-        AppRoutes.editCard('p1', 'd1', 'c1'): 'Editar tarjeta',
         AppRoutes.sessionSetup('p1'): 'Configurar sesión',
         AppRoutes.session('s1'): 'Sesión de estudio',
         AppRoutes.results('s1'): 'Resultados',

@@ -502,6 +502,139 @@
     "description": "Empty state of the Archived screen, under archivedEmptyTitle."
   },
 
+  "addCard": "Añadir tarjeta",
+  "@addCard": {
+    "description": "Button of the deck screen that opens the card editor (P05)."
+  },
+  "deckPath": "{project} › {deck}",
+  "@deckPath": {
+    "description": "Under the card editor title on mobile: the project and the deck of the card, e.g. 'Inglés B2 › Verbos irregulares'.",
+    "placeholders": {
+      "project": { "type": "String" },
+      "deck": { "type": "String" }
+    }
+  },
+  "questionLabel": "Pregunta",
+  "@questionLabel": {
+    "description": "Card editor: label of the question field in a general project."
+  },
+  "answerLabel": "Respuesta",
+  "@answerLabel": {
+    "description": "Card editor: label of the answer field in a general project."
+  },
+  "languageQuestionLabel": "Palabra o pregunta",
+  "@languageQuestionLabel": {
+    "description": "Card editor: label of the question field in a language project."
+  },
+  "languageAnswerLabel": "Traducción o respuesta",
+  "@languageAnswerLabel": {
+    "description": "Card editor: label of the answer field in a language project."
+  },
+  "exampleOptionalLabel": "Frase de ejemplo (opcional)",
+  "@exampleOptionalLabel": {
+    "description": "Card editor: label of the example sentence field (language projects only)."
+  },
+  "notesOptionalLabel": "Notas (opcional)",
+  "@notesOptionalLabel": {
+    "description": "Card editor: label of the notes field (language projects only)."
+  },
+  "bold": "Negrita",
+  "@bold": {
+    "description": "Tooltip of the B button of the formatting bar."
+  },
+  "italic": "Cursiva",
+  "@italic": {
+    "description": "Tooltip of the I button of the formatting bar."
+  },
+  "questionMissing": "Escribe la pregunta",
+  "@questionMissing": {
+    "description": "Card editor: shown under the question field when it has been emptied."
+  },
+  "answerMissing": "Escribe la respuesta",
+  "@answerMissing": {
+    "description": "Card editor: shown under the answer field when it has been emptied."
+  },
+  "testTypeLabel": "Tipo test",
+  "@testTypeLabel": {
+    "description": "Card editor switch: turns the card into a test card with options (US-09)."
+  },
+  "allowMultipleLabel": "Permitir varias correctas",
+  "@allowMultipleLabel": {
+    "description": "Card editor switch: several options of a test card can be correct."
+  },
+  "optionsLabel": "Opciones",
+  "@optionsLabel": {
+    "description": "Card editor: heading of the options of a test card."
+  },
+  "optionsCounter": "{count} de {max} · {correct, plural, =1{1 correcta} other{{correct} correctas}}",
+  "@optionsCounter": {
+    "description": "Card editor: options shown out of the maximum, and how many are ticked as correct, e.g. '4 de 6 · 2 correctas'.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" },
+      "correct": { "type": "int" }
+    }
+  },
+  "optionHint": "Opción {number}",
+  "@optionHint": {
+    "description": "Hint of an empty option field, e.g. 'Opción 3'.",
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "markCorrect": "Correcta",
+  "@markCorrect": {
+    "description": "Screen reader label of the selector that marks an option as correct."
+  },
+  "removeOption": "Quitar opción",
+  "@removeOption": {
+    "description": "Tooltip of the ✕ that removes an option."
+  },
+  "addOption": "Añadir opción",
+  "@addOption": {
+    "description": "Card editor button that adds an option (up to 6)."
+  },
+  "optionsTooFew": "Escribe al menos 2 opciones",
+  "@optionsTooFew": {
+    "description": "Card editor: a test card has fewer than 2 options with text."
+  },
+  "noCorrectOption": "Marca la opción correcta",
+  "@noCorrectOption": {
+    "description": "Card editor: no option with text is ticked as correct."
+  },
+  "explanationOptionalLabel": "Explicación (opcional)",
+  "@explanationOptionalLabel": {
+    "description": "Card editor: label of the explanation of a test card."
+  },
+  "keepCorrectTitle": "¿Qué opción es la correcta?",
+  "@keepCorrectTitle": {
+    "description": "Dialog shown when 'Permitir varias correctas' is turned off with several options ticked (US-09 AC4)."
+  },
+  "saveAndAddAnother": "Guardar y añadir otra",
+  "@saveAndAddAnother": {
+    "description": "Card editor button: saves the card and clears the form for the next one (US-10)."
+  },
+  "cardSaved": "Tarjeta guardada",
+  "@cardSaved": {
+    "description": "Short snackbar after 'Guardar y añadir otra' (US-10 AC2)."
+  },
+  "discardChangesTitle": "¿Descartar los cambios?",
+  "@discardChangesTitle": {
+    "description": "Title of the dialog shown when leaving the card editor with unsaved changes."
+  },
+  "discardChangesBody": "Lo que has escrito en esta tarjeta no se guardará.",
+  "@discardChangesBody": {
+    "description": "Body of the dialog shown when leaving the card editor with unsaved changes."
+  },
+  "discard": "Descartar",
+  "@discard": {
+    "description": "Confirm button of the dialog that discards the card editor's changes."
+  },
+  "cardNotFound": "Esta tarjeta ya no existe",
+  "@cardNotFound": {
+    "description": "Card editor opened with the ID of a card that does not exist."
+  },
+
   "colorOrange": "Naranja",
   "@colorOrange": { "description": "Project palette colour name, read by screen readers." },
   "colorAmber": "Ámbar",

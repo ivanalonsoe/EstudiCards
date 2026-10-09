@@ -11,6 +11,8 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
+import 'package:estudicards/features/cards/presentation/card_editor_screen.dart';
+import 'package:estudicards/features/decks/presentation/deck_placeholder_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
@@ -89,18 +91,32 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                 ),
                 routes: [
                   screen('study', 'sessionSetup', (l10n) => l10n.sessionSetup),
-                  screen(
-                    'deck/:deckId',
-                    'deck',
-                    (l10n) => l10n.deck,
+                  GoRoute(
+                    path: 'deck/:deckId',
+                    builder: (context, state) => DeckPlaceholderScreen(
+                      key: const Key('screen.deck'),
+                      projectId: state.pathParameters['projectId']!,
+                      deckId: state.pathParameters['deckId']!,
+                    ),
                     routes: [
                       // `card/new` is declared before `card/:cardId` so
                       // "new" is not read as a card ID.
-                      screen('card/new', 'newCard', (l10n) => l10n.newCard),
-                      screen(
-                        'card/:cardId',
-                        'editCard',
-                        (l10n) => l10n.editCard,
+                      GoRoute(
+                        path: 'card/new',
+                        builder: (context, state) => CardEditorScreen(
+                          key: const Key('screen.newCard'),
+                          projectId: state.pathParameters['projectId']!,
+                          deckId: state.pathParameters['deckId']!,
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'card/:cardId',
+                        builder: (context, state) => CardEditorScreen(
+                          key: const Key('screen.editCard'),
+                          projectId: state.pathParameters['projectId']!,
+                          deckId: state.pathParameters['deckId']!,
+                          cardId: state.pathParameters['cardId'],
+                        ),
                       ),
                     ],
                   ),

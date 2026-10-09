@@ -1,0 +1,593 @@
+import 'package:estudicards/app/router.dart';
+import 'package:estudicards/core/clock.dart';
+import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/features/cards/data/cards_dao.dart';
+import 'package:estudicards/features/cards/data/cards_repository.dart';
+import 'package:estudicards/features/cards/domain/card_input.dart';
+import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/decks/data/decks_dao.dart';
+import 'package:estudicards/features/decks/data/decks_repository.dart';
+import 'package:estudicards/features/decks/domain/deck.dart';
+import 'package:estudicards/features/decks/domain/deck_input.dart';
+import 'package:estudicards/features/projects/data/projects_dao.dart';
+import 'package:estudicards/features/projects/data/projects_repository.dart';
+import 'package:estudicards/features/projects/domain/project.dart';
+import 'package:estudicards/features/projects/domain/project_input.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/test_app.dart';
+import 'card_editor_finders.dart';
+
+void main() {
+  late AppDatabase db;
+  late FakeClock clock;
+  late CardsRepository cards;
+  late Project general;
+  late Project language;
+  late Deck constitution;
+  late Deck verbs;
+
+  setUp(() async {
+    db = createTestDatabase();
+    clock = FakeClock(DateTime.utc(2026, 10, 6, 12));
+    cards = CardsRepository(CardsDao(db), clock, FakeImageFiles());
+    final projects = ProjectsRepository(ProjectsDao(db), clock);
+    final decks = DecksRepository(DecksDao(db), clock);
+    general = await projects.create(
+      const ProjectInput(
+        name: 'Oposiciones · Tema 3',
+        color: 'orange',
+        icon: 'scales',
+      ),
+    );
+    language = await projects.create(
+      const ProjectInput(
+        name: 'Inglés B2',
+        color: 'blue',
+        icon: 'globe',
+        type: ProjectType.language,
+        sourceLang: 'en-GB',
+        targetLang: 'es-ES',
+      ),
+    );
+    constitution = await decks.create(
+      general.id,
+      const DeckInput(name: 'Constitución'),
+    );
+    verbs = await decks.create(
+      language.id,
+      const DeckInput(name: 'Verbos irregulares'),
+    );
+  });
+
+  Future<void> openNewCard(
+    WidgetTester tester, {
+    Deck? deck,
+    Size size = mobile,
+  }) {
+    final target = deck ?? constitution;
+    return pumpTestApp(
+      tester,
+      size: size,
+      db: db,
+      clock: clock,
+      location: AppRoutes.newCard(target.projectId, target.id),
+    );
+  }
+
+  /// The cards in the database, read with a plain query (see
+  /// `test/helpers/test_app.dart`).
+  Future<List<Flashcard>> storedCards() async {
+    final rows = await db.select(db.cards).get();
+    return [for (final row in rows) (await cards.getById(row.id))!];
+  }
+
+  group('simple card', () {
+    testWidgets('Save is disabled without a question or without an answer', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+
+      expect(find.byKey(const Key('cardEditor')), findsOneWidget);
+      expect(isEnabled(tester, saveButton), isFalse);
+
+      await tester.enterText(questionField, '¿Qué órgano ejerce la potestad?');
+      await tester.pump();
+      expect(isEnabled(tester, saveButton), isFalse);
+
+      await tester.enterText(answerField, 'Las Cortes Generales');
+      await tester.pump();
+      expect(isEnabled(tester, saveButton), isTrue);
+      expect(isEnabled(tester, saveAndAddButton), isTrue);
+
+      await tester.enterText(questionField, '   ');
+      await tester.pump();
+      expect(isEnabled(tester, saveButton), isFalse);
+      expect(isEnabled(tester, saveAndAddButton), isFalse);
+    });
+
+    testWidgets('"Guardar" saves the card and goes back to the deck', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+
+      await tester.enterText(
+        questionField,
+        ' ¿Qué órgano ejerce la potestad? ',
+      );
+      await tester.enterText(answerField, 'Las Cortes Generales');
+      await tester.pump();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [card] = await storedCards();
+      expect(card.deckId, constitution.id);
+      expect(card.type, CardType.simple);
+      expect(card.question, '¿Qué órgano ejerce la potestad?');
+      expect(card.answer, 'Las Cortes Generales');
+      expect(find.byKey(const Key('cardEditor')), findsNothing);
+      expect(find.byKey(const Key('screen.deck')), findsOneWidget);
+    });
+
+    testWidgets('"Guardar y añadir otra" clears the form, keeps the type and '
+        'focuses the question', (tester) async {
+      await openNewCard(tester);
+
+      await tester.enterText(questionField, 'to bring');
+      await tester.enterText(answerField, 'traer');
+      await tester.pump();
+      await tester.tap(saveAndAddButton);
+      await tester.pumpAndSettle();
+
+      expect((await storedCards()).single.question, 'to bring');
+      expect(find.byKey(const Key('cardEditor')), findsOneWidget);
+      expect(fieldText(tester, questionField), isEmpty);
+      expect(fieldText(tester, answerField), isEmpty);
+      expect(answerField, findsOneWidget, reason: 'still a simple card');
+      expect(hasFocus(tester, questionField), isTrue);
+      expect(find.text('Tarjeta guardada'), findsOneWidget);
+      expect(isEnabled(tester, saveButton), isFalse);
+    });
+
+    testWidgets('the formatting bar makes the selected text bold or italic', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, 'Can you bring me some water?');
+      setSelection(tester, questionField, 8, 13);
+
+      await tester.tap(find.byKey(const Key('cardEditor.question.bold')));
+      await tester.pump();
+      expect(
+        fieldText(tester, questionField),
+        'Can you **bring** me some water?',
+      );
+
+      setSelection(tester, questionField, 21, 25);
+      await tester.tap(find.byKey(const Key('cardEditor.question.italic')));
+      await tester.pump();
+      expect(
+        fieldText(tester, questionField),
+        'Can you **bring** me *some* water?',
+      );
+    });
+
+    testWidgets('editing loads the card and saves the changes', (tester) async {
+      final card = await cards.create(
+        constitution.id,
+        const CardInput(
+          type: CardType.simple,
+          question: '¿Qué órgano ejerce la potestad legislativa?',
+          answer: 'Las Cortes',
+        ),
+      );
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(general.id, constitution.id, card.id),
+      );
+
+      expect(find.text('Editar tarjeta'), findsOneWidget);
+      expect(fieldText(tester, answerField), 'Las Cortes');
+      // "Guardar y añadir otra" is only for new cards.
+      expect(saveAndAddButton, findsNothing);
+
+      await tester.enterText(answerField, 'Las Cortes Generales');
+      await tester.pump();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [stored] = await storedCards();
+      expect(stored.id, card.id);
+      expect(stored.answer, 'Las Cortes Generales');
+    });
+
+    testWidgets('an unknown card shows that it no longer exists', (
+      tester,
+    ) async {
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(general.id, constitution.id, 'missing'),
+      );
+
+      expect(find.text('Esta tarjeta ya no existe'), findsOneWidget);
+    });
+  });
+
+  group('test card', () {
+    /// Fills the options from [texts] (more than 4 adds options first).
+    Future<void> fillOptions(WidgetTester tester, List<String> texts) async {
+      for (final (i, text) in texts.indexed) {
+        if (i >= optionCount()) {
+          await tester.ensureVisible(addOptionButton);
+          await tester.tap(addOptionButton);
+          await tester.pump();
+        }
+        await tester.ensureVisible(optionField(i));
+        await tester.enterText(optionField(i), text);
+      }
+      await tester.pump();
+    }
+
+    Future<void> tick(WidgetTester tester, int index) async {
+      await tester.ensureVisible(correctSelector(index));
+      await tester.tap(correctSelector(index));
+      await tester.pump();
+    }
+
+    Future<void> turnOnTestType(WidgetTester tester) async {
+      await tester.tap(testTypeSwitch);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('turning on "Tipo test" replaces the answer with options and '
+        'explanation', (tester) async {
+      await openNewCard(tester);
+      expect(answerField, findsOneWidget);
+      expect(allowMultipleSwitch, findsNothing);
+
+      await turnOnTestType(tester);
+
+      expect(answerField, findsNothing);
+      expect(optionCount(), 4);
+      expect(explanationField, findsOneWidget);
+      expect(allowMultipleSwitch, findsOneWidget);
+      expect(find.text('4 de 6 · 0 correctas'), findsOneWidget);
+
+      // Turning it off brings the answer back.
+      await tester.tap(testTypeSwitch);
+      await tester.pumpAndSettle();
+      expect(answerField, findsOneWidget);
+      expect(optionCount(), 0);
+    });
+
+    testWidgets('you cannot add more than 6 options or remove below 2', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+      await turnOnTestType(tester);
+
+      await tester.ensureVisible(addOptionButton);
+      await tester.tap(addOptionButton);
+      await tester.pump();
+      await tester.tap(addOptionButton);
+      await tester.pump();
+      expect(optionCount(), 6);
+      expect(isEnabled(tester, addOptionButton), isFalse);
+
+      for (var i = 0; i < 4; i++) {
+        await tester.ensureVisible(removeOptionButton(0));
+        await tester.tap(removeOptionButton(0));
+        await tester.pump();
+      }
+      expect(optionCount(), 2);
+      expect(
+        tester.widget<IconButton>(removeOptionButton(0)).onPressed,
+        isNull,
+      );
+      expect(
+        tester.widget<IconButton>(removeOptionButton(1)).onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('removing an option keeps the text of the others', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+      await turnOnTestType(tester);
+      await fillOptions(tester, ['Sídney', 'Canberra', 'Melbourne', 'Perth']);
+
+      await tester.ensureVisible(removeOptionButton(0));
+      await tester.tap(removeOptionButton(0));
+      await tester.pump();
+
+      expect(fieldText(tester, optionField(0)), 'Canberra');
+      expect(fieldText(tester, optionField(2)), 'Perth');
+    });
+
+    testWidgets('with "allow multiple" off, ticking an option unticks the '
+        'previous one', (tester) async {
+      await openNewCard(tester);
+      await turnOnTestType(tester);
+
+      await tick(tester, 0);
+      expect(isTicked(tester, 0), isTrue);
+
+      await tick(tester, 2);
+      expect(isTicked(tester, 2), isTrue);
+      expect(isTicked(tester, 0), isFalse);
+    });
+
+    testWidgets('with "allow multiple" on, several options can be ticked', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+      await turnOnTestType(tester);
+      await tester.tap(allowMultipleSwitch);
+      await tester.pump();
+
+      await tick(tester, 0);
+      await tick(tester, 2);
+      expect(isTicked(tester, 0), isTrue);
+      expect(isTicked(tester, 2), isTrue);
+
+      // Tapping a ticked option unticks it.
+      await tick(tester, 0);
+      expect(isTicked(tester, 0), isFalse);
+    });
+
+    testWidgets('turning off "allow multiple" with 2 ticked asks which one to '
+        'keep', (tester) async {
+      await openNewCard(tester);
+      await turnOnTestType(tester);
+      await fillOptions(tester, ['2', '4', '7', '9']);
+      await tester.tap(allowMultipleSwitch);
+      await tester.pump();
+      await tick(tester, 0);
+      await tick(tester, 2);
+
+      // "Cancelar" leaves everything as it was.
+      await tester.ensureVisible(allowMultipleSwitch);
+      await tester.tap(allowMultipleSwitch);
+      await tester.pumpAndSettle();
+      expect(find.text('¿Qué opción es la correcta?'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('keepCorrectDialog.cancel')));
+      await tester.pumpAndSettle();
+      expect(tester.widget<SwitchListTile>(allowMultipleSwitch).value, isTrue);
+      expect(isTicked(tester, 0) && isTicked(tester, 2), isTrue);
+
+      // Choosing one keeps only that one and turns the option off.
+      await tester.tap(allowMultipleSwitch);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('keepCorrectDialog.option.2')));
+      await tester.pumpAndSettle();
+      expect(tester.widget<SwitchListTile>(allowMultipleSwitch).value, isFalse);
+      expect(isTicked(tester, 2), isTrue);
+      expect(isTicked(tester, 0), isFalse);
+    });
+
+    testWidgets('saves a test card with its options in order', (tester) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, '¿Qué números son primos?');
+      await turnOnTestType(tester);
+      await tester.tap(allowMultipleSwitch);
+      await tester.pump();
+      await fillOptions(tester, ['2', '4', '7', '9']);
+      await tick(tester, 0);
+      await tick(tester, 2);
+      await tester.ensureVisible(explanationField);
+      await tester.enterText(
+        explanationField,
+        'Solo se dividen por 1 y por sí',
+      );
+      await tester.pump();
+      expect(find.text('4 de 6 · 2 correctas'), findsOneWidget);
+
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [card] = await storedCards();
+      expect(card.type, CardType.test);
+      expect(card.allowMultiple, isTrue);
+      expect(card.answer, isNull);
+      expect(card.explanation, 'Solo se dividen por 1 y por sí');
+      expect(card.options.map((o) => o.text), ['2', '4', '7', '9']);
+      expect(card.options.map((o) => o.isCorrect), [true, false, true, false]);
+    });
+
+    testWidgets('Save waits for 2 options and a correct one', (tester) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, '¿Capital de Australia?');
+      await turnOnTestType(tester);
+
+      await fillOptions(tester, ['Canberra']);
+      await tick(tester, 0);
+      expect(isEnabled(tester, saveButton), isFalse);
+      expect(find.text('Escribe al menos 2 opciones'), findsOneWidget);
+
+      await fillOptions(tester, ['Canberra', 'Sídney']);
+      expect(isEnabled(tester, saveButton), isTrue);
+
+      // The ticked option emptied: no correct option left.
+      await tester.enterText(optionField(0), '');
+      await tester.pump();
+      expect(isEnabled(tester, saveButton), isFalse);
+      expect(find.text('Marca la opción correcta'), findsOneWidget);
+    });
+
+    testWidgets('"Guardar y añadir otra" keeps the test type and "allow '
+        'multiple"', (tester) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, '¿Qué números son primos?');
+      await turnOnTestType(tester);
+      await tester.tap(allowMultipleSwitch);
+      await tester.pump();
+      await fillOptions(tester, ['2', '4']);
+      await tick(tester, 0);
+
+      await tester.tap(saveAndAddButton);
+      await tester.pumpAndSettle();
+
+      expect(await storedCards(), hasLength(1));
+      expect(tester.widget<SwitchListTile>(testTypeSwitch).value, isTrue);
+      expect(tester.widget<SwitchListTile>(allowMultipleSwitch).value, isTrue);
+      expect(optionCount(), 4);
+      expect(fieldText(tester, optionField(0)), isEmpty);
+      expect(isTicked(tester, 0), isFalse);
+    });
+
+    testWidgets('editing a test card shows its options', (tester) async {
+      final card = await cards.create(
+        constitution.id,
+        const CardInput(
+          type: CardType.test,
+          question: '¿Capital de Australia?',
+          explanation: 'Desde 1913',
+          options: [
+            CardOptionInput(text: 'Sídney'),
+            CardOptionInput(text: 'Canberra', isCorrect: true),
+            CardOptionInput(text: 'Perth'),
+          ],
+        ),
+      );
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(general.id, constitution.id, card.id),
+      );
+
+      expect(tester.widget<SwitchListTile>(testTypeSwitch).value, isTrue);
+      expect(optionCount(), 3);
+      expect(fieldText(tester, optionField(1)), 'Canberra');
+      expect(isTicked(tester, 1), isTrue);
+      expect(fieldText(tester, explanationField), 'Desde 1913');
+
+      await fillOptions(tester, ['Sídney', 'Canberra', 'Perth', 'Melbourne']);
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [stored] = await storedCards();
+      expect(stored.options.map((o) => o.text), [
+        'Sídney',
+        'Canberra',
+        'Perth',
+        'Melbourne',
+      ]);
+      // The options that were already there keep their ID.
+      expect(stored.options[1].id, card.options[1].id);
+    });
+  });
+
+  group('language fields', () {
+    testWidgets('in a general project, "Frase de ejemplo" and "Notas" are not '
+        'shown', (tester) async {
+      await openNewCard(tester);
+
+      expect(find.text('Pregunta'), findsOneWidget);
+      expect(find.text('Respuesta'), findsOneWidget);
+      expect(exampleField, findsNothing);
+      expect(notesField, findsNothing);
+    });
+
+    testWidgets('a language project shows them and saves them', (tester) async {
+      await openNewCard(tester, deck: verbs);
+
+      expect(find.text('Palabra o pregunta'), findsOneWidget);
+      expect(find.text('Traducción o respuesta'), findsOneWidget);
+      expect(find.text('Frase de ejemplo (opcional)'), findsOneWidget);
+      expect(find.text('Notas (opcional)'), findsOneWidget);
+
+      await tester.enterText(questionField, 'to bring');
+      await tester.enterText(answerField, 'traer');
+      await tester.enterText(exampleField, 'Can you **bring** me some water?');
+      await tester.enterText(notesField, 'Verbo irregular');
+      await tester.pump();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final [card] = await storedCards();
+      expect(card.example, 'Can you **bring** me some water?');
+      expect(card.notes, 'Verbo irregular');
+    });
+  });
+
+  group('leaving', () {
+    testWidgets('closing with no changes does not ask', (tester) async {
+      await openNewCard(tester);
+
+      await tester.tap(closeButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('confirmDialog')), findsNothing);
+      expect(find.byKey(const Key('screen.deck')), findsOneWidget);
+    });
+
+    testWidgets('closing with changes asks before discarding them', (
+      tester,
+    ) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, 'to bring');
+      await tester.pump();
+
+      await tester.tap(closeButton);
+      await tester.pumpAndSettle();
+      expect(find.text('¿Descartar los cambios?'), findsOneWidget);
+
+      // "Cancelar" keeps editing.
+      await tester.tap(find.byKey(const Key('confirmDialog.cancel')));
+      await tester.pumpAndSettle();
+      expect(fieldText(tester, questionField), 'to bring');
+
+      await tester.tap(closeButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('screen.deck')), findsOneWidget);
+      expect(await storedCards(), isEmpty);
+    });
+  });
+
+  testWidgets('on desktop the actions are in the header, next to the sidebar', (
+    tester,
+  ) async {
+    await openNewCard(tester, size: desktop);
+
+    expect(find.byKey(const Key('shell.sidebar')), findsOneWidget);
+    expect(find.text('Nueva tarjeta'), findsWidgets);
+    expect(cancelButton, findsOneWidget);
+    expect(saveAndAddButton, findsOneWidget);
+
+    await tester.tap(cancelButton);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('screen.deck')), findsOneWidget);
+  });
+
+  testWidgets('"Añadir tarjeta" on the deck screen opens the editor', (
+    tester,
+  ) async {
+    await pumpTestApp(
+      tester,
+      size: mobile,
+      db: db,
+      clock: clock,
+      location: AppRoutes.deck(general.id, constitution.id),
+    );
+
+    await tester.tap(find.byKey(const Key('deckScreen.addCard')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('cardEditor')), findsOneWidget);
+    expect(find.text('Nueva tarjeta'), findsOneWidget);
+  });
+}

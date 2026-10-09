@@ -1,6 +1,7 @@
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/decks/data/decks_dao.dart';
 import 'package:estudicards/features/decks/data/decks_repository.dart';
+import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -11,6 +12,12 @@ final decksRepositoryProvider = Provider<DecksRepository>(
     ref.watch(clockProvider),
   ),
 );
+
+/// One deck, read once; null if it does not exist. `autoDispose` forgets it
+/// when no screen uses it, so reopening a screen reads it again.
+final FutureProviderFamily<Deck?, String> deckProvider = FutureProvider
+    .autoDispose
+    .family((ref, id) => ref.watch(decksRepositoryProvider).getById(id));
 
 /// A project's decks with their card counts.
 ///
