@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.9 | ⏳ 4 / 9 |
+| 2. Cards | T2.1 – T2.9 | ⏳ 5 / 9 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -223,7 +223,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 with "allow multiple" off, ticking an option unticks the previous one.
     - 🧩 turning off "allow multiple" with 2 ticked asks which one to keep.
 
-- [ ] **T2.5 Preview and card component** · Depends on: T2.3
+- [x] **T2.5 Preview and card component** · Depends on: T2.3
+  - > **Note:** `StudyCard` covers the variants of the card itself; the timer, pause and drag variants arrive with T3.4, T3.7 and T3.8, and the back of a test card in the preview shows the solution (both decided with the owner). See SPEC §13.2 (assumption 27).
   - Reusable card component with every variant from `design/tarjetas/` and the 3D flip; used in the preview.
   - **Tests first:**
     - 🧩 tapping the preview shows the back.

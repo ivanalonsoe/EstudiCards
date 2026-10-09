@@ -11,10 +11,12 @@ import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text_controller.dart';
+import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/form_parts.dart';
+import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +25,7 @@ import 'package:go_router/go_router.dart';
 /// P06: creates a card in a deck, or edits [cardId] when given
 /// (`docs/design/movil-claro/editor.png`, `escritorio-claro/editor.png`).
 ///
-/// The preview arrives with T2.5 and the image buttons with T2.6. "Eliminar
+/// The image buttons arrive with T2.6. "Eliminar
 /// tarjeta" (T2.9) and "Reiniciar estadísticas" (phase 4) arrive with their
 /// tasks.
 class CardEditorScreen extends ConsumerWidget {
@@ -113,6 +115,7 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   bool _answerEdited = false;
   bool _optionsEdited = false;
   bool _saving = false;
+  CardFace _previewFace = CardFace.front;
 
   /// A new test card starts with 4 empty options (decided with the owner).
   static const _initialOptions = 4;
@@ -362,6 +365,11 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
                 onCancel: () => unawaited(_leave()),
                 actions: actions,
                 fields: _fields(l10n),
+                preview: _DesktopPreview(
+                  face: _previewFace,
+                  onFaceChanged: (face) => setState(() => _previewFace = face),
+                  card: _previewCard(l10n),
+                ),
               )
             : _MobileFrame(
                 title: title,
@@ -370,7 +378,57 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
                 onClose: () => unawaited(_leave()),
                 actions: actions,
                 fields: _fields(l10n),
+                preview: SizedBox(height: 440, child: _previewCard(l10n)),
               ),
+      ),
+    );
+  }
+
+  /// The card as it will be studied, updated while typing (US-08 AC4).
+  /// Tapping it turns it over; the back of a test card shows the solution.
+  StudyCard _previewCard(AppLocalizations l10n) {
+    final input = _input;
+    final project = widget.project;
+    final source = project.sourceLang;
+    final target = project.targetLang;
+    final now = DateTime.utc(2000);
+    return StudyCard(
+      card: Flashcard(
+        id: 'preview',
+        deckId: widget.deck.id,
+        type: _type,
+        question: input.trimmedQuestion,
+        answer: input.trimmedAnswer,
+        explanation: input.trimmedExplanation,
+        allowMultiple: _allowMultiple,
+        example: input.trimmedExample,
+        notes: input.trimmedNotes,
+        options: [
+          for (final (i, option) in input.filledOptions.indexed)
+            CardOption(
+              id: 'preview.$i',
+              text: option.text,
+              isCorrect: option.isCorrect,
+              position: i,
+            ),
+        ],
+        // Not shown; a card needs them.
+        createdAt: now,
+        updatedAt: now,
+      ),
+      label: l10n.cardLabel(project.name, widget.deck.name),
+      color: widget.deck.color,
+      face: _previewFace,
+      languagePair: _isLanguage && source != null && target != null
+          ? l10n.languagePair(
+              languageName(l10n, source),
+              languageName(l10n, target),
+            )
+          : null,
+      onTap: () => setState(
+        () => _previewFace = _previewFace == CardFace.front
+            ? CardFace.back
+            : CardFace.front,
       ),
     );
   }
@@ -663,6 +721,7 @@ class _MobileFrame extends StatelessWidget {
     required this.onClose,
     required this.actions,
     required this.fields,
+    required this.preview,
   });
 
   final String title;
@@ -671,6 +730,9 @@ class _MobileFrame extends StatelessWidget {
   final VoidCallback onClose;
   final _Actions actions;
   final List<Widget> fields;
+
+  /// Shown below the form.
+  final Widget preview;
 
   @override
   Widget build(BuildContext context) {
@@ -706,6 +768,13 @@ class _MobileFrame extends StatelessWidget {
                 _DeckPath(project: project, deck: deck),
                 const SizedBox(height: AppSpacing.xl),
                 ...fields,
+                const SizedBox(height: AppSpacing.xxl),
+                Text(
+                  l10n.previewTapToFlip.toUpperCase(),
+                  style: _previewHeadingStyle(context),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                preview,
               ],
             ),
           ),
@@ -735,6 +804,88 @@ class _MobileFrame extends StatelessWidget {
   }
 }
 
+/// "VISTA PREVIA" above the preview, in small capitals.
+TextStyle? _previewHeadingStyle(BuildContext context) =>
+    Theme.of(context).textTheme.labelMedium?.copyWith(
+      color: AppColors.of(context).textMuted,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1,
+    );
+
+/// The desktop preview column: "VISTA PREVIA" with "Anverso" / "Reverso",
+/// the card and a caption, as in `escritorio-claro/editor.png`.
+class _DesktopPreview extends StatelessWidget {
+  const new({
+    required this.face,
+    required this.onFaceChanged,
+    required this.card,
+  });
+
+  final CardFace face;
+  final ValueChanged<CardFace> onFaceChanged;
+  final StudyCard card;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.previewLabel.toUpperCase(),
+                style: _previewHeadingStyle(context),
+              ),
+            ),
+            SegmentedButton<CardFace>(
+              showSelectedIcon: false,
+              // As in the design: the chosen side is a light "pill" on a
+              // grey track, not an orange fill.
+              style: SegmentedButton.styleFrom(
+                backgroundColor: colors.surfaceVariant,
+                selectedBackgroundColor: colors.surface,
+                foregroundColor: colors.textMuted,
+                selectedForegroundColor: colors.text,
+                side: BorderSide(color: colors.border),
+              ),
+              segments: [
+                ButtonSegment(
+                  value: CardFace.front,
+                  label: Text(
+                    l10n.previewFront,
+                    key: const Key('cardEditor.preview.front'),
+                  ),
+                ),
+                ButtonSegment(
+                  value: CardFace.back,
+                  label: Text(
+                    l10n.previewBack,
+                    key: const Key('cardEditor.preview.back'),
+                  ),
+                ),
+              ],
+              selected: {face},
+              onSelectionChanged: (selection) =>
+                  onFaceChanged(selection.single),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: 460, child: card),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          l10n.previewCaption,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
 /// Desktop: breadcrumb, title with the buttons, and the fields.
 class _DesktopFrame extends StatelessWidget {
   const new({
@@ -744,6 +895,7 @@ class _DesktopFrame extends StatelessWidget {
     required this.onCancel,
     required this.actions,
     required this.fields,
+    required this.preview,
   });
 
   final String title;
@@ -752,6 +904,7 @@ class _DesktopFrame extends StatelessWidget {
   final VoidCallback onCancel;
   final _Actions actions;
   final List<Widget> fields;
+  final Widget preview;
 
   @override
   Widget build(BuildContext context) {
@@ -814,13 +967,19 @@ class _DesktopFrame extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            // The preview column on the right arrives with T2.5.
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 660),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: fields,
-              ),
+            // The form on the left and the preview on the right.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: fields,
+                  ),
+                ),
+                const SizedBox(width: 40),
+                SizedBox(width: 380, child: preview),
+              ],
             ),
           ],
         ),

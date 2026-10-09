@@ -610,6 +610,86 @@
   "@keepCorrectTitle": {
     "description": "Dialog shown when 'Permitir varias correctas' is turned off with several options ticked (US-09 AC4)."
   },
+  "cardTypeSimple": "Simple",
+  "@cardTypeSimple": {
+    "description": "Card type label: a simple card (question → answer)."
+  },
+  "cardTypeTest": "Test",
+  "@cardTypeTest": {
+    "description": "Card type label: a test card with options."
+  },
+  "cardBackLabel": "Respuesta",
+  "@cardBackLabel": {
+    "description": "Label at the top of the back of a simple card."
+  },
+  "cardLabel": "{project} · {deck}",
+  "@cardLabel": {
+    "description": "Small label at the top of a study card: its project and deck, e.g. 'Biología 2º Bach. · Célula'.",
+    "placeholders": {
+      "project": { "type": "String" },
+      "deck": { "type": "String" }
+    }
+  },
+  "tapToFlip": "Toca para girar",
+  "@tapToFlip": {
+    "description": "Hint at the bottom of the front of a card."
+  },
+  "tapToFlipBack": "Toca para volver",
+  "@tapToFlipBack": {
+    "description": "Hint at the bottom of the back of a card."
+  },
+  "multipleCorrectChip": "Varias respuestas correctas",
+  "@multipleCorrectChip": {
+    "description": "Label on a test card where several options are correct."
+  },
+  "answerCorrect": "¡Correcto!",
+  "@answerCorrect": {
+    "description": "Top of a checked test card answered correctly, next to a ✓."
+  },
+  "answerWrong": "Incorrecto",
+  "@answerWrong": {
+    "description": "Top of a checked test card answered wrongly, next to a ✗."
+  },
+  "yourAnswer": "Tu respuesta",
+  "@yourAnswer": {
+    "description": "Next to an option the user ticked, once the test card is checked."
+  },
+  "correctOptionLabel": "Correcta",
+  "@correctOptionLabel": {
+    "description": "Next to a correct option the user did not tick, once the test card is checked."
+  },
+  "explanationLead": "Explicación.",
+  "@explanationLead": {
+    "description": "Bold start of the explanation box of a checked test card, followed by the explanation."
+  },
+  "exampleHeading": "Ejemplo",
+  "@exampleHeading": {
+    "description": "Heading of the example sentence on the back of a language card (shown in capitals)."
+  },
+  "notesHeading": "Notas",
+  "@notesHeading": {
+    "description": "Heading of the notes on the back of a language card (shown in capitals)."
+  },
+  "previewLabel": "Vista previa",
+  "@previewLabel": {
+    "description": "Card editor: heading of the card preview."
+  },
+  "previewTapToFlip": "Vista previa · Toca para girar",
+  "@previewTapToFlip": {
+    "description": "Card editor on mobile: heading of the preview below the form (shown in capitals)."
+  },
+  "previewFront": "Anverso",
+  "@previewFront": {
+    "description": "Card editor on desktop: shows the front of the preview."
+  },
+  "previewBack": "Reverso",
+  "@previewBack": {
+    "description": "Card editor on desktop: shows the back of the preview."
+  },
+  "previewCaption": "Así se verá al estudiar. Pulsa la tarjeta para girarla.",
+  "@previewCaption": {
+    "description": "Card editor on desktop: under the preview."
+  },
   "saveAndAddAnother": "Guardar y añadir otra",
   "@saveAndAddAnother": {
     "description": "Card editor button: saves the card and clears the form for the next one (US-10)."

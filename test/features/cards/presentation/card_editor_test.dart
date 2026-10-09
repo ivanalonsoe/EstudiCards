@@ -226,8 +226,7 @@ void main() {
     Future<void> fillOptions(WidgetTester tester, List<String> texts) async {
       for (final (i, text) in texts.indexed) {
         if (i >= optionCount()) {
-          await tester.ensureVisible(addOptionButton);
-          await tester.tap(addOptionButton);
+          await tapVisible(tester, addOptionButton);
           await tester.pump();
         }
         await tester.ensureVisible(optionField(i));
@@ -237,13 +236,12 @@ void main() {
     }
 
     Future<void> tick(WidgetTester tester, int index) async {
-      await tester.ensureVisible(correctSelector(index));
-      await tester.tap(correctSelector(index));
+      await tapVisible(tester, correctSelector(index));
       await tester.pump();
     }
 
     Future<void> turnOnTestType(WidgetTester tester) async {
-      await tester.tap(testTypeSwitch);
+      await tapVisible(tester, testTypeSwitch);
       await tester.pumpAndSettle();
     }
 
@@ -262,7 +260,7 @@ void main() {
       expect(find.text('4 de 6 · 0 correctas'), findsOneWidget);
 
       // Turning it off brings the answer back.
-      await tester.tap(testTypeSwitch);
+      await tapVisible(tester, testTypeSwitch);
       await tester.pumpAndSettle();
       expect(answerField, findsOneWidget);
       expect(optionCount(), 0);
@@ -274,8 +272,7 @@ void main() {
       await openNewCard(tester);
       await turnOnTestType(tester);
 
-      await tester.ensureVisible(addOptionButton);
-      await tester.tap(addOptionButton);
+      await tapVisible(tester, addOptionButton);
       await tester.pump();
       await tester.tap(addOptionButton);
       await tester.pump();
@@ -283,8 +280,7 @@ void main() {
       expect(isEnabled(tester, addOptionButton), isFalse);
 
       for (var i = 0; i < 4; i++) {
-        await tester.ensureVisible(removeOptionButton(0));
-        await tester.tap(removeOptionButton(0));
+        await tapVisible(tester, removeOptionButton(0));
         await tester.pump();
       }
       expect(optionCount(), 2);
@@ -305,8 +301,7 @@ void main() {
       await turnOnTestType(tester);
       await fillOptions(tester, ['Sídney', 'Canberra', 'Melbourne', 'Perth']);
 
-      await tester.ensureVisible(removeOptionButton(0));
-      await tester.tap(removeOptionButton(0));
+      await tapVisible(tester, removeOptionButton(0));
       await tester.pump();
 
       expect(fieldText(tester, optionField(0)), 'Canberra');
@@ -331,7 +326,7 @@ void main() {
     ) async {
       await openNewCard(tester);
       await turnOnTestType(tester);
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pump();
 
       await tick(tester, 0);
@@ -349,14 +344,13 @@ void main() {
       await openNewCard(tester);
       await turnOnTestType(tester);
       await fillOptions(tester, ['2', '4', '7', '9']);
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pump();
       await tick(tester, 0);
       await tick(tester, 2);
 
       // "Cancelar" leaves everything as it was.
-      await tester.ensureVisible(allowMultipleSwitch);
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pumpAndSettle();
       expect(find.text('¿Qué opción es la correcta?'), findsOneWidget);
       await tester.tap(find.byKey(const Key('keepCorrectDialog.cancel')));
@@ -365,7 +359,7 @@ void main() {
       expect(isTicked(tester, 0) && isTicked(tester, 2), isTrue);
 
       // Choosing one keeps only that one and turns the option off.
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('keepCorrectDialog.option.2')));
       await tester.pumpAndSettle();
@@ -378,7 +372,7 @@ void main() {
       await openNewCard(tester);
       await tester.enterText(questionField, '¿Qué números son primos?');
       await turnOnTestType(tester);
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pump();
       await fillOptions(tester, ['2', '4', '7', '9']);
       await tick(tester, 0);
@@ -428,7 +422,7 @@ void main() {
       await openNewCard(tester);
       await tester.enterText(questionField, '¿Qué números son primos?');
       await turnOnTestType(tester);
-      await tester.tap(allowMultipleSwitch);
+      await tapVisible(tester, allowMultipleSwitch);
       await tester.pump();
       await fillOptions(tester, ['2', '4']);
       await tick(tester, 0);
@@ -485,6 +479,92 @@ void main() {
       ]);
       // The options that were already there keep their ID.
       expect(stored.options[1].id, card.options[1].id);
+    });
+  });
+
+  group('preview', () {
+    final front = find.byKey(const Key('studyCard.front'));
+    final back = find.byKey(const Key('studyCard.back'));
+
+    testWidgets('tapping the preview shows the back', (tester) async {
+      await openNewCard(tester);
+      await tester.enterText(questionField, '¿Qué órgano ejerce la potestad?');
+      await tester.enterText(answerField, 'Las Cortes Generales');
+      await tester.pump();
+
+      expect(front, findsOneWidget);
+      expect(
+        find.descendant(
+          of: front,
+          matching: find.text('¿Qué órgano ejerce la potestad?'),
+        ),
+        findsOneWidget,
+      );
+
+      await tapVisible(tester, front);
+      await tester.pumpAndSettle();
+
+      expect(back, findsOneWidget);
+      expect(
+        find.descendant(of: back, matching: find.text('Las Cortes Generales')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the preview updates while typing', (tester) async {
+      await openNewCard(tester, deck: verbs);
+      await tester.enterText(questionField, 'to **bring**');
+      await tester.pump();
+
+      expect(
+        find.descendant(of: front, matching: find.text('to bring')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: front,
+          matching: find.text('Inglés (R. U.) → Español'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the back of a test card shows the solution', (tester) async {
+      await openNewCard(tester);
+      await tapVisible(tester, testTypeSwitch);
+      await tester.pumpAndSettle();
+      await tester.enterText(optionField(0), 'Canberra');
+      await tester.tap(correctSelector(0));
+      await tester.pump();
+
+      await tapVisible(tester, front);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('studyCard.option.0')),
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('on desktop "Anverso" and "Reverso" choose the side', (
+      tester,
+    ) async {
+      await openNewCard(tester, size: desktop);
+      await tester.enterText(questionField, 'to bring');
+      await tester.enterText(answerField, 'traer');
+      await tester.pump();
+
+      expect(find.text('VISTA PREVIA'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('cardEditor.preview.back')));
+      await tester.pumpAndSettle();
+      expect(back, findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('cardEditor.preview.front')));
+      await tester.pumpAndSettle();
+      expect(front, findsOneWidget);
     });
   });
 

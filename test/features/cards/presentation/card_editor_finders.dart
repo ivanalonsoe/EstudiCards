@@ -45,6 +45,14 @@ bool isTicked(WidgetTester tester, int index) =>
     isSemantics(isChecked: true)
         .matches(tester.getSemantics(correctSelector(index)), {});
 
+/// Scrolls [finder] into view, lets the screen settle and taps it. The
+/// editor is longer than the screen, so a widget can be out of sight.
+Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+}
+
 /// Whether the button found by [finder] can be tapped.
 bool isEnabled(WidgetTester tester, Finder finder) =>
     tester.widget<ButtonStyleButton>(finder).onPressed != null;

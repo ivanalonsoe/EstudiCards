@@ -1,0 +1,301 @@
+import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/cards/presentation/study_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../../helpers/pump_widget.dart';
+
+final _now = DateTime.utc(2026, 10, 9);
+
+Flashcard simpleCard({
+  String question = '¿Qué órgano ejerce la potestad legislativa del Estado?',
+  String answer = 'Las Cortes Generales',
+  String? example,
+  String? notes,
+}) => Flashcard(
+  id: 'c1',
+  deckId: 'd1',
+  type: CardType.simple,
+  question: question,
+  answer: answer,
+  example: example,
+  notes: notes,
+  allowMultiple: false,
+  createdAt: _now,
+  updatedAt: _now,
+);
+
+/// ¿Qué orgánulo produce la mayor parte del ATP? with Mitocondria correct.
+Flashcard testCard({bool allowMultiple = false, String? explanation}) =>
+    Flashcard(
+      id: 'c2',
+      deckId: 'd1',
+      type: CardType.test,
+      question: '¿Qué orgánulo produce la mayor parte del ATP de la célula?',
+      explanation: explanation,
+      allowMultiple: allowMultiple,
+      options: [
+        for (final (i, text) in [
+          'Ribosoma',
+          'Mitocondria',
+          'Aparato de Golgi',
+          'Lisosoma',
+        ].indexed)
+          CardOption(
+            id: 'o$i',
+            text: text,
+            isCorrect: i == 1 || (allowMultiple && i == 2),
+            position: i,
+          ),
+      ],
+      createdAt: _now,
+      updatedAt: _now,
+    );
+
+Finder option(int index) => find.byKey(Key('studyCard.option.$index'));
+
+/// Whether the option at [index] shows [icon] as its marker.
+Finder marker(int index, IconData icon) =>
+    find.descendant(of: option(index), matching: find.byIcon(icon));
+
+void main() {
+  Future<void> pumpCard(
+    WidgetTester tester,
+    Flashcard card, {
+    CardFace face = CardFace.front,
+    Set<String> selected = const {},
+    bool checked = false,
+    bool? answeredCorrectly,
+    String? languagePair,
+  }) => pumpComponent(
+    tester,
+    StudyCard(
+      card: card,
+      label: 'Biología 2º Bach. · Célula',
+      color: 'green',
+      face: face,
+      languagePair: languagePair,
+      selectedOptionIds: selected,
+      checked: checked,
+      answeredCorrectly: answeredCorrectly,
+    ),
+  );
+
+  group('simple card', () {
+    testWidgets('the front shows the question, its type and the flip hint', (
+      tester,
+    ) async {
+      await pumpCard(tester, simpleCard());
+
+      expect(find.byKey(const Key('studyCard.front')), findsOneWidget);
+      expect(find.byKey(const Key('studyCard.back')), findsNothing);
+      expect(find.text('Biología 2º Bach. · Célula'), findsOneWidget);
+      expect(find.text('Simple'), findsOneWidget);
+      expect(
+        find.text('¿Qué órgano ejerce la potestad legislativa del Estado?'),
+        findsOneWidget,
+      );
+      expect(find.text('Toca para girar'), findsOneWidget);
+      expect(find.text('Las Cortes Generales'), findsNothing);
+    });
+
+    testWidgets('the back shows the answer under the question', (tester) async {
+      await pumpCard(tester, simpleCard(), face: CardFace.back);
+
+      expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
+      expect(find.text('Respuesta'), findsOneWidget);
+      expect(find.text('Las Cortes Generales'), findsOneWidget);
+      expect(
+        find.text('¿Qué órgano ejerce la potestad legislativa del Estado?'),
+        findsOneWidget,
+      );
+      expect(find.text('Toca para volver'), findsOneWidget);
+    });
+
+    testWidgets('bold text is drawn bold, without the asterisks', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        simpleCard(question: 'Can you **bring** me some water?'),
+      );
+
+      final text = find.text('Can you bring me some water?');
+      expect(text, findsOneWidget);
+      final span = tester.widget<Text>(text).textSpan! as TextSpan;
+      final bring = span.children!.cast<TextSpan>().singleWhere(
+        (s) => s.text == 'bring',
+      );
+      expect(bring.style?.fontWeight, FontWeight.w800);
+    });
+
+    testWidgets('a language card shows the languages, example and notes', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        simpleCard(
+          question: 'to bring',
+          answer: 'traer',
+          example: 'Can you **bring** me some water?',
+          notes: 'Verbo irregular. Mismo pasado y participio.',
+        ),
+        face: CardFace.back,
+        languagePair: 'Inglés → Español',
+      );
+
+      expect(find.text('Inglés → Español'), findsOneWidget);
+      expect(find.text('traer'), findsOneWidget);
+      expect(find.text('EJEMPLO'), findsOneWidget);
+      expect(find.text('Can you bring me some water?'), findsOneWidget);
+      expect(find.text('NOTAS'), findsOneWidget);
+    });
+
+    testWidgets('a general card shows no example or notes', (tester) async {
+      await pumpCard(tester, simpleCard(), face: CardFace.back);
+
+      expect(find.text('EJEMPLO'), findsNothing);
+      expect(find.text('NOTAS'), findsNothing);
+    });
+
+    testWidgets('a long answer scrolls inside the card', (tester) async {
+      await pumpCard(
+        tester,
+        simpleCard(answer: 'Los españoles son iguales ante la ley. ' * 20),
+        face: CardFace.back,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('studyCard.back')),
+          matching: find.byType(Scrollable),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('test card', () {
+    testWidgets('a test card shows its options with the right marker (radio '
+        'or checkbox)', (tester) async {
+      await pumpCard(tester, testCard());
+
+      expect(find.text('Test'), findsOneWidget);
+      for (var i = 0; i < 4; i++) {
+        expect(marker(i, Icons.radio_button_unchecked_rounded), findsOneWidget);
+      }
+      expect(find.text('Varias respuestas correctas'), findsNothing);
+
+      await pumpCard(tester, testCard(allowMultiple: true));
+
+      for (var i = 0; i < 4; i++) {
+        expect(
+          marker(i, Icons.check_box_outline_blank_rounded),
+          findsOneWidget,
+        );
+      }
+      expect(find.text('Varias respuestas correctas'), findsOneWidget);
+    });
+
+    testWidgets('a selected option is marked before checking', (tester) async {
+      await pumpCard(tester, testCard(), selected: {'o1'});
+
+      expect(marker(1, Icons.radio_button_checked_rounded), findsOneWidget);
+      expect(marker(0, Icons.radio_button_unchecked_rounded), findsOneWidget);
+      // Nothing says yet whether it is right.
+      expect(find.text('¡Correcto!'), findsNothing);
+      expect(find.text('Tu respuesta'), findsNothing);
+    });
+
+    testWidgets('after a correct answer, it is marked with ✓ and the '
+        'explanation is shown', (tester) async {
+      await pumpCard(
+        tester,
+        testCard(explanation: 'La mitocondria realiza la respiración.'),
+        selected: {'o1'},
+        checked: true,
+        answeredCorrectly: true,
+      );
+
+      expect(find.text('¡Correcto!'), findsOneWidget);
+      expect(marker(1, Icons.check_circle_rounded), findsOneWidget);
+      expect(
+        find.descendant(of: option(1), matching: find.text('Tu respuesta')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('La mitocondria realiza la respiración.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('after a wrong answer, the ticked option has ✗ and the '
+        'correct one ✓', (tester) async {
+      await pumpCard(
+        tester,
+        testCard(explanation: 'La mitocondria realiza la respiración.'),
+        selected: {'o0'},
+        checked: true,
+        answeredCorrectly: false,
+      );
+
+      expect(find.text('Incorrecto'), findsOneWidget);
+      expect(marker(0, Icons.cancel_rounded), findsOneWidget);
+      expect(
+        find.descendant(of: option(0), matching: find.text('Tu respuesta')),
+        findsOneWidget,
+      );
+      expect(marker(1, Icons.check_circle_rounded), findsOneWidget);
+      expect(
+        find.descendant(of: option(1), matching: find.text('Correcta')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the solution, with no answer, marks the correct options', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        testCard(allowMultiple: true),
+        face: CardFace.back,
+        checked: true,
+      );
+
+      expect(marker(1, Icons.check_box_rounded), findsOneWidget);
+      expect(marker(2, Icons.check_box_rounded), findsOneWidget);
+      expect(marker(0, Icons.check_box_outline_blank_rounded), findsOneWidget);
+      expect(find.text('¡Correcto!'), findsNothing);
+      expect(find.text('Incorrecto'), findsNothing);
+    });
+  });
+
+  testWidgets('changing the face flips the card with an animation', (
+    tester,
+  ) async {
+    await pumpCard(tester, simpleCard());
+
+    await pumpCard(tester, simpleCard(), face: CardFace.back);
+    // Halfway through, the card is still turning.
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('studyCard.back')), findsNothing);
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
+  });
+
+  testWidgets('with reduced motion the card changes face at once', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await pumpCard(tester, simpleCard());
+
+    await pumpCard(tester, simpleCard(), face: CardFace.back);
+    await tester.pump();
+
+    expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
+  });
+}
