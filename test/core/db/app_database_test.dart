@@ -23,9 +23,6 @@ void main() {
             name: 'Inglés B2',
             color: 'orange',
             icon: '🇬🇧',
-            type: 'language',
-            sourceLang: const Value('en-GB'),
-            targetLang: const Value('es-ES'),
             createdAt: now,
             updatedAt: now,
           ),
@@ -37,6 +34,9 @@ void main() {
             id: 'deck-1',
             projectId: 'project-1',
             name: 'Verbos irregulares',
+            type: const Value('language'),
+            sourceLang: const Value('en-GB'),
+            targetLang: const Value('es-ES'),
             createdAt: now,
             updatedAt: now,
           ),
@@ -56,8 +56,8 @@ void main() {
         );
   }
 
-  test('opens in memory with schema version 2 and every table empty', () async {
-    expect(db.schemaVersion, 2);
+  test('opens in memory with schema version 3 and every table empty', () async {
+    expect(db.schemaVersion, 3);
     expect(
       db.allTables.map((t) => t.actualTableName),
       unorderedEquals([
@@ -105,8 +105,6 @@ void main() {
     final project = await db.select(db.projects).getSingle();
     expect(project.id, 'project-1');
     expect(project.name, 'Inglés B2');
-    expect(project.type, 'language');
-    expect(project.sourceLang, 'en-GB');
     expect(project.isFavorite, isFalse);
     expect(project.isArchived, isFalse);
     expect(project.deletedAt, isNull);
@@ -116,6 +114,9 @@ void main() {
     expect(deck.projectId, 'project-1');
     expect(deck.name, 'Verbos irregulares');
     expect(deck.color, isNull);
+    expect(deck.type, 'language');
+    expect(deck.sourceLang, 'en-GB');
+    expect(deck.targetLang, 'es-ES');
 
     final card = await db.select(db.cards).getSingle();
     expect(card.deckId, 'deck-1');

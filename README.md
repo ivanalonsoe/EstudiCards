@@ -145,6 +145,7 @@ lefthook install
 | Command | What it does |
 |---|---|
 | `dart run build_runner build --delete-conflicting-outputs` | Generates the database code (`*.g.dart`) from the table definitions. |
+| `dart run drift_dev schema dump lib/core/db/app_database.dart drift_schemas/drift_schema_vN.json` | After a schema change (N = the new `schemaVersion`): saves the new schema, which the migration tests in `test/core/db/` use. Commit the file. |
 | `flutter analyze` | Checks the code for errors and bad practices. It must report no warnings. |
 | `flutter test` | Runs the unit and widget tests. |
 | `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |

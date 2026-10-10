@@ -234,15 +234,15 @@
   },
   "typeLabel": "Tipo",
   "@typeLabel": {
-    "description": "Label of the project type selector."
+    "description": "Label of the deck type selector."
   },
   "typeGeneral": "General",
   "@typeGeneral": {
-    "description": "Project type: any subject."
+    "description": "Deck type: any subject."
   },
   "typeLanguage": "Idioma",
   "@typeLanguage": {
-    "description": "Project type: learning a language (enables voice, reverse mode, example and notes)."
+    "description": "Deck type: learning a language (enables voice, reverse mode, example and notes)."
   },
   "sourceLanguageLabel": "Idioma origen",
   "@sourceLanguageLabel": {
@@ -258,15 +258,15 @@
   },
   "switchToGeneralTitle": "¿Cambiar a General?",
   "@switchToGeneralTitle": {
-    "description": "Title of the dialog shown when a language project is changed to general (US-02 AC2)."
+    "description": "Title of the dialog shown when a language deck is changed to general (US-06 AC3)."
   },
   "switchToGeneralBody": "Se ocultarán la voz, el modo inverso y los campos de ejemplo y notas. No se borrará ningún dato.",
   "@switchToGeneralBody": {
-    "description": "Body of the dialog shown when a language project is changed to general."
+    "description": "Body of the dialog shown when a language deck is changed to general."
   },
   "switchToGeneralConfirm": "Cambiar",
   "@switchToGeneralConfirm": {
-    "description": "Confirm button of the dialog shown when a language project is changed to general."
+    "description": "Confirm button of the dialog shown when a language deck is changed to general."
   },
 
   "projectNotFound": "Este proyecto ya no existe",
@@ -275,7 +275,7 @@
   },
   "languagePair": "{source} → {target}",
   "@languagePair": {
-    "description": "Languages of a language project, e.g. 'Inglés → Español'.",
+    "description": "Languages of a language deck, e.g. 'Inglés → Español', or 'EN → ES' in the deck chip.",
     "placeholders": {
       "source": { "type": "String" },
       "target": { "type": "String" }
@@ -283,7 +283,7 @@
   },
   "detailsSeparator": " · ",
   "@detailsSeparator": {
-    "description": "Separator between the parts of a subtitle, e.g. 'Inglés → Español · Nivel intermedio alto'."
+    "description": "Separator between the parts of a subtitle, e.g. 'Nivel intermedio alto · 256 tarjetas'."
   },
   "metricCards": "{count, plural, =1{tarjeta} other{tarjetas}}",
   "@metricCards": {
@@ -524,19 +524,19 @@
   },
   "languageQuestionLabel": "Palabra o pregunta",
   "@languageQuestionLabel": {
-    "description": "Card editor: label of the question field in a language project."
+    "description": "Card editor: label of the question field in a language deck."
   },
   "languageAnswerLabel": "Traducción o respuesta",
   "@languageAnswerLabel": {
-    "description": "Card editor: label of the answer field in a language project."
+    "description": "Card editor: label of the answer field in a language deck."
   },
   "exampleOptionalLabel": "Frase de ejemplo (opcional)",
   "@exampleOptionalLabel": {
-    "description": "Card editor: label of the example sentence field (language projects only)."
+    "description": "Card editor: label of the example sentence field (language decks only)."
   },
   "notesOptionalLabel": "Notas (opcional)",
   "@notesOptionalLabel": {
-    "description": "Card editor: label of the notes field (language projects only)."
+    "description": "Card editor: label of the notes field (language decks only)."
   },
   "bold": "Negrita",
   "@bold": {

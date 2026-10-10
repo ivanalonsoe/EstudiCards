@@ -13,7 +13,6 @@ import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
-import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
@@ -242,8 +241,9 @@ class _Breadcrumb extends StatelessWidget {
   }
 }
 
-/// Icon, name and details. On desktop the details also hold the counts,
-/// since there are no metric boxes.
+/// Icon, name and description. On desktop the details also hold the counts,
+/// since there are no metric boxes. The languages belong to each deck and
+/// show in its row (T2.10).
 class _ProjectHeader extends ConsumerWidget {
   const new({required this.project, this.large = false});
 
@@ -256,7 +256,6 @@ class _ProjectHeader extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final cardCount = large ? ref.watch(_cardCountProvider(project.id)) : null;
     final details = [
-      ?_languages(l10n),
       ?project.description,
       if (cardCount != null) ...[
         l10n.cardCount(cardCount),
@@ -290,21 +289,6 @@ class _ProjectHeader extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  /// "Inglés → Español", only for a language project with both languages.
-  String? _languages(AppLocalizations l10n) {
-    final source = project.sourceLang;
-    final target = project.targetLang;
-    if (project.type != ProjectType.language ||
-        source == null ||
-        target == null) {
-      return null;
-    }
-    return l10n.languagePair(
-      languageName(l10n, source),
-      languageName(l10n, target),
     );
   }
 }

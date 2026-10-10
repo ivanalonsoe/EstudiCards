@@ -30,12 +30,8 @@ class Projects extends Table {
   /// Emoji or icon key.
   TextColumn get icon => text()();
 
-  /// `general` | `language`.
-  TextColumn get type => text()();
-
-  /// BCP-47 codes, e.g. `en-GB`. Only for language projects.
-  TextColumn get sourceLang => text().nullable()();
-  TextColumn get targetLang => text().nullable()();
+  // `type`, `source_lang` and `target_lang` were here until schema version 3
+  // moved them to `decks`.
 
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
@@ -69,6 +65,15 @@ class Decks extends Table {
 
   /// Null = inherits the project colour.
   TextColumn get color => text().nullable()();
+
+  /// `general` | `language`. Moved here from `projects` in schema version 3:
+  /// one project can mix both types.
+  TextColumn get type => text().withDefault(const Constant('general'))();
+
+  /// BCP-47 codes, e.g. `en-GB`. Required for a language deck; they can be
+  /// the same (word → definition).
+  TextColumn get sourceLang => text().nullable()();
+  TextColumn get targetLang => text().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
   DateTimeColumn get lastUsedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime()();

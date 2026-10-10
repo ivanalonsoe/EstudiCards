@@ -41,7 +41,7 @@ EstudiCards is a flashcard app for desktop and mobile. Content is organised into
 
 - Create, edit, archive and delete projects and decks, with a 15-day trash.
 - Create two types of cards: **simple** (question → answer) and **test** (question with 2–6 options, one or several correct).
-- **Language** projects with text-to-speech (system TTS), example sentence, notes and reverse mode.
+- **Language** decks with text-to-speech (system TTS), example sentence, notes and reverse mode. A project can mix general and language decks.
 - Configurable random study sessions: number of cards, decks, normal or errors-only mode, direction, per-question or global timer.
 - Record every attempt and keep an error list per card and direction.
 - Per-project and global statistics, daily streak and optional daily goal.
@@ -62,12 +62,13 @@ A single user who studies syllabi (public exams, school subjects, certifications
 
 | Term | Definition |
 |---|---|
-| **Project** | Top-level container (e.g. "Inglés B2"). Defines the type (general or language) and the languages, which its decks inherit. |
-| **Deck** | Group of cards inside a project (e.g. "Verbos irregulares"). |
+| **Project** | Top-level container (e.g. "Inglés B2"). Its decks can be of different types. |
+| **Deck** | Group of cards inside a project (e.g. "Verbos irregulares"). Its type is *general* or *language*. A language deck has a source and a target language, which can be the same: "Inglés B2" can hold an English → Spanish deck and an English → English one (word → definition). |
+| **Language deck** | A deck of type language. Its cards get voice, reverse mode, example sentence and notes. |
 | **Card** | Unit of study. It can be *simple* or *test*. |
 | **Simple card** | Has a front (question, word or sentence) and a back (answer or translation). The user self-grades it with "Acerté" (got it) or "Fallé" (missed it). |
 | **Test card** | Question with 2–6 options and one or several correct ones. The app grades it automatically when the user taps "Comprobar" (check). |
-| **Direction** | *Normal* (question → answer) or *reverse* (answer → question). Reverse only exists in language projects. |
+| **Direction** | *Normal* (question → answer) or *reverse* (answer → question). Reverse only applies to simple cards of language decks. |
 | **Session** | One round of study with a specific configuration. |
 | **Attempt** | The result of one card within a session: correct, wrong or unanswered. |
 | **Error / error list** | A card is "in errors" for a direction if it was answered wrong and has not yet been answered correctly twice in a row. |
@@ -224,15 +225,14 @@ erDiagram
 | description | TEXT? | Up to 300 characters |
 | color | TEXT | Key from the project palette (e.g. `orange`, `blue`) |
 | icon | TEXT | Emoji or icon key |
-| type | TEXT | `general` \| `language` |
-| source_lang | TEXT? | BCP-47 (e.g. `en-GB`). Only if `type = language` |
-| target_lang | TEXT? | BCP-47 (e.g. `es-ES`). Only if `type = language` |
 | is_favorite | BOOL | Default `false` |
 | is_archived | BOOL | Default `false` |
 | archived_at | DATETIME? | When it was archived; null when not archived (schema version 2) |
 | deleted_at | DATETIME? | Not null = in the trash |
 | last_used_at | DATETIME? | Updated when the project is opened or studied |
 | created_at / updated_at | DATETIME | |
+
+Up to schema version 2, `type`, `source_lang` and `target_lang` were project columns. Schema version 3 moved them to `decks` (T2.10, see §13.1).
 
 #### `decks`
 
@@ -243,6 +243,9 @@ erDiagram
 | name | TEXT | Required, 1–60 characters |
 | description | TEXT? | |
 | color | TEXT? | Null = inherits the project colour |
+| type | TEXT | `general` \| `language`. Default `general` |
+| source_lang | TEXT? | BCP-47 (e.g. `en-GB`). Required if `type = language`; kept, but not used, if the deck becomes general |
+| target_lang | TEXT? | BCP-47 (e.g. `es-ES`). Same rules as `source_lang`; it can equal it (e.g. `en-GB` → `en-GB` for word → definition) |
 | deleted_at | DATETIME? | Not null = in the trash |
 | last_used_at | DATETIME? | |
 | created_at / updated_at | DATETIME | |
@@ -260,8 +263,8 @@ erDiagram
 | answer_image | TEXT? | In `test` it is shown with the explanation |
 | explanation | TEXT? | `test` only, optional |
 | allow_multiple | BOOL | `test` only. Allows several correct options |
-| example | TEXT? | Language projects only |
-| notes | TEXT? | Language projects only |
+| example | TEXT? | Shown in language decks only; kept in a general deck |
+| notes | TEXT? | Shown in language decks only; kept in a general deck |
 | created_at / updated_at | DATETIME | |
 
 #### `card_options`
@@ -372,13 +375,13 @@ flowchart TD
 | ID | Screen | Main content | Actions |
 |---|---|---|---|
 | P01 | **Dashboard** | Header with streak and daily goal progress. Search by title. Project list: favourites first, then by last use. Each project card shows icon, colour, name, number of decks and cards, % correct, date last studied and number of errors. | Create project (floating button). ⋮ menu per project: Edit, Share, Favourite, Archive, Delete. "Repasar errores (N)" button if N > 0. General menu. |
-| P02 | **Create/edit project** | Name, description, colour, icon, type. If language: source and target language. | Save, Cancel. When editing: reset project statistics. |
-| P03 | **Project** | Header with the project details. **Barajas** (decks) and **Estadísticas** (statistics) tabs. Each deck shows name, colour, number of cards, % correct and number of errors. | New deck, Study, Review errors, Edit project, Share project, Import as new deck. ⋮ menu per deck: Edit, Share, Reset statistics, Delete. |
-| P04 | **Create/edit deck** | Name, description, colour (project colour by default). | Save, Cancel. |
+| P02 | **Create/edit project** | Name, description, colour, icon. | Save, Cancel. When editing: reset project statistics. |
+| P03 | **Project** | Header with the project details. **Barajas** (decks) and **Estadísticas** (statistics) tabs. Each deck shows name, colour, number of cards, % correct, number of errors and, for a language deck, a chip with its language pair (e.g. "EN → ES"). | New deck, Study, Review errors, Edit project, Share project, Import as new deck. ⋮ menu per deck: Edit, Share, Reset statistics, Delete. |
+| P04 | **Create/edit deck** | Name, description, colour (project colour by default), type (General / Idioma). If language: source and target language. | Save, Cancel. |
 | P05 | **Deck** | Card list: question, type icon (simple/test) and % correct. Search by question and answer. Sort by creation date, alphabetically or most missed. | Add card, Study this deck, Review errors, Import cards, Download template, Copy AI prompt, Share deck. Multi-select: Copy to…, Move to…, Delete. |
-| P06 | **Card editor** | Question (+ image). **Tipo test** toggle. Simple: Answer (+ image). Test: list of 2–6 options, "Permitir varias correctas" check, correct-answer selector(s) and Explanation (+ image). Language: Example sentence and Notes. Flippable **preview** below (mobile) or on the right (desktop). | Save, Save and add another, Cancel. When editing: Delete card, Reset statistics. |
+| P06 | **Card editor** | Question (+ image). **Tipo test** toggle. Simple: Answer (+ image). Test: list of 2–6 options, "Permitir varias correctas" check, correct-answer selector(s) and Explanation (+ image). In a language deck: Example sentence and Notes. Flippable **preview** below (mobile) or on the right (desktop). | Save, Save and add another, Cancel. When editing: Delete card, Reset statistics. |
 | P07 | **Import** | Step 1: choose file. Step 2: choose destination (depending on where it was launched). Step 3: preview with cards to create, duplicates and rows with errors. | Confirm import, Cancel. |
-| P08 | **Session setup** | Decks (multi-select + "Todo el proyecto"), number of cards (10, 20, 50, All, Custom), mode (Normal / Errors only), direction (Normal / Reverse, language only), "Priorizar las más falladas", "Repetir falladas al final", timer (None / Per question / Global) with its value. Shows how many cards are available. | Start. |
+| P08 | **Session setup** | Decks (multi-select + "Todo el proyecto"), number of cards (10, 20, 50, All, Custom), mode (Normal / Errors only), direction (Normal / Reverse; only shown when at least one chosen deck is a language deck), "Priorizar las más falladas", "Repetir falladas al final", timer (None / Per question / Global) with its value. Shows how many cards are available. | Start. |
 | P09 | **Study session** | Progress bar ("7 / 20"), ✓/✗ counter, timer (if any), card in the centre. | See section [7.3](#73-study-session). Buttons: Pause, Exit. |
 | P10 | **Pause** (overlay) | Completely hides the card. Shows "En pausa" and the time. | Resume, Exit. |
 | P11 | **Results** | % correct, correct/wrong/unanswered, total and average time. Lists: **missed** (question + correct answer) and **unanswered**. Subtle celebration if ≥ 80%. | Review missed now, Repeat session, Back. |
@@ -405,13 +408,12 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 ### Epic A — Projects
 
 **US-01 — Create project.** I want to create a project to organise a study topic.
-- AC1. The name is required (1–60 characters); everything else is optional except the type, which defaults to "General".
-- AC2. If the type is "Idioma" (language), source and target languages are requested; both are required.
-- AC3. On save, it appears on the dashboard and the project opens.
+- AC1. The name is required (1–60 characters); everything else is optional.
+- AC2. On save, it appears on the dashboard and the project opens.
+- The type and the languages belong to each deck (US-06), not to the project.
 
 **US-02 — Edit project.** From the dashboard ⋮ menu and from the project screen.
 - AC1. All fields can be changed.
-- AC2. Changing the type from "Idioma" to "General" asks for confirmation and warns that voice, reverse mode and the example and notes fields will be hidden. The data is not deleted.
 
 **US-03 — Delete project.**
 - AC1. Confirmation dialog showing how many decks and cards it contains.
@@ -433,18 +435,21 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 
 **US-06 — Create, edit and delete a deck.**
 - AC1. Name required. Colour optional; the project colour by default.
-- AC2. Deleting asks for confirmation showing the number of cards, offers "Deshacer" for 5 s, and then the deck goes to the trash.
+- AC2. Type required, "General" by default. If the type is "Idioma" (language), source and target languages are requested; both are required, and they can be the same language (e.g. English → English for word → definition).
+- AC3. Changing the type from "Idioma" to "General" asks for confirmation and warns that voice, reverse mode and the example and notes fields will be hidden. The data is not deleted.
+- AC4. Deleting asks for confirmation showing the number of cards, offers "Deshacer" for 5 s, and then the deck goes to the trash.
 
 **US-07 — Copy and move cards.**
 - AC1. In the deck, multi-select is activated with a long press (mobile) or checkboxes (desktop).
-- AC2. "Mover a…" and "Copiar a…" only list decks from the same project.
+- AC2. "Mover a…" and "Copiar a…" only list decks from the same project, of either type.
 - AC3. Moving keeps the ID and the statistics. Copying creates new cards (new ID, options copied) with no history.
+- AC4. Cards can go to a deck of a different type. In a general deck, the example and notes of a card are hidden but not deleted, and they show again if the card goes back to a language deck.
 
 ### Epic C — Cards
 
 **US-08 — Create a simple card.**
 - AC1. Question and answer required; images optional.
-- AC2. In language projects, "Frase de ejemplo" and "Notas" appear (optional).
+- AC2. In language decks, "Frase de ejemplo" and "Notas" appear (optional).
 - AC3. Bold and italic are available in the text field toolbar.
 - AC4. The preview updates while typing and flips when tapped.
 
@@ -467,7 +472,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 - AC2. Sort: creation date (default, newest first), alphabetical or most missed.
 
 **US-13 — Voice (TTS).**
-- AC1. In language projects, the question and answer text each have a speaker button that reads it in its language.
+- AC1. In language decks, the question and answer text each have a speaker button that reads it in its language: the question in the deck's source language and the answer in its target language.
 - AC2. If the system lacks the voice, a notice with instructions is shown and the button is disabled.
 
 ### Epic D — Study session
@@ -560,7 +565,8 @@ Buttons shown depending on the card state (no keyboard shortcuts in v1):
 - **Repetir falladas al final** (if on): each missed card is added again at the end of the queue until it is answered correctly. These repeats are recorded with `is_first_attempt = false` and do not count in statistics or the error list.
 - **Progress:** "n / total" counts resolved original cards. Pending repeats are shown separately ("+3 repasos").
 - **End of session:** when no cards remain, when the global timer runs out, or on exit. Unresolved cards (pending or left for later) are recorded as `unanswered` (`source = session_end`).
-- **Reverse direction:** only affects simple cards in language projects (the answer is shown and the user guesses the question). Test cards are always shown in the normal direction and recorded as `normal`.
+- **Mixed decks:** a session can mix general and language decks. "Sentido" (direction) is offered in P08 when at least one chosen deck is a language deck.
+- **Reverse direction:** only affects simple cards of language decks (the answer is shown and the user guesses the question). Every other card (test cards, and any card from a general deck) is shown in the normal direction and recorded as `normal`, even in a reverse session.
 
 ### 7.4 Error list
 
@@ -631,8 +637,8 @@ Common structure:
 
 Contents of `data` depending on `kind`:
 
-- **deck:** `{ "language": {"source": "en-GB", "target": "es-ES"} | null, "deck": Deck }`
-- **project:** `{ "project": Project }` with its decks and cards nested.
+- **deck:** `{ "deck": Deck }`. Each deck carries its own `type` (`general` | `language`) and, for a language deck, `sourceLang` and `targetLang`.
+- **project:** `{ "project": Project }` with its decks and cards nested; each deck carries its type and languages as above.
 - **backup:** `{ "projects": [Project], "sessions": [...], "sessionDecks": [...], "attempts": [...], "cardStats": [...], "settings": {...} }`. Includes archived projects and projects in the trash.
 
 Example of a shared deck (card contents are user data, here in Spanish):
@@ -642,9 +648,9 @@ Example of a shared deck (card contents are user data, here in Spanish):
   "format": "estudicards", "version": 1, "kind": "deck",
   "exportedAt": "2026-09-30T10:00:00Z", "appVersion": "1.0.0",
   "data": {
-    "language": { "source": "en-GB", "target": "es-ES" },
     "deck": {
       "id": "7b0f…", "name": "Verbos irregulares", "description": null, "color": null,
+      "type": "language", "sourceLang": "en-GB", "targetLang": "es-ES",
       "cards": [
         {
           "id": "c1a2…", "type": "simple",
@@ -685,8 +691,8 @@ Example of a shared deck (card contents are user data, here in Spanish):
 | `option1` … `option6` | For test cards | If `option1` and `option2` have text, the card is a test card |
 | `correct` | For test cards | Number(s) of the correct options, separated by `\|` (e.g. `1` or `1\|3`) |
 | `explanation` | No | Test cards only |
-| `example` | No | Language projects only |
-| `notes` | No | Language projects only |
+| `example` | No | Shown in language decks only |
+| `notes` | No | Shown in language decks only |
 | `deck` | No | Only when importing as a new project: groups rows into decks with that name. Without it, a deck named "Importadas" is created. Ignored in other cases. |
 
 - If `correct` has more than one number, the card is created with "Permitir varias correctas" on.
@@ -710,7 +716,11 @@ to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irr
    - Adding to an existing deck: the card ID is kept unless it already exists in the database, in which case a new one is generated.
 4. **Duplicates** (only when adding to an existing deck): a card is skipped if the target deck already has one with the same ID, or with the same question and answer (or options) after normalising (trimmed whitespace, case-insensitive).
 5. **Final summary** (UI): "12 añadidas, 3 omitidas por duplicadas, 1 con errores".
-6. **Project type:** when importing a language JSON as a new project, it is created as a language project with its languages. When importing a CSV as a new project, the user is asked for the type.
+6. **Deck type:**
+   - JSON: every imported deck keeps the type and languages stored in the file.
+   - CSV as a new project: the user is asked once for the type (and, for "Idioma", the languages), which applies to every deck created from the `deck` column.
+   - CSV as a new deck: the user is asked for the new deck's type and languages.
+   - Adding to an existing deck (JSON or CSV): the deck keeps its type. Example and notes are imported in any case, and hidden if the deck is general.
 7. **Restore full backup:**
    - Empty database: everything is imported as is.
    - With data: the user chooses **Reemplazar todo** (replace all; explicit confirmation; deletes current data) or **Fusionar** (merge by ID; if it exists in both, the one with the most recent `updated_at` wins; attempts are merged by ID and then `card_stats` is recalculated).
@@ -787,7 +797,7 @@ Minimum E2E flows for v1:
 
 | ID | Flow |
 |---|---|
-| E2E-01 | First use: create a language project → create a deck → add 3 cards → study → see results. |
+| E2E-01 | First use: create a project → create a language deck → add 3 cards → study → see results. |
 | E2E-02 | Multiple-answer test card: create it → answer it wrong → it appears in errors → answer it correctly twice in a row → it leaves the errors. |
 | E2E-03 | Timers: an expired per-question timer counts as wrong; an expired global timer ends the session and shows the unanswered cards. |
 | E2E-04 | Import a CSV with the native file picker → preview with duplicates and errors → import. |
@@ -906,7 +916,8 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 |---|---|
 | Platform | Windows, macOS, Android, iOS. Flutter. No login. 100% offline. |
 | Data | Local only. Export all (with statistics) and share a project/deck (without statistics) as JSON or CSV. Import as a new project, a new deck or by adding to a deck. |
-| Structure | Project → Decks → Cards. Type and languages set on the project. No tags. |
+| Structure | Project → Decks → Cards. Type and languages set on each deck (see "Deck type" below). No tags. |
+| Deck type (T2.10) | The type and the languages move from the project to the deck, so one project can hold decks of different types; e.g. "Inglés B2" with an English → Spanish deck and an English → English one (word and its definition). Rules: <br>• A deck has `type` (`general` \| `language`) and `source_lang` / `target_lang`, required when it is a language deck. They can be the same language (e.g. `en` → `en` for word → definition). <br>• A session can mix types. "Sentido" appears in P08 when at least one chosen deck is a language deck; reverse only affects simple cards of language decks, and every other card goes in the normal direction. <br>• Moving or copying cards between decks of different types is allowed; the language fields (example and notes) are hidden, not deleted. <br>• CSV imported as a new project: the type and the languages are asked once, for every deck created. <br>• Existing data: the schema version 3 migration gives each deck the type and the languages its project had. |
 | Deletion | Projects and decks go to a 15-day trash. Cards are deleted directly, with undo. Expired items are purged on app start and again when the Trash screen is opened (no background process). |
 | Dashboard | Sorted by last use, favourites on top, archive, search by title, streak, "Review errors (N)" per project. |
 | Cards | Simple or test (2–6 options, check to allow several correct). Explanation on test cards. Image, system TTS, bold/italic. Example and notes for languages. |
@@ -986,6 +997,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The form is a bottom sheet on mobile (< 600 dp) and a dialog on tablet and desktop. After creating, the new project opens (US-01 AC3); after editing, the form just closes.
     - A new project starts as orange, with the `book` icon and type "General".
     - The confirmation when switching from "Idioma" to "General" (US-02 AC2) only appears when editing a project stored as a language project. While creating one, switching back just hides the language selectors.
+    - T2.10 moved the type, the language selectors and this confirmation to the deck form (assumption 29).
     - Name and description stop accepting text at 60 and 300 characters instead of showing an error; the Save button stays disabled until the input is valid (`ProjectInput.validate()`).
     - Languages offered (decided with the owner): Español, Inglés (R. U.), Inglés (EE. UU.), Francés, Alemán, Italiano, Portugués, Portugués (Brasil), Catalán, Gallego, Euskera, Neerlandés, Chino and Japonés (`lib/features/projects/domain/languages.dart`). A stored code outside the list (e.g. from an import) is still shown, with the code as its name.
     - Colours and icons have Spanish names in the ARB for screen readers. The icon picker keeps 48 px touch targets, so on a phone its 8 icons take two rows (the design fits them in one row with smaller squares).
@@ -993,7 +1005,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Metrics until phase 4 (decided with the owner): the real number of cards, "—" for % correct and 0 errors, in the normal text colour. Deck rows show "N tarjetas · — aciertos" with no errors chip.
     - The "Estadísticas" tab exists on mobile and tablet and shows an empty state until phase 4 (decided with the owner). On desktop there are no tabs: the decks sit next to a "Últimos 30 días" summary card with the same empty state; the chart and "Más falladas" arrive in phase 4.
     - Hidden until their phase, following assumption 16: "Estudiar" (phase 3), "Repasar errores" (phase 4; it only appears with errors anyway), and "Compartir" and "Importar" (phase 5). The ⋮ menu has "Editar proyecto" and the favourite toggle; "Archivar" and "Eliminar" arrive with T1.9 and T1.8.
-    - The header shows the languages ("Inglés → Español", language projects only) and the description, joined by " · ". On desktop it also shows the card count and % correct, replacing the metric boxes, plus an "Inicio › name" breadcrumb.
+    - The header shows the languages ("Inglés → Español", language projects only) and the description, joined by " · ". On desktop it also shows the card count and % correct, replacing the metric boxes, plus an "Inicio › name" breadcrumb. Since T2.10 the header shows only the description (and the counts on desktop), and each language deck shows its pair in its row (assumption 29).
     - Opening a deck marks it as used (R 7.7). An unknown project ID shows "Este proyecto ya no existe" with a button back to the dashboard.
 19. **Create and edit deck (T1.6):**
     - Same frame as the project form: a bottom sheet on mobile and a dialog on tablet and desktop, with name, description and colour. The shared pieces are in `lib/features/projects/presentation/form_parts.dart`.
@@ -1039,7 +1051,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 25. **Card editor: simple (T2.3):**
     - The editor is a screen (`card_editor_screen.dart`) on the `…/card/new` and `…/card/:cardId` routes. Mobile and tablet: ✕ and title at the top, "Proyecto › Baraja" with the deck's colour dot, and the buttons fixed at the bottom. Desktop: next to the sidebar, with a breadcrumb (plain text), the title, and "Cancelar", "Guardar y añadir otra" and "Guardar" in the header.
     - Until the deck screen (T2.8), the deck route shows a temporary screen with only "Añadir tarjeta", so the editor can be tried by hand (decided with the owner).
-    - Labels: "Pregunta" / "Respuesta" in general projects, "Palabra o pregunta" / "Traducción o respuesta" in language projects (as in the desktop design). "Frase de ejemplo" and "Notas" only appear in language projects; a card that has them keeps them when edited from a general project.
+    - Labels: "Pregunta" / "Respuesta" in general projects, "Palabra o pregunta" / "Traducción o respuesta" in language projects (as in the desktop design). "Frase de ejemplo" and "Notas" only appear in language projects; a card that has them keeps them when edited from a general project. Since T2.10 all of this depends on the card's deck, not on the project.
     - Bold and italic (US-08 AC3): the B and I buttons wrap the selection in `**` or `*`, or remove them when they are already there; with nothing selected they insert the pair with the cursor inside. The field draws the text in bold or italic and keeps the markers visible but dimmed (decided with the owner). The rules live in `inline_format.dart` (domain), which the preview will reuse. A marker without its pair is plain text, so "5 * 3" stays as typed. The bar is on the question and answer fields, as in the design; the example field draws bold and italic too.
     - "Guardar" saves and goes back to the deck. "Guardar y añadir otra" (only when creating) saves, clears the form keeping the type, focuses the question and shows "Tarjeta guardada" for 2 seconds (US-10). Save is disabled while the input is not valid; "Escribe la pregunta" / "Escribe la respuesta" appear under a field the user has emptied.
     - Leaving with unsaved changes (✕, "Cancelar", the back button) asks "¿Descartar los cambios?"; with no changes it just closes (decided with the owner). Navigating away through the sidebar does not ask.
@@ -1053,7 +1065,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - "Guardar y añadir otra" keeps "Tipo test" and "Permitir varias correctas" and starts again with 4 empty options (US-10 AC1).
 27. **Card component and preview (T2.5):**
     - `StudyCard` (`lib/features/cards/presentation/study_card.dart`) draws the card variants of `docs/design/tarjetas/` that belong to the card itself: simple front and back, test before checking (with the ticked options), test after checking (right or wrong, with ✓/✗ and the explanation), several correct answers ("Varias respuestas correctas" and checkboxes), the language back with example and notes, and long text that scrolls inside the card. The timer (variant 9), pause (10) and drag tint (12) are study-session states and arrive with T3.4, T3.7 and T3.8; the speaker button arrives with T2.7 and the image with T2.6 (decided with the owner).
-    - The top shows "Proyecto · Baraja" and a label: "Simple" or "Test" on the front, "Respuesta" on the back of a simple card, and the language pair in language projects. The pair uses the app's language names ("Inglés (R. U.) → Español"); the label is cut with "…" past 180 px.
+    - The top shows "Proyecto · Baraja" and a label: "Simple" or "Test" on the front, "Respuesta" on the back of a simple card, and the language pair in language projects (since T2.10, language decks). The pair uses the app's language names ("Inglés (R. U.) → Español"); the label is cut with "…" past 180 px.
     - An answer over 120 characters is shown as a paragraph: smaller and aligned to the left (variant 11).
     - Changing the face turns the card with a 3D flip on the vertical axis (350 ms, ease in and out). With the system's "reduce motion" on, it changes at once.
     - Bold and italic are drawn with `FormattedText`, which hides the markers.
@@ -1066,3 +1078,11 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Picking goes through the `ImageSource` interface (`DeviceImageSource` in the app, a fake in tests). In the editor, the formatting bar of the question and the answer has an image button at the right; a test card has "Añadir imagen" under the explanation, since its answer image goes with the explanation (SPEC §4.2). A picked image shows as a thumbnail with "Quitar imagen", and in the preview.
     - Image files are never left behind. Deleting a card deletes its images, and editing a card deletes the images it no longer uses, after saving. An image picked in the editor and then replaced or removed is deleted at once; leaving the editor without saving deletes the images picked there. Leaving through the sidebar does not ask and does not clean up, so it can leave a picked image unused.
     - In the card, an image is up to 160 px high, whole (not cropped) on a `surface-variant` box; the question image goes above the question and the answer image above the answer, or with the explanation on a test card once the solution is shown. The back of a test card shows the solution (the correct options in green with ✓ and the explanation) (decided with the owner). On mobile it is below the form under "VISTA PREVIA · TOCA PARA GIRAR"; on desktop it is a column on the right with "Anverso" / "Reverso" and "Así se verá al estudiar. Pulsa la tarjeta para girarla."
+29. **Deck type and languages (T2.10):**
+    - The owner moved the type and the languages from the project to the deck (§13.1, "Deck type"). Schema version 3 adds `type` (default `general`), `source_lang` and `target_lang` to `decks`, copies each project's values to its decks, and drops the three columns from `projects`. A project that went from language to general had kept its languages hidden (US-02 AC2 before T2.10); its decks keep them hidden too.
+    - Each step of the migration checks first whether it is still needed, so it can run again after an app closed midway (assumption 23). The project columns are dropped with `ALTER TABLE … DROP COLUMN`, which needs SQLite 3.35; the app ships its own SQLite (`sqlite3` package), so every platform has it.
+    - Migration tests use Drift's tools. `drift_schemas/drift_schema_vN.json` keeps every schema version (made with `dart run drift_dev schema dump lib/core/db/app_database.dart drift_schemas/drift_schema_vN.json` after each schema change; versions 1 and 2 were dumped from the code of their time). `SchemaVerifier` creates a database at an old version, the test fills it with SQL, and after migrating it checks that the schema equals a fresh install. Drift can also generate the test helpers as Dart code (`make-migrations`), but that code names a getter after the `text` column of `card_options`, which clashes with Drift's `Table.text()` and does not compile; `test/core/db/schema_files.dart` builds each old version from the exact CREATE statements stored in its schema file instead.
+    - The owner's own version 2 database on Windows was migrated before the PR: every project, deck and card was kept, and each deck took its project's type and languages.
+    - The deck form has the same "General / Idioma" segmented control and the two language selectors the project form had, and the confirmation when a stored language deck becomes general (US-06 AC3). The project form loses them.
+    - In P03, the row of a language deck shows a grey chip with the pair in short form ("EN → ES": the language part of each code, in capitals), where the design puts the errors chip; screen readers hear the full names as part of the row. The project header no longer shows languages. The language list (`supportedLanguages`) moved to `lib/features/decks/domain/languages.dart`.
+    - The card editor and the preview take the labels, the example and notes fields and the language pair from the card's deck.

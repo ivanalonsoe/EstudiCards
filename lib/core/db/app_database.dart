@@ -30,13 +30,19 @@ class AppDatabase extends _$AppDatabase {
   new([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'estudicards'));
 
-  /// Bump this number on every schema change and add its migration.
+  /// Bump this number on every schema change and add its migration. Then
+  /// save the new schema for the migration tests (see
+  /// `test/core/db/schema_files.dart`):
+  ///
+  ///   dart run drift_dev schema dump lib/core/db/app_database.dart drift_schemas/drift_schema_vN.json
   ///
   /// History:
   /// 1. First schema (T0.4).
   /// 2. `projects.archived_at` (T1.9).
+  /// 3. `type`, `source_lang` and `target_lang` move from `projects` to
+  ///    `decks` (T2.10).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   /// A migration tells Drift how to create the tables the first time and,
   /// later, how to upgrade an old database when `schemaVersion` grows.
@@ -54,6 +60,7 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2 && !await _hasColumn('projects', 'archived_at')) {
         await m.addColumn(projects, projects.archivedAt);
       }
+      if (from < 3) await _moveTypeToDecks(m);
     },
     beforeOpen: (details) async {
       // SQLite ignores foreign keys unless they are switched on for every
@@ -62,6 +69,35 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Version 3: the type and the languages move from each project to its
+  /// decks. Every part checks first, so a start cut short can run it again.
+  Future<void> _moveTypeToDecks(Migrator m) async {
+    // 1. The new deck columns (`type` starts as 'general').
+    for (final column in [decks.type, decks.sourceLang, decks.targetLang]) {
+      if (!await _hasColumn('decks', column.name)) {
+        await m.addColumn(decks, column);
+      }
+    }
+    // 2. Each deck copies its project's values, while the project still has
+    // them. A general project may have kept hidden languages; its decks keep
+    // them hidden too.
+    if (await _hasColumn('projects', 'type')) {
+      await customStatement('''
+        UPDATE decks SET (type, source_lang, target_lang) = (
+          SELECT p.type, p.source_lang, p.target_lang
+          FROM projects AS p WHERE p.id = decks.project_id
+        )
+      ''');
+    }
+    // 3. The project columns go, `type` first: once it is gone, step 2 is
+    // never repeated.
+    for (final column in ['type', 'source_lang', 'target_lang']) {
+      if (await _hasColumn('projects', column)) {
+        await m.dropColumn(projects, column);
+      }
+    }
+  }
 
   /// Whether [table] already has [column] (SQLite's `table_info` lists the
   /// columns of a table).

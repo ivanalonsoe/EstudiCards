@@ -8,7 +8,6 @@ import 'package:estudicards/features/decks/data/decks_repository.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/data/projects_repository.dart';
-import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,16 +29,6 @@ void main() {
 
   ProjectInput general(String name) =>
       ProjectInput(name: name, color: 'blue', icon: 'globe');
-
-  ProjectInput language({String? sourceLang, String? targetLang}) =>
-      ProjectInput(
-        name: 'Inglés B2',
-        color: 'blue',
-        icon: 'globe',
-        type: ProjectType.language,
-        sourceLang: sourceLang,
-        targetLang: targetLang,
-      );
 
   Matcher failsWith(ProjectInputError error) => throwsA(
     isA<InvalidProjectException>().having(
@@ -70,7 +59,6 @@ void main() {
       expect(project.description, 'Temas 1 a 5');
       expect(project.color, 'green');
       expect(project.icon, 'flask');
-      expect(project.type, ProjectType.general);
       expect(project.isFavorite, isFalse);
       expect(project.isArchived, isFalse);
       expect(project.createdAt, start);
@@ -111,30 +99,6 @@ void main() {
         failsWith(.descriptionTooLong),
       );
     });
-
-    test('a language project without a source language fails', () {
-      expect(
-        () => repository.create(language(targetLang: 'es-ES')),
-        failsWith(.languagesMissing),
-      );
-    });
-
-    test('a language project without a target language fails', () {
-      expect(
-        () => repository.create(language(sourceLang: 'en-GB')),
-        failsWith(.languagesMissing),
-      );
-    });
-
-    test('a language project with both languages is stored', () async {
-      final project = await repository.create(
-        language(sourceLang: 'en-GB', targetLang: 'es-ES'),
-      );
-
-      expect(project.type, ProjectType.language);
-      expect(project.sourceLang, 'en-GB');
-      expect(project.targetLang, 'es-ES');
-    });
   });
 
   group('update', () {
@@ -169,24 +133,6 @@ void main() {
       );
       expect((await repository.getById(project.id))!.name, 'Historia');
     });
-
-    test(
-      'switching from language to general does not delete the languages',
-      () async {
-        final project = await repository.create(
-          language(sourceLang: 'en-GB', targetLang: 'es-ES'),
-        );
-
-        final updated = await repository.update(
-          project.id,
-          const ProjectInput(name: 'Inglés B2', color: 'blue', icon: 'globe'),
-        );
-
-        expect(updated.type, ProjectType.general);
-        expect(updated.sourceLang, 'en-GB');
-        expect(updated.targetLang, 'es-ES');
-      },
-    );
   });
 
   group('list', () {
