@@ -115,6 +115,7 @@ class CardsRepository {
           ]),
           correctCount: row.correctCount,
           wrongCount: row.wrongCount,
+          lastReviewedAt: row.lastAttemptAt,
         ),
     ];
     return sortCards(

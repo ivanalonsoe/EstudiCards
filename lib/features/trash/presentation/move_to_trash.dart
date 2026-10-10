@@ -45,13 +45,15 @@ Future<void> confirmMoveProjectToTrash(
   );
 }
 
-/// Deletes a deck as US-06 AC2 asks: a dialog with its number of cards,
-/// then the trash, with "Deshacer" for 5 seconds.
+/// Deletes a deck as US-06 AC4 asks: a dialog with its number of cards,
+/// then the trash, with "Deshacer" for 5 seconds. [afterMove] runs once it
+/// is in the trash, e.g. to leave the deck screen.
 Future<void> confirmMoveDeckToTrash(
   BuildContext context,
   WidgetRef ref, {
   required Deck deck,
   required int cardCount,
+  VoidCallback? afterMove,
 }) async {
   final l10n = AppLocalizations.of(context);
   final trash = ref.read(trashRepositoryProvider);
@@ -66,6 +68,7 @@ Future<void> confirmMoveDeckToTrash(
   if (!confirmed) return;
 
   await trash.moveDeckToTrash(deck.id);
+  afterMove?.call();
   // The deck is already in the trash, so undoing just restores it.
   showUndoSnackBar(
     messenger,

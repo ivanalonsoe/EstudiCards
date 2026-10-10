@@ -46,6 +46,50 @@ List<String> questions(List<CardSummary> cards) => [
 ];
 
 void main() {
+  group('daysSinceReview', () {
+    // Noon in local time, so the tests do not depend on the time zone.
+    final now = DateTime(2026, 10, 10, 12).toUtc();
+
+    test('is null for a card never reviewed', () {
+      expect(daysSinceReview(null, now), isNull);
+    });
+
+    test('counts calendar days in local time', () {
+      expect(daysSinceReview(DateTime(2026, 10, 10, 0, 5).toUtc(), now), 0);
+      expect(daysSinceReview(DateTime(2026, 10, 9, 23, 55).toUtc(), now), 1);
+      expect(daysSinceReview(DateTime(2026, 10, 7, 12).toUtc(), now), 3);
+      expect(daysSinceReview(DateTime(2026, 9, 30, 8).toUtc(), now), 10);
+    });
+  });
+
+  group('RateLevel.of', () {
+    test('is good from 70%, fair from 40% and poor below', () {
+      expect(RateLevel.of(0.92), RateLevel.good);
+      expect(RateLevel.of(0.7), RateLevel.good);
+      expect(RateLevel.of(0.69), RateLevel.fair);
+      expect(RateLevel.of(0.4), RateLevel.fair);
+      expect(RateLevel.of(0.39), RateLevel.poor);
+      expect(RateLevel.of(0), RateLevel.poor);
+    });
+  });
+
+  group('combinedCorrectRate', () {
+    test('adds up the answers of every card', () {
+      final rate = combinedCorrectRate([
+        summary('a', correct: 3, wrong: 1),
+        summary('b', correct: 1, wrong: 3),
+        summary('c'),
+      ]);
+
+      expect(rate, 0.5);
+    });
+
+    test('is null with no answers', () {
+      expect(combinedCorrectRate([summary('a'), summary('b')]), isNull);
+      expect(combinedCorrectRate(const <CardSummary>[]), isNull);
+    });
+  });
+
   group('matchesCardSearch', () {
     final bring = card('to **bring**', answer: 'traer');
     final atp = card(

@@ -5,8 +5,14 @@ import 'package:estudicards/core/db/app_database.dart';
 
 part 'cards_dao.g.dart';
 
-/// A card row with its first-attempt results, both directions added up.
-typedef CardWithResults = ({CardRow card, int correctCount, int wrongCount});
+/// A card row with its first-attempt results, both directions added up, and
+/// its last answer.
+typedef CardWithResults = ({
+  CardRow card,
+  int correctCount,
+  int wrongCount,
+  DateTime? lastAttemptAt,
+});
 
 @DriftAccessor(tables: [Cards, CardOptions, CardStats, Decks, Projects])
 class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
@@ -57,8 +63,13 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
         );
     final correct = total(cardStats.correctCount);
     final wrong = total(cardStats.wrongCount);
+    final lastAttempt = subqueryExpression<DateTime>(
+      selectOnly(cardStats)
+        ..addColumns([cardStats.lastAttemptAt.max()])
+        ..where(cardStats.cardId.equalsExp(cards.id)),
+    );
     final query = select(cards).join([])
-      ..addColumns([correct, wrong])
+      ..addColumns([correct, wrong, lastAttempt])
       ..where(cards.deckId.equals(deckId));
     return [
       for (final row in await query.get())
@@ -66,6 +77,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
           card: row.readTable(cards),
           correctCount: row.read(correct) ?? 0,
           wrongCount: row.read(wrong) ?? 0,
+          lastAttemptAt: row.read(lastAttempt),
         ),
     ];
   }

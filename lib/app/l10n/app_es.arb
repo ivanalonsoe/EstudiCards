@@ -18,10 +18,6 @@
   "@project": {
     "description": "Title of the project screen (P03)."
   },
-  "deck": "Baraja",
-  "@deck": {
-    "description": "Title of the deck screen (P05)."
-  },
   "newCard": "Nueva tarjeta",
   "@newCard": {
     "description": "Title of the card editor when creating a card (P06)."
@@ -505,6 +501,103 @@
   "addCard": "Añadir tarjeta",
   "@addCard": {
     "description": "Button of the deck screen that opens the card editor (P05)."
+  },
+  "searchCards": "Buscar tarjetas",
+  "@searchCards": {
+    "description": "Hint of the card search field on mobile (P05)."
+  },
+  "searchCardsLong": "Buscar en preguntas y respuestas",
+  "@searchCardsLong": {
+    "description": "Hint of the card search field on desktop (P05)."
+  },
+  "sortNewest": "Recientes",
+  "@sortNewest": {
+    "description": "Card list order: newest first (US-12 AC2)."
+  },
+  "sortAlphabetical": "A–Z",
+  "@sortAlphabetical": {
+    "description": "Card list order: alphabetical by question."
+  },
+  "sortMostMissed": "Más falladas",
+  "@sortMostMissed": {
+    "description": "Card list order: most misses first."
+  },
+  "sortCards": "Ordenar tarjetas",
+  "@sortCards": {
+    "description": "Tooltip of the sort menu of the card list on mobile."
+  },
+  "emptyCards": "Añade tu primera tarjeta",
+  "@emptyCards": {
+    "description": "Empty state of a deck with no cards (SPEC §5.3)."
+  },
+  "noCardResults": "Ninguna tarjeta coincide con «{query}»",
+  "@noCardResults": {
+    "description": "The card search found nothing.",
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "deckNotFound": "Esta baraja ya no existe",
+  "@deckNotFound": {
+    "description": "Deck screen opened with the ID of a deck that does not exist or is in the trash."
+  },
+  "deleteDeck": "Eliminar baraja",
+  "@deleteDeck": {
+    "description": "Item of the deck screen menu that moves the deck to the trash."
+  },
+  "cardOptions": "Opciones de la tarjeta",
+  "@cardOptions": {
+    "description": "Tooltip of the ⋮ menu of a card in the deck screen."
+  },
+  "columnQuestion": "Pregunta",
+  "@columnQuestion": {
+    "description": "Column of the desktop card table (shown in capitals)."
+  },
+  "columnType": "Tipo",
+  "@columnType": {
+    "description": "Column of the desktop card table: simple or test."
+  },
+  "columnCorrect": "Aciertos",
+  "@columnCorrect": {
+    "description": "Column of the desktop card table: correct first attempts."
+  },
+  "columnWrong": "Fallos",
+  "@columnWrong": {
+    "description": "Column of the desktop card table: wrong first attempts."
+  },
+  "columnRate": "% aciertos",
+  "@columnRate": {
+    "description": "Column of the desktop card table: % correct with a bar."
+  },
+  "columnLastReview": "Último repaso",
+  "@columnLastReview": {
+    "description": "Column of the desktop card table: when the card was last answered."
+  },
+  "reviewedToday": "Hoy",
+  "@reviewedToday": {
+    "description": "Last review of a card: today."
+  },
+  "reviewedYesterday": "Ayer",
+  "@reviewedYesterday": {
+    "description": "Last review of a card: yesterday."
+  },
+  "reviewedDaysAgo": "Hace {count} días",
+  "@reviewedDaysAgo": {
+    "description": "Last review of a card: 2 or more days ago.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewedNever": "Nunca",
+  "@reviewedNever": {
+    "description": "Last review of a card that was never studied."
+  },
+  "percent": "{value}%",
+  "@percent": {
+    "description": "A % correct, e.g. '92%'.",
+    "placeholders": {
+      "value": { "type": "int" }
+    }
   },
   "deckPath": "{project} › {deck}",
   "@deckPath": {

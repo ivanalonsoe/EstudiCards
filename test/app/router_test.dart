@@ -119,7 +119,6 @@ void main() {
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
-        AppRoutes.deck('p1', 'd1'): 'Baraja',
         AppRoutes.sessionSetup('p1'): 'Configurar sesión',
         AppRoutes.session('s1'): 'Sesión de estudio',
         AppRoutes.results('s1'): 'Resultados',

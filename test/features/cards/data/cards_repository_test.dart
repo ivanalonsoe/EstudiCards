@@ -499,6 +499,39 @@ void main() {
       expect(summary.correctRate, 0.8);
     });
 
+    test('returns the last review in either direction', () async {
+      final card = await repository.create(deck.id, simple);
+      final never = await repository.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to seek',
+          answer: 'buscar',
+        ),
+      );
+      await addTestStats(
+        db,
+        card.id,
+        correct: 1,
+        lastAttemptAt: DateTime.utc(2026, 10, 3),
+      );
+      await addTestStats(
+        db,
+        card.id,
+        direction: 'reverse',
+        wrong: 1,
+        lastAttemptAt: DateTime.utc(2026, 10, 5),
+      );
+
+      final summaries = {
+        for (final s in await repository.watchCards(deck.id).first)
+          s.card.id: s.lastReviewedAt,
+      };
+
+      expect(summaries[card.id], DateTime.utc(2026, 10, 5));
+      expect(summaries[never.id], isNull);
+    });
+
     test('emits again when the cards change', () async {
       final stream = repository.watchCards(deck.id);
       final names = stream.map(

@@ -19,7 +19,12 @@ enum CardSort {
 
 /// A card with its results, for the deck's card list.
 class CardSummary {
-  const new({required this.card, this.correctCount = 0, this.wrongCount = 0});
+  const new({
+    required this.card,
+    this.correctCount = 0,
+    this.wrongCount = 0,
+    this.lastReviewedAt,
+  });
 
   final Flashcard card;
 
@@ -27,12 +32,56 @@ class CardSummary {
   final int correctCount;
   final int wrongCount;
 
+  /// The last answer in either direction; null if never studied.
+  final DateTime? lastReviewedAt;
+
   /// % correct as a fraction: correct / (correct + wrong) (R 7.6). Null
   /// with no answers, which the list shows as "—".
   double? get correctRate {
     final total = correctCount + wrongCount;
     return total == 0 ? null : correctCount / total;
   }
+}
+
+/// How good a % correct is, for the colour of its bar: green, amber or red
+/// (thresholds taken from the deck screen design).
+enum RateLevel {
+  good,
+  fair,
+  poor;
+
+  static RateLevel of(double rate) => switch (rate) {
+    >= 0.7 => good,
+    >= 0.4 => fair,
+    _ => poor,
+  };
+}
+
+/// The % correct of several cards together, as a fraction; null with no
+/// answers (R 7.6).
+double? combinedCorrectRate(Iterable<CardSummary> cards) {
+  var correct = 0;
+  var wrong = 0;
+  for (final card in cards) {
+    correct += card.correctCount;
+    wrong += card.wrongCount;
+  }
+  final total = correct + wrong;
+  return total == 0 ? null : correct / total;
+}
+
+/// Calendar days, in local time, from [reviewedAt] to [now]: 0 = today,
+/// 1 = yesterday. Null if the card was never reviewed.
+int? daysSinceReview(DateTime? reviewedAt, DateTime now) {
+  if (reviewedAt == null) return null;
+  // Compare the local dates at midnight UTC, so a daylight saving change
+  // does not leave a day with 23 or 25 hours.
+  DateTime day(DateTime time) {
+    final local = time.toLocal();
+    return DateTime.utc(local.year, local.month, local.day);
+  }
+
+  return day(now).difference(day(reviewedAt)).inDays;
 }
 
 /// Whether [card] matches what the user typed in the search box (US-12

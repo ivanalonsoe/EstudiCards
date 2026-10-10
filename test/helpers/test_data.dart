@@ -40,6 +40,7 @@ Future<void> addTestStats(
   String direction = 'normal',
   int correct = 0,
   int wrong = 0,
+  DateTime? lastAttemptAt,
 }) => db
     .into(db.cardStats)
     .insert(
@@ -49,6 +50,7 @@ Future<void> addTestStats(
         correctCount: Value(correct),
         wrongCount: Value(wrong),
         inErrorList: Value(wrong > 0),
+        lastAttemptAt: Value(lastAttemptAt),
       ),
     );
 
