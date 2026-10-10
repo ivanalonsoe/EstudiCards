@@ -5,18 +5,21 @@ import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
+import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
+import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
+import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// A deck in the project screen (DESIGN_BRIEF.md §6.3): a band in its
-/// colour, the name and "84 tarjetas · 81% aciertos". Tapping it opens the
-/// deck.
+/// colour, the name, "84 tarjetas · 81% aciertos" and, for a language deck,
+/// its language pair. Tapping it opens the deck.
 ///
 /// % correct and errors come from the statistics of phase 4; until then the
 /// row shows "— aciertos" and no errors chip.
@@ -79,6 +82,18 @@ class DeckTile extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (deck case Deck(
+                isLanguage: true,
+                :final sourceLang?,
+                :final targetLang?,
+              ))
+                Center(
+                  child: _LanguagePair(
+                    key: Key('deckTile.${deck.id}.languages'),
+                    source: sourceLang,
+                    target: targetLang,
+                  ),
+                ),
               Center(
                 child: _DeckMenu(summary: summary, project: project),
               ),
@@ -96,6 +111,46 @@ class DeckTile extends ConsumerWidget {
     // The screen does not wait for the database write.
     unawaited(ref.read(decksRepositoryProvider).markUsed(deck.id));
     context.go(AppRoutes.deck(deck.projectId, deck.id));
+  }
+}
+
+/// The chip of a language deck: "EN → ES". Screen readers hear the full
+/// names ("Inglés (R. U.) → Español").
+class _LanguagePair extends StatelessWidget {
+  const new({required this.source, required this.target, super.key});
+
+  final String source;
+  final String target;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    return Semantics(
+      label: l10n.languagePair(
+        languageName(l10n, source),
+        languageName(l10n, target),
+      ),
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppRadii.chip),
+        ),
+        child: Text(
+          l10n.languagePair(
+            shortLanguageCode(source),
+            shortLanguageCode(target),
+          ),
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: colors.textMuted),
+        ),
+      ),
+    );
   }
 }
 

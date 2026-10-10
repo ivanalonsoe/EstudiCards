@@ -20,6 +20,7 @@ class DecksRepository {
     _checkValid(input);
     final id = newId();
     final now = _clock.now();
+    final isLanguage = input.type == DeckType.language;
     await _dao.insertDeck(
       DecksCompanion.insert(
         id: id,
@@ -27,6 +28,9 @@ class DecksRepository {
         name: input.trimmedName,
         description: Value(input.trimmedDescription),
         color: Value(input.color),
+        type: Value(input.type.name),
+        sourceLang: Value(isLanguage ? input.sourceLang : null),
+        targetLang: Value(isLanguage ? input.targetLang : null),
         createdAt: now,
         updatedAt: now,
       ),
@@ -38,14 +42,22 @@ class DecksRepository {
   /// Replaces the fields the user edits (P04). A null colour makes the deck
   /// inherit its project's colour again. Throws [InvalidDeckException] if
   /// [input] is not valid.
+  ///
+  /// A general deck keeps the languages already stored: switching from
+  /// "Idioma" to "General" hides them but does not delete them (US-06 AC3).
   Future<Deck> update(String id, DeckInput input) async {
     _checkValid(input);
+    final isLanguage = input.type == DeckType.language;
     await _dao.updateDeck(
       id,
       DecksCompanion(
         name: Value(input.trimmedName),
         description: Value(input.trimmedDescription),
         color: Value(input.color),
+        type: Value(input.type.name),
+        // `Value.absent()` leaves the column as it is.
+        sourceLang: isLanguage ? Value(input.sourceLang) : const .absent(),
+        targetLang: isLanguage ? Value(input.targetLang) : const .absent(),
         updatedAt: Value(_clock.now()),
       ),
     );
@@ -86,6 +98,9 @@ class DecksRepository {
     description: row.deck.description,
     color: row.deck.color ?? row.projectColor,
     inheritsColor: row.deck.color == null,
+    type: DeckType.fromStored(row.deck.type),
+    sourceLang: row.deck.sourceLang,
+    targetLang: row.deck.targetLang,
     lastUsedAt: row.deck.lastUsedAt,
     createdAt: row.deck.createdAt,
     updatedAt: row.deck.updatedAt,

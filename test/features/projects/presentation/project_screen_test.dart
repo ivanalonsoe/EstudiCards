@@ -34,14 +34,25 @@ void main() {
       description: 'Nivel intermedio alto',
       color: 'blue',
       icon: 'globe',
-      type: ProjectType.language,
-      sourceLang: 'en-GB',
-      targetLang: 'es-ES',
     ),
   );
 
-  Future<Deck> createDeck(Project project, String name, {int cards = 0}) async {
-    final deck = await decks.create(project.id, DeckInput(name: name));
+  Future<Deck> createDeck(
+    Project project,
+    String name, {
+    int cards = 0,
+    String? sourceLang,
+    String? targetLang,
+  }) async {
+    final deck = await decks.create(
+      project.id,
+      DeckInput(
+        name: name,
+        type: sourceLang == null ? DeckType.general : DeckType.language,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+      ),
+    );
     for (var i = 0; i < cards; i++) {
       await addTestCard(db, deck.id);
     }
@@ -95,6 +106,49 @@ void main() {
       );
     });
 
+    testWidgets('a language deck shows its language pair; a general one '
+        'shows none', (tester) async {
+      final project = await createEnglish();
+      final translation = await createDeck(
+        project,
+        'Verbos irregulares',
+        sourceLang: 'en-GB',
+        targetLang: 'es-ES',
+      );
+      final definitions = await createDeck(
+        project,
+        'Definitions',
+        sourceLang: 'en-GB',
+        targetLang: 'en-GB',
+      );
+      final general = await createDeck(project, 'Notas de clase');
+
+      await openProject(tester, project);
+
+      Finder pairOf(Deck deck) =>
+          find.byKey(Key('deckTile.${deck.id}.languages'));
+      expect(
+        find.descendant(
+          of: pairOf(translation),
+          matching: find.text('EN → ES'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: pairOf(definitions),
+          matching: find.text('EN → EN'),
+        ),
+        findsOneWidget,
+      );
+      expect(pairOf(general), findsNothing);
+      // Screen readers hear the full names, as part of the deck's row.
+      expect(
+        tester.getSemantics(deckTile(translation)).label,
+        contains('Inglés (R. U.) → Español'),
+      );
+    });
+
     testWidgets('with no decks, the empty state is shown', (tester) async {
       final project = await createEnglish();
 
@@ -115,10 +169,8 @@ void main() {
       await openProject(tester, project);
 
       expect(find.text('Inglés B2'), findsOneWidget);
-      expect(
-        find.text('Inglés (R. U.) → Español · Nivel intermedio alto'),
-        findsOneWidget,
-      );
+      // The languages belong to each deck, not to the project header.
+      expect(find.text('Nivel intermedio alto'), findsOneWidget);
       // Real card count; % correct and errors arrive in phase 4.
       Finder metric(String key, String value) => find.descendant(
         of: find.byKey(Key('projectScreen.metric.$key')),

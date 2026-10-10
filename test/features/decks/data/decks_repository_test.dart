@@ -4,6 +4,7 @@ import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/features/decks/data/decks_dao.dart';
 import 'package:estudicards/features/decks/data/decks_repository.dart';
+import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/data/projects_repository.dart';
@@ -82,6 +83,111 @@ void main() {
       await repository.create(project.id, DeckInput(name: 'a' * 60));
       expect(await listedNames(), ['a' * 60]);
     });
+  });
+
+  group('type and languages', () {
+    const english = DeckInput(
+      name: 'Verbos irregulares',
+      type: DeckType.language,
+      sourceLang: 'en-GB',
+      targetLang: 'es-ES',
+    );
+
+    test('a new deck is general and has no languages', () async {
+      final deck = await repository.create(
+        project.id,
+        const DeckInput(name: 'Célula'),
+      );
+
+      expect(deck.type, DeckType.general);
+      expect(deck.isLanguage, isFalse);
+      expect(deck.sourceLang, isNull);
+      expect(deck.targetLang, isNull);
+    });
+
+    test('a language deck stores its type and languages', () async {
+      final deck = await repository.create(project.id, english);
+
+      expect(deck.type, DeckType.language);
+      expect(deck.isLanguage, isTrue);
+      expect(deck.sourceLang, 'en-GB');
+      expect(deck.targetLang, 'es-ES');
+      final listed = (await repository.watchDecks(project.id).first).single;
+      expect(listed.deck.type, DeckType.language);
+      expect(listed.deck.sourceLang, 'en-GB');
+    });
+
+    test('a language deck without a source language fails', () {
+      expect(
+        () => repository.create(
+          project.id,
+          const DeckInput(
+            name: 'Verbos',
+            type: DeckType.language,
+            targetLang: 'es-ES',
+          ),
+        ),
+        failsWith(.languagesMissing),
+      );
+    });
+
+    test('a language deck without a target language fails', () {
+      expect(
+        () => repository.create(
+          project.id,
+          const DeckInput(
+            name: 'Verbos',
+            type: DeckType.language,
+            sourceLang: 'en-GB',
+          ),
+        ),
+        failsWith(.languagesMissing),
+      );
+    });
+
+    test('a project can hold decks of both types', () async {
+      // The list goes oldest first.
+      await repository.create(project.id, english);
+      clock.advance(const Duration(minutes: 1));
+      await repository.create(
+        project.id,
+        const DeckInput(
+          name: 'Definitions',
+          type: DeckType.language,
+          sourceLang: 'en-GB',
+          targetLang: 'en-GB',
+        ),
+      );
+      clock.advance(const Duration(minutes: 1));
+      await repository.create(project.id, const DeckInput(name: 'Notas'));
+
+      final decks = [
+        for (final s in await repository.watchDecks(project.id).first)
+          (s.deck.type, s.deck.sourceLang, s.deck.targetLang),
+      ];
+
+      expect(decks, [
+        (DeckType.language, 'en-GB', 'es-ES'),
+        (DeckType.language, 'en-GB', 'en-GB'),
+        (DeckType.general, null, null),
+      ]);
+    });
+
+    test(
+      'switching from language to general does not delete the languages',
+      () async {
+        final deck = await repository.create(project.id, english);
+
+        final updated = await repository.update(
+          deck.id,
+          const DeckInput(name: 'Verbos irregulares'),
+        );
+
+        expect(updated.type, DeckType.general);
+        expect(updated.sourceLang, 'en-GB');
+        expect(updated.targetLang, 'es-ES');
+      },
+    );
   });
 
   group('colour', () {

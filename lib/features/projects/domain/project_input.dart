@@ -1,12 +1,5 @@
-import 'package:estudicards/features/projects/domain/project.dart';
-
 /// Why a [ProjectInput] is not valid.
-enum ProjectInputError {
-  nameMissing,
-  nameTooLong,
-  descriptionTooLong,
-  languagesMissing,
-}
+enum ProjectInputError { nameMissing, nameTooLong, descriptionTooLong }
 
 /// Thrown when saving a project whose input is not valid.
 class InvalidProjectException implements Exception {
@@ -25,18 +18,12 @@ class ProjectInput {
     required this.color,
     required this.icon,
     this.description,
-    this.type = ProjectType.general,
-    this.sourceLang,
-    this.targetLang,
   });
 
   final String name;
   final String? description;
   final String color;
   final String icon;
-  final ProjectType type;
-  final String? sourceLang;
-  final String? targetLang;
 
   static const maxNameLength = 60;
   static const maxDescriptionLength = 300;
@@ -50,17 +37,12 @@ class ProjectInput {
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
-  /// The rules from US-01: name 1–60 characters, description up to 300, and
-  /// both languages for a language project. Empty list = valid.
+  /// The rules from US-01: name 1–60 characters and description up to 300.
+  /// Empty list = valid.
   List<ProjectInputError> validate() => [
     if (trimmedName.isEmpty) ProjectInputError.nameMissing,
     if (trimmedName.length > maxNameLength) ProjectInputError.nameTooLong,
     if ((trimmedDescription?.length ?? 0) > maxDescriptionLength)
       ProjectInputError.descriptionTooLong,
-    if (type == ProjectType.language &&
-        (_isBlank(sourceLang) || _isBlank(targetLang)))
-      ProjectInputError.languagesMissing,
   ];
-
-  static bool _isBlank(String? value) => value == null || value.trim().isEmpty;
 }

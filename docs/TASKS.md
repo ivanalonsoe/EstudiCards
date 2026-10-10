@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.10 | ⏳ 6 / 10 |
+| 2. Cards | T2.1 – T2.10 | ⏳ 7 / 10 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -238,8 +238,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a 4000 px image is stored with its long side at 1600 px.
     - 🧪 deleting the card deletes the image file.
 
-- [ ] **T2.10 Type and languages per deck** · P02, P03, P04, P06 · US-01, US-06, US-08 · Depends on: T2.6
-  - > **Note:** design change decided by the owner after T2.6, done before T2.7: the type (general / language) and the languages move from the project to the deck, so one project can mix types. See SPEC §13.1 ("Deck type") and §13.2 (assumption 29).
+- [x] **T2.10 Type and languages per deck** · P02, P03, P04, P06 · US-01, US-06, US-08 · Depends on: T2.6
+  - > **Note:** design change decided by the owner after T2.6, done before T2.7: the type (general / language) and the languages move from the project to the deck, so one project can mix types. Schema version 3; the migration tests use Drift's `SchemaVerifier` with the schema files in `drift_schemas/`, and the owner's real database was migrated on Windows. See SPEC §13.1 ("Deck type") and §13.2 (assumption 29).
   - Schema version 3: add `type`, `source_lang` and `target_lang` to `decks`, give each deck its project's values and drop them from `projects`.
   - Move the language validation from `ProjectInput` to `DeckInput`, and the type and language fields from the project form to the deck form.
   - Language deck rows in P03 show the pair ("EN → ES"); the project header no longer shows languages. The card editor depends on the deck.

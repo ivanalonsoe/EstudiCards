@@ -136,7 +136,10 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   late String _savedSignature = _signature;
 
   bool get _isEditing => widget.card != null;
-  bool get _isLanguage => widget.project.type == ProjectType.language;
+
+  /// The labels, example and notes and the language pair follow the card's
+  /// deck: one project can mix general and language decks (T2.10).
+  bool get _isLanguage => widget.deck.isLanguage;
 
   /// Everything the user can change, in one string.
   String get _signature => [
@@ -462,8 +465,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
   StudyCard _previewCard(AppLocalizations l10n) {
     final input = _input;
     final project = widget.project;
-    final source = project.sourceLang;
-    final target = project.targetLang;
+    final source = widget.deck.sourceLang;
+    final target = widget.deck.targetLang;
     final now = DateTime.utc(2000);
     return StudyCard(
       card: Flashcard(

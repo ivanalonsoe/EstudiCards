@@ -1,10 +1,9 @@
-import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ProjectInput.validate', () {
-    test('a general project with a name is valid', () {
+    test('a project with a name is valid', () {
       const input = ProjectInput(name: 'Historia', color: 'blue', icon: 'book');
 
       expect(input.validate(), isEmpty);
@@ -16,15 +15,11 @@ void main() {
         description: 'a' * 301,
         color: 'blue',
         icon: 'globe',
-        type: ProjectType.language,
-        sourceLang: 'en-GB',
-        targetLang: '  ',
       );
 
       expect(input.validate(), [
         ProjectInputError.nameMissing,
         ProjectInputError.descriptionTooLong,
-        ProjectInputError.languagesMissing,
       ]);
     });
 
@@ -51,11 +46,6 @@ void main() {
 
       expect(input.trimmedDescription, isNull);
     });
-  });
-
-  test('ProjectType.fromStored falls back to general for unknown values', () {
-    expect(ProjectType.fromStored('language'), ProjectType.language);
-    expect(ProjectType.fromStored('unknown'), ProjectType.general);
   });
 
   test('InvalidProjectException lists the errors in its message', () {

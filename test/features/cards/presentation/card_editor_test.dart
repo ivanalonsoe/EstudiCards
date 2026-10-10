@@ -31,9 +31,14 @@ void main() {
   late FakeClock clock;
   late CardsRepository cards;
   late Project general;
-  late Project language;
+  late Project english;
   late Deck constitution;
+
+  /// A language deck (English → Spanish) of "Inglés B2".
   late Deck verbs;
+
+  /// A general deck of the same project.
+  late Deck classNotes;
 
   setUp(() async {
     db = createTestDatabase();
@@ -48,23 +53,25 @@ void main() {
         icon: 'scales',
       ),
     );
-    language = await projects.create(
-      const ProjectInput(
-        name: 'Inglés B2',
-        color: 'blue',
-        icon: 'globe',
-        type: ProjectType.language,
-        sourceLang: 'en-GB',
-        targetLang: 'es-ES',
-      ),
+    english = await projects.create(
+      const ProjectInput(name: 'Inglés B2', color: 'blue', icon: 'globe'),
     );
     constitution = await decks.create(
       general.id,
       const DeckInput(name: 'Constitución'),
     );
     verbs = await decks.create(
-      language.id,
-      const DeckInput(name: 'Verbos irregulares'),
+      english.id,
+      const DeckInput(
+        name: 'Verbos irregulares',
+        type: DeckType.language,
+        sourceLang: 'en-GB',
+        targetLang: 'es-ES',
+      ),
+    );
+    classNotes = await decks.create(
+      english.id,
+      const DeckInput(name: 'Notas de clase'),
     );
   });
 
@@ -733,7 +740,7 @@ void main() {
   });
 
   group('language fields', () {
-    testWidgets('in a general project, "Frase de ejemplo" and "Notas" are not '
+    testWidgets('in a general deck, "Frase de ejemplo" and "Notas" are not '
         'shown', (tester) async {
       await openNewCard(tester);
 
@@ -743,7 +750,58 @@ void main() {
       expect(notesField, findsNothing);
     });
 
-    testWidgets('a language project shows them and saves them', (tester) async {
+    testWidgets('they follow the deck, not the project', (tester) async {
+      // "Inglés B2" also has a language deck (see the next test), but this
+      // deck is general.
+      await openNewCard(tester, deck: classNotes);
+
+      expect(find.text('Pregunta'), findsOneWidget);
+      expect(exampleField, findsNothing);
+      expect(notesField, findsNothing);
+      // The preview has no language pair either.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('studyCard.front')),
+          matching: find.textContaining('→'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a card keeps its example and notes in a general deck', (
+      tester,
+    ) async {
+      final card = await cards.create(
+        classNotes.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to bring',
+          answer: 'traer',
+          example: 'Can you bring me some water?',
+          notes: 'Verbo irregular',
+        ),
+      );
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(english.id, classNotes.id, card.id),
+      );
+
+      expect(exampleField, findsNothing);
+      await tester.enterText(answerField, 'traer, llevar');
+      await tester.pump();
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      final stored = (await cards.getById(card.id))!;
+      expect(stored.answer, 'traer, llevar');
+      expect(stored.example, 'Can you bring me some water?');
+      expect(stored.notes, 'Verbo irregular');
+    });
+
+    testWidgets('a language deck shows them and saves them', (tester) async {
       await openNewCard(tester, deck: verbs);
 
       expect(find.text('Palabra o pregunta'), findsOneWidget);

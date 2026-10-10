@@ -21,7 +21,6 @@ class ProjectsRepository {
   Future<Project> create(ProjectInput input) async {
     _checkValid(input);
     final now = _clock.now();
-    final isLanguage = input.type == ProjectType.language;
     final row = await _dao.insertProject(
       ProjectsCompanion.insert(
         id: newId(),
@@ -29,9 +28,6 @@ class ProjectsRepository {
         description: Value(input.trimmedDescription),
         color: input.color,
         icon: input.icon,
-        type: input.type.name,
-        sourceLang: Value(isLanguage ? input.sourceLang : null),
-        targetLang: Value(isLanguage ? input.targetLang : null),
         createdAt: now,
         updatedAt: now,
       ),
@@ -41,12 +37,8 @@ class ProjectsRepository {
 
   /// Replaces the fields the user edits (P02). Throws
   /// [InvalidProjectException] if [input] is not valid.
-  ///
-  /// A general project keeps the languages already stored: switching from
-  /// "Idioma" to "General" hides them but does not delete them (US-02 AC2).
   Future<Project> update(String id, ProjectInput input) async {
     _checkValid(input);
-    final isLanguage = input.type == ProjectType.language;
     final row = await _dao.updateProject(
       id,
       ProjectsCompanion(
@@ -54,10 +46,6 @@ class ProjectsRepository {
         description: Value(input.trimmedDescription),
         color: Value(input.color),
         icon: Value(input.icon),
-        type: Value(input.type.name),
-        // `Value.absent()` leaves the column as it is.
-        sourceLang: isLanguage ? Value(input.sourceLang) : const .absent(),
-        targetLang: isLanguage ? Value(input.targetLang) : const .absent(),
         updatedAt: Value(_clock.now()),
       ),
     );
@@ -134,9 +122,6 @@ class ProjectsRepository {
     description: row.description,
     color: row.color,
     icon: row.icon,
-    type: ProjectType.fromStored(row.type),
-    sourceLang: row.sourceLang,
-    targetLang: row.targetLang,
     isFavorite: row.isFavorite,
     isArchived: row.isArchived,
     archivedAt: row.archivedAt,

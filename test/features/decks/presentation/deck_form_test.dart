@@ -54,6 +54,155 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  final nameField = find.byKey(const Key('deckForm.name'));
+  final sourceLang = find.byKey(const Key('deckForm.sourceLang'));
+  final targetLang = find.byKey(const Key('deckForm.targetLang'));
+  final general = find.byKey(const Key('deckForm.type.general'));
+  final language = find.byKey(const Key('deckForm.type.language'));
+
+  Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
+  /// Opens a dropdown and picks the language called [name].
+  Future<void> chooseLanguage(
+    WidgetTester tester,
+    Finder field,
+    String name,
+  ) async {
+    await tapVisible(tester, field);
+    await tester.tap(find.text(name).last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> openEditForm(WidgetTester tester, Deck deck) async {
+    await openProject(tester);
+    await tester.tap(find.byKey(Key('deckTile.${deck.id}.menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Editar'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<Deck> createLanguageDeck() => decks.create(
+    project.id,
+    const DeckInput(
+      name: 'Verbos irregulares',
+      type: DeckType.language,
+      sourceLang: 'en-GB',
+      targetLang: 'es-ES',
+    ),
+  );
+
+  group('type and languages', () {
+    testWidgets('a new deck is general, and "Idioma" shows the selectors', (
+      tester,
+    ) async {
+      await openProject(tester);
+      await openNewDeckForm(tester);
+      expect(sourceLang, findsNothing);
+      expect(targetLang, findsNothing);
+
+      await tapVisible(tester, language);
+
+      expect(sourceLang, findsOneWidget);
+      expect(targetLang, findsOneWidget);
+    });
+
+    testWidgets('a language deck needs both languages to be saved', (
+      tester,
+    ) async {
+      await openProject(tester);
+      await openNewDeckForm(tester);
+      await tester.enterText(nameField, 'Definitions');
+      await tapVisible(tester, language);
+      expect(saveEnabled(tester), isFalse);
+
+      await chooseLanguage(tester, sourceLang, 'Inglés (R. U.)');
+      expect(saveEnabled(tester), isFalse);
+      // The same language on both sides: word → definition.
+      await chooseLanguage(tester, targetLang, 'Inglés (R. U.)');
+      expect(saveEnabled(tester), isTrue);
+
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      final [deck] = await storedDecks();
+      expect(deck.type, DeckType.language);
+      expect(deck.sourceLang, 'en-GB');
+      expect(deck.targetLang, 'en-GB');
+    });
+
+    testWidgets('while creating, going back to "General" does not ask', (
+      tester,
+    ) async {
+      await openProject(tester);
+      await openNewDeckForm(tester);
+      await tapVisible(tester, language);
+
+      await tapVisible(tester, general);
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(sourceLang, findsNothing);
+    });
+
+    testWidgets('editing a language deck shows its languages', (tester) async {
+      final deck = await createLanguageDeck();
+      await openEditForm(tester, deck);
+
+      expect(sourceLang, findsOneWidget);
+      expect(
+        find.descendant(of: sourceLang, matching: find.text('Inglés (R. U.)')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: targetLang, matching: find.text('Español')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      'switching a language deck to "General" asks for confirmation',
+      (tester) async {
+        final deck = await createLanguageDeck();
+        await openEditForm(tester, deck);
+
+        await tapVisible(tester, general);
+
+        final dialog = find.byType(AlertDialog);
+        expect(dialog, findsOneWidget);
+        expect(
+          find.descendant(
+            of: dialog,
+            matching: find.textContaining('No se borrará ningún dato'),
+          ),
+          findsOneWidget,
+        );
+
+        // Cancelling keeps the language type.
+        await tester.tap(
+          find.descendant(of: dialog, matching: find.text('Cancelar')),
+        );
+        await tester.pumpAndSettle();
+        expect(sourceLang, findsOneWidget);
+
+        // Confirming switches to General, and the languages are kept.
+        await tapVisible(tester, general);
+        await tester.tap(find.byKey(const Key('deckForm.confirmTypeChange')));
+        await tester.pumpAndSettle();
+        expect(sourceLang, findsNothing);
+
+        await tapVisible(tester, save);
+        final stored = (await decks.getById(deck.id))!;
+        expect(stored.type, DeckType.general);
+        expect(stored.sourceLang, 'en-GB');
+        expect(stored.targetLang, 'es-ES');
+      },
+    );
+  });
+
   testWidgets('cannot save without a name', (tester) async {
     await openProject(tester);
     await openNewDeckForm(tester);
