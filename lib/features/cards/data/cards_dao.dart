@@ -28,6 +28,20 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   Future<CardRow?> findById(String id) =>
       (select(cards)..where((c) => c.id.equals(id))).getSingleOrNull();
 
+  /// These cards, oldest first.
+  Future<List<CardRow>> findByIds(Iterable<String> ids) =>
+      (select(cards)
+            ..where((c) => c.id.isIn(ids))
+            ..orderBy([(c) => OrderingTerm.asc(c.createdAt)]))
+          .get();
+
+  /// Puts the cards in [deckId]. Their IDs, options, statistics and
+  /// attempts stay as they are.
+  Future<void> moveCards(Iterable<String> ids, String deckId, DateTime now) =>
+      (update(cards)..where((c) => c.id.isIn(ids))).write(
+        CardsCompanion(deckId: Value(deckId), updatedAt: Value(now)),
+      );
+
   /// Deletes the card for good. The foreign keys cascade the delete to its
   /// options, statistics and attempts.
   Future<void> deleteCard(String id) =>

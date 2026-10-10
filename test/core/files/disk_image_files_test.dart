@@ -56,6 +56,20 @@ void main() {
     },
   );
 
+  test('copy stores the same image under a new name', () async {
+    final original = await images.save(pngBytes(10, 10));
+
+    final copy = await images.copy(original!);
+
+    expect(copy, matches(RegExp(r'^[0-9a-f-]{36}\.jpg$')));
+    expect(copy, isNot(original));
+    expect(stored(copy!).readAsBytesSync(), stored(original).readAsBytesSync());
+  });
+
+  test('copy gives null for a missing file', () async {
+    expect(await images.copy('missing.jpg'), isNull);
+  });
+
   test('delete removes the files and ignores missing ones', () async {
     final kept = await images.save(pngBytes(10, 10));
     final deleted = await images.save(pngBytes(10, 10));

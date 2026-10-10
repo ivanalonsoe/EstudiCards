@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
@@ -366,6 +367,240 @@ void main() {
       await openDeck(tester, size: desktop);
 
       expect(inRow(seek, 'Hace 3 días'), findsOneWidget);
+    });
+  });
+
+  group('selection (T2.9)', () {
+    late Deck classNotes;
+    late Deck trashed;
+    late Deck otherProjectDeck;
+
+    setUp(() async {
+      // Same project: a general deck and a deck in the trash.
+      classNotes = await decks.create(
+        project.id,
+        const DeckInput(name: 'Notas de clase'),
+      );
+      trashed = await decks.create(
+        project.id,
+        const DeckInput(name: 'Borrada'),
+      );
+      await (db.update(db.decks)..where((d) => d.id.equals(trashed.id))).write(
+        DecksCompanion(deletedAt: Value(clock.now())),
+      );
+      final biology = await ProjectsRepository(ProjectsDao(db), clock).create(
+        const ProjectInput(name: 'Biología', color: 'green', icon: 'flask'),
+      );
+      otherProjectDeck = await decks.create(
+        biology.id,
+        const DeckInput(name: 'Célula'),
+      );
+    });
+
+    Finder select(Flashcard card) =>
+        find.byKey(Key('cardRow.${card.id}.select'));
+    final bar = find.byKey(const Key('deckScreen.selectionBar'));
+
+    Future<List<String>> storedIdsIn(Deck deck) async => [
+      for (final row in await (db.select(
+        db.cards,
+      )..where((c) => c.deckId.equals(deck.id))).get())
+        row.id,
+    ];
+
+    testWidgets('a long press starts selecting on mobile', (tester) async {
+      final bring = await addSimple('to bring', 'traer');
+      final seek = await addSimple('to seek', 'buscar');
+      await openDeck(tester);
+      expect(select(bring), findsNothing);
+      expect(bar, findsNothing);
+
+      await tester.longPress(row(bring));
+      await tester.pumpAndSettle();
+      expect(find.text('1 seleccionada'), findsOneWidget);
+
+      // While selecting, a tap selects instead of opening the card.
+      await tester.tap(row(seek));
+      await tester.pumpAndSettle();
+      expect(find.text('2 seleccionadas'), findsOneWidget);
+      expect(find.byKey(const Key('screen.editCard')), findsNothing);
+
+      await tester.tap(row(seek));
+      await tester.pumpAndSettle();
+      expect(find.text('1 seleccionada'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('deckScreen.clearSelection')));
+      await tester.pumpAndSettle();
+      expect(bar, findsNothing);
+      expect(select(bring), findsNothing);
+    });
+
+    testWidgets('desktop rows have checkboxes, and the heading one selects '
+        'all', (tester) async {
+      final bring = await addSimple('to bring', 'traer');
+      final seek = await addSimple('to seek', 'buscar');
+      await openDeck(tester, size: desktop);
+
+      await tester.tap(select(bring));
+      await tester.pumpAndSettle();
+      expect(find.text('1 seleccionada'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('deckScreen.selectAll')));
+      await tester.pumpAndSettle();
+      expect(find.text('2 seleccionadas'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('deckScreen.selectAll')));
+      await tester.pumpAndSettle();
+      expect(bar, findsNothing);
+      expect(tester.widget<Checkbox>(select(seek)).value, isFalse);
+    });
+
+    testWidgets('"Mover a…" only offers decks from the same project, of '
+        'either type', (tester) async {
+      final bring = await addSimple('to bring', 'traer');
+      final seek = await addSimple('to seek', 'buscar');
+      await openDeck(tester);
+      await tester.longPress(row(bring));
+      await tester.pumpAndSettle();
+      await tester.tap(row(seek));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('deckScreen.moveTo')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mover a…'), findsOneWidget);
+      Finder option(Deck deck) => find.byKey(Key('deckPicker.${deck.id}'));
+      expect(option(classNotes), findsOneWidget);
+      // Not the deck the cards are in, not a deck in the trash and not a
+      // deck of another project.
+      expect(option(verbs), findsNothing);
+      expect(option(trashed), findsNothing);
+      expect(option(otherProjectDeck), findsNothing);
+
+      await tester.tap(option(classNotes));
+      await tester.pumpAndSettle();
+
+      expect(row(bring), findsNothing);
+      expect(row(seek), findsNothing);
+      expect(bar, findsNothing);
+      expect(
+        find.text('2 tarjetas movidas a «Notas de clase»'),
+        findsOneWidget,
+      );
+      expect(
+        await storedIdsIn(classNotes),
+        unorderedEquals([bring.id, seek.id]),
+      );
+    });
+
+    testWidgets('"Copiar a…" leaves the cards and creates copies', (
+      tester,
+    ) async {
+      final bring = await addSimple('to bring', 'traer');
+      await openDeck(tester, size: desktop);
+
+      await tester.tap(find.byKey(Key('cardRow.${bring.id}.menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Copiar a…'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key('deckPicker.${classNotes.id}')));
+      await tester.pumpAndSettle();
+
+      expect(row(bring), findsOneWidget);
+      expect(find.text('Tarjeta copiada a «Notas de clase»'), findsOneWidget);
+      final [copyId] = await storedIdsIn(classNotes);
+      expect(copyId, isNot(bring.id));
+    });
+
+    testWidgets('with no other decks, the picker says so', (tester) async {
+      final notes = await addSimple('to bring', 'traer');
+      // The only other deck of the project goes to the trash too.
+      await (db.update(db.decks)..where((d) => d.id.equals(classNotes.id)))
+          .write(DecksCompanion(deletedAt: Value(clock.now())));
+      await openDeck(tester, size: desktop);
+
+      await tester.tap(find.byKey(Key('cardRow.${notes.id}.menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Mover a…'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('deckPicker.empty')), findsOneWidget);
+      expect(
+        find.text('No hay otras barajas en este proyecto'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('deleting cards and tapping "Deshacer" recovers them', (
+      tester,
+    ) async {
+      final bring = await addSimple('to bring', 'traer', correct: 3);
+      final seek = await addSimple('to seek', 'buscar');
+      await openDeck(tester);
+      await tester.longPress(row(bring));
+      await tester.pumpAndSettle();
+      await tester.tap(row(seek));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('deckScreen.deleteSelected')));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Eliminar 2 tarjetas?'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
+
+      expect(row(bring), findsNothing);
+      expect(find.text('2 tarjetas eliminadas'), findsOneWidget);
+
+      await tester.tap(find.text('Deshacer'));
+      await tester.pumpAndSettle();
+
+      expect(row(bring), findsOneWidget);
+      expect(row(seek), findsOneWidget);
+      expect(inRow(bring, '100%'), findsOneWidget);
+      expect(await storedIdsIn(verbs), hasLength(2));
+    });
+
+    testWidgets('without "Deshacer", deleted cards are gone for good', (
+      tester,
+    ) async {
+      final bring = await addSimple('to bring', 'traer');
+      final seek = await addSimple('to seek', 'buscar');
+      await openDeck(tester, size: desktop);
+
+      await tester.tap(find.byKey(Key('cardRow.${bring.id}.menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Eliminar 1 tarjeta?'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
+      expect(row(bring), findsNothing);
+      expect(find.text('Tarjeta eliminada'), findsOneWidget);
+
+      // The snackbar lasts 5 seconds.
+      await tester.pump(const Duration(seconds: 6));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tarjeta eliminada'), findsNothing);
+      expect(await storedIdsIn(verbs), [seek.id]);
+      expect(row(bring), findsNothing);
+    });
+
+    testWidgets('cancelling the deletion keeps the cards selected', (
+      tester,
+    ) async {
+      final bring = await addSimple('to bring', 'traer');
+      await openDeck(tester);
+      await tester.longPress(row(bring));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('deckScreen.deleteSelected')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmDialog.cancel')));
+      await tester.pumpAndSettle();
+
+      expect(row(bring), findsOneWidget);
+      expect(find.text('1 seleccionada'), findsOneWidget);
     });
   });
 }

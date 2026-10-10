@@ -236,6 +236,47 @@ void main() {
 
       expect(find.text('Esta tarjeta ya no existe'), findsOneWidget);
     });
+
+    for (final size in [mobile, desktop]) {
+      testWidgets('"Eliminar tarjeta" deletes it with "Deshacer" and goes '
+          'back to the deck (${size.width.toInt()} px)', (tester) async {
+        final card = await cards.create(
+          constitution.id,
+          const CardInput(
+            type: CardType.simple,
+            question: '¿Qué órgano ejerce la potestad legislativa?',
+            answer: 'Las Cortes',
+          ),
+        );
+        await pumpTestApp(
+          tester,
+          size: size,
+          db: db,
+          clock: clock,
+          location: AppRoutes.editCard(general.id, constitution.id, card.id),
+        );
+
+        await tester.tap(find.byKey(const Key('cardEditor.delete')));
+        await tester.pumpAndSettle();
+        expect(find.text('¿Eliminar 1 tarjeta?'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('screen.deck')), findsOneWidget);
+        expect(find.byKey(Key('cardRow.${card.id}')), findsNothing);
+        expect(find.text('Tarjeta eliminada'), findsOneWidget);
+
+        await tester.pump(const Duration(seconds: 6));
+        await tester.pumpAndSettle();
+        expect(await storedCards(), isEmpty);
+      });
+    }
+
+    testWidgets('a new card has no "Eliminar tarjeta"', (tester) async {
+      await openNewCard(tester);
+
+      expect(find.byKey(const Key('cardEditor.delete')), findsNothing);
+    });
   });
 
   group('test card', () {

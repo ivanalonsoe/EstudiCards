@@ -10,10 +10,13 @@ import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
+import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
+import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
+import 'package:estudicards/features/decks/presentation/deck_picker.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
@@ -43,6 +46,61 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
   String _query = '';
   CardSort _sort = CardSort.newest;
 
+  /// The IDs of the selected cards (US-07). Selecting starts with a long
+  /// press on mobile and with the checkboxes on desktop.
+  final _selected = <String>{};
+
+  void _toggle(String id) => setState(() {
+    if (!_selected.remove(id)) _selected.add(id);
+  });
+
+  /// "Copiar a…" / "Mover a…": picks another deck of the project, of either
+  /// type (US-07 AC2), and copies or moves the cards there.
+  Future<void> _transfer(List<String> ids, {required bool move}) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = ref.read(cardsRepositoryProvider);
+    final targets = [
+      for (final summary
+          in ref.read(deckSummariesProvider(widget.projectId)).value ??
+              const <DeckSummary>[])
+        if (summary.deck.id != widget.deckId) summary.deck,
+    ];
+    final target = await showDeckPicker(
+      context,
+      title: move ? l10n.moveTo : l10n.copyTo,
+      decks: targets,
+    );
+    if (target == null) return;
+    if (move) {
+      await repository.moveCards(ids, target.id);
+    } else {
+      await repository.copyCards(ids, target.id);
+    }
+    if (mounted) setState(() => _selected.removeAll(ids));
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            move
+                ? l10n.cardsMoved(ids.length, target.name)
+                : l10n.cardsCopied(ids.length, target.name),
+          ),
+        ),
+      );
+  }
+
+  /// "Eliminar": asks, hides the cards and offers "Deshacer" (US-11 AC2).
+  Future<void> _delete(List<String> ids) => confirmDeleteCards(
+    context,
+    ref,
+    ids,
+    afterConfirm: () {
+      if (mounted) setState(() => _selected.removeAll(ids));
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -51,6 +109,8 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     // the deck (name, colour, type) and notices when it goes to the trash.
     final decks = ref.watch(deckSummariesProvider(widget.projectId));
     final cards = ref.watch(deckCardsProvider(widget.deckId));
+    // Cards waiting for their "Deshacer" to run out are hidden.
+    final pending = ref.watch(pendingCardDeletionsProvider);
 
     if (project.hasError || decks.hasError || cards.hasError) {
       return _Message(l10n.loadError);
@@ -67,19 +127,35 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
       return const _Message(null);
     }
 
-    final all = cards.value!;
+    final all = [
+      for (final summary in cards.value!)
+        if (!pending.contains(summary.card.id)) summary,
+    ];
+    final shown = sortCards(
+      all.where((s) => matchesCardSearch(s.card, _query)),
+      _sort,
+    );
+    // Cards that left the deck (moved, deleted) are no longer selected.
+    _selected.retainAll({for (final summary in all) summary.card.id});
     final view = _DeckView(
       project: loadedProject,
       deck: deck,
       allCards: all,
-      shownCards: sortCards(
-        all.where((s) => matchesCardSearch(s.card, _query)),
-        _sort,
-      ),
+      shownCards: shown,
       query: _query,
       sort: _sort,
+      selected: _selected,
       onQueryChanged: (query) => setState(() => _query = query),
       onSortChanged: (sort) => setState(() => _sort = sort),
+      onToggle: _toggle,
+      onSelectShown: (select) => setState(() {
+        final ids = [for (final summary in shown) summary.card.id];
+        select ? _selected.addAll(ids) : _selected.removeAll(ids);
+      }),
+      onClearSelection: () => setState(_selected.clear),
+      onCopy: (ids) => unawaited(_transfer(ids, move: false)),
+      onMove: (ids) => unawaited(_transfer(ids, move: true)),
+      onDelete: (ids) => unawaited(_delete(ids)),
     );
     final isDesktop =
         FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
@@ -97,8 +173,15 @@ class _DeckView {
     required this.shownCards,
     required this.query,
     required this.sort,
+    required this.selected,
     required this.onQueryChanged,
     required this.onSortChanged,
+    required this.onToggle,
+    required this.onSelectShown,
+    required this.onClearSelection,
+    required this.onCopy,
+    required this.onMove,
+    required this.onDelete,
   });
 
   final Project project;
@@ -113,6 +196,25 @@ class _DeckView {
   final CardSort sort;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<CardSort> onSortChanged;
+
+  /// The IDs of the selected cards.
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  /// Selects (true) or unselects (false) every card shown.
+  final ValueChanged<bool> onSelectShown;
+  final VoidCallback onClearSelection;
+
+  /// The actions on some cards: the selection, or one card from its menu.
+  final ValueChanged<List<String>> onCopy;
+  final ValueChanged<List<String>> onMove;
+  final ValueChanged<List<String>> onDelete;
+
+  bool get isSelecting => selected.isNotEmpty;
+
+  /// Taps a card: opens it, or selects it while selecting.
+  void tapCard(BuildContext context, Flashcard card) =>
+      isSelecting ? onToggle(card.id) : openCard(context, card);
 
   /// "EN → ES", only for a language deck with both languages.
   String? languagePair(AppLocalizations l10n) {
@@ -176,17 +278,22 @@ class _MobileDeck extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
+      floatingActionButton: view.isSelecting
+          ? _SelectionBar(view: view, compact: true)
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           // On tablets the list keeps a comfortable reading width.
           constraints: const BoxConstraints(maxWidth: 640),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
+            // While selecting, room for the selection bar below the list.
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
               0,
               AppSpacing.lg,
-              AppSpacing.xxxl,
+              view.isSelecting ? 120 : AppSpacing.xxxl,
             ),
             children: [
               Row(
@@ -256,10 +363,16 @@ class _DesktopDeck extends StatelessWidget {
     ].join(l10n.detailsSeparator);
 
     return Scaffold(
+      floatingActionButton: view.isSelecting
+          ? _SelectionBar(view: view, compact: false)
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 40,
-          vertical: AppSpacing.xl,
+        padding: EdgeInsets.fromLTRB(
+          40,
+          AppSpacing.xl,
+          40,
+          view.isSelecting ? 120 : AppSpacing.xl,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -293,7 +406,7 @@ class _DesktopDeck extends StatelessWidget {
                 if (view.allCards.isNotEmpty) ...[
                   Flexible(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
+                      constraints: const BoxConstraints(maxWidth: 360),
                       child: _SearchField(
                         view: view,
                         hint: l10n.searchCardsLong,
@@ -520,14 +633,28 @@ class _CardTile extends StatelessWidget {
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
     final card = summary.card;
+    final isSelected = view.selected.contains(card.id);
     return InkWell(
       key: Key('cardRow.${card.id}'),
-      onTap: () => view.openCard(context, card),
-      child: Padding(
+      onTap: () => view.tapCard(context, card),
+      // A long press starts selecting (US-07 AC1).
+      onLongPress: () => view.onToggle(card.id),
+      child: Ink(
+        color: isSelected ? colors.primarySoft : null,
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Row(
           children: [
-            _TypeIcon(type: card.type),
+            if (view.isSelecting)
+              SizedBox(
+                width: 44,
+                child: Checkbox(
+                  key: Key('cardRow.${card.id}.select'),
+                  value: isSelected,
+                  onChanged: (_) => view.onToggle(card.id),
+                ),
+              )
+            else
+              _TypeIcon(type: card.type),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
@@ -660,12 +787,28 @@ class _CardTable extends ConsumerWidget {
         ?.copyWith(color: colors.textMuted, letterSpacing: 0.6);
     Text heading(String label, {TextAlign? align}) =>
         Text(label.toUpperCase(), style: header, textAlign: align);
+    final selectedShown = view.shownCards
+        .where((s) => view.selected.contains(s.card.id))
+        .length;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           _TableRow(
+            // All, none, or some (a dash) of the cards shown are selected.
+            select: Checkbox(
+              key: const Key('deckScreen.selectAll'),
+              tristate: true,
+              value: switch (selectedShown) {
+                0 => false,
+                _ when selectedShown == view.shownCards.length => true,
+                _ => null,
+              },
+              semanticLabel: l10n.selectAll,
+              onChanged: (_) =>
+                  view.onSelectShown(selectedShown != view.shownCards.length),
+            ),
             question: heading(l10n.columnQuestion),
             type: heading(l10n.columnType),
             correct: heading(l10n.columnCorrect, align: TextAlign.end),
@@ -687,6 +830,7 @@ class _CardTable extends ConsumerWidget {
 /// The column widths of the table, shared by the heading and every row.
 class _TableRow extends StatelessWidget {
   const new({
+    required this.select,
     required this.question,
     required this.type,
     required this.correct,
@@ -696,6 +840,7 @@ class _TableRow extends StatelessWidget {
     required this.menu,
   });
 
+  final Widget select;
   final Widget question;
   final Widget type;
   final Widget correct;
@@ -712,6 +857,8 @@ class _TableRow extends StatelessWidget {
     ),
     child: Row(
       children: [
+        SizedBox(width: 40, child: select),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(child: question),
         const SizedBox(width: AppSpacing.lg),
         SizedBox(width: 128, child: type),
@@ -740,44 +887,53 @@ class _CardTableRow extends StatelessWidget {
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
     final card = summary.card;
+    final isSelected = view.selected.contains(card.id);
     return InkWell(
       key: Key('cardRow.${card.id}'),
-      onTap: () => view.openCard(context, card),
-      child: _TableRow(
-        question: _Question(card: card, maxLines: 1),
-        type: Align(
-          alignment: Alignment.centerLeft,
-          child: _TypeChip(type: card.type),
-        ),
-        correct: Text(
-          '${summary.correctCount}',
-          style: text.titleSmall,
-          textAlign: TextAlign.end,
-        ),
-        wrong: Text(
-          '${summary.wrongCount}',
-          style: text.titleSmall,
-          textAlign: TextAlign.end,
-        ),
-        rate: Row(
-          children: [
-            Expanded(child: _RateBar(rate: summary.correctRate)),
-            const SizedBox(width: AppSpacing.md),
-            SizedBox(
-              width: 40,
-              child: Text(
-                rateText(l10n, summary.correctRate),
-                style: text.titleSmall,
-                textAlign: TextAlign.end,
+      onTap: () => view.tapCard(context, card),
+      child: Ink(
+        color: isSelected ? colors.primarySoft : null,
+        child: _TableRow(
+          select: Checkbox(
+            key: Key('cardRow.${card.id}.select'),
+            value: isSelected,
+            onChanged: (_) => view.onToggle(card.id),
+          ),
+          question: _Question(card: card, maxLines: 1),
+          type: Align(
+            alignment: Alignment.centerLeft,
+            child: _TypeChip(type: card.type),
+          ),
+          correct: Text(
+            '${summary.correctCount}',
+            style: text.titleSmall,
+            textAlign: TextAlign.end,
+          ),
+          wrong: Text(
+            '${summary.wrongCount}',
+            style: text.titleSmall,
+            textAlign: TextAlign.end,
+          ),
+          rate: Row(
+            children: [
+              Expanded(child: _RateBar(rate: summary.correctRate)),
+              const SizedBox(width: AppSpacing.md),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  rateText(l10n, summary.correctRate),
+                  style: text.titleSmall,
+                  textAlign: TextAlign.end,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          review: Text(
+            _reviewText(l10n, summary.lastReviewedAt, now),
+            style: text.bodyMedium?.copyWith(color: colors.textMuted),
+          ),
+          menu: _CardMenu(view: view, card: card),
         ),
-        review: Text(
-          _reviewText(l10n, summary.lastReviewedAt, now),
-          style: text.bodyMedium?.copyWith(color: colors.textMuted),
-        ),
-        menu: _CardMenu(view: view, card: card),
       ),
     );
   }
@@ -822,8 +978,8 @@ class _TypeChip extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of a card in the table. "Copiar a…", "Mover a…" and
-/// "Eliminar" arrive with T2.9.
+/// The ⋮ menu of a card in the table: the actions of the selection bar, for
+/// this card only.
 class _CardMenu extends StatelessWidget {
   const new({required this.view, required this.card});
 
@@ -843,7 +999,109 @@ class _CardMenu extends StatelessWidget {
           value: () => view.openCard(context, card),
           child: Text(l10n.edit),
         ),
+        PopupMenuItem(
+          value: () => view.onCopy([card.id]),
+          child: Text(l10n.copyTo),
+        ),
+        PopupMenuItem(
+          value: () => view.onMove([card.id]),
+          child: Text(l10n.moveTo),
+        ),
+        PopupMenuItem(
+          value: () => view.onDelete([card.id]),
+          child: Text(l10n.delete),
+        ),
       ],
+    );
+  }
+}
+
+/// The dark bar at the bottom while cards are selected (design
+/// `escritorio-claro/baraja.png`): "3 seleccionadas", "Copiar a…", "Mover
+/// a…", "Eliminar" and ✕. On a phone the actions are icons with tooltips,
+/// so the bar fits.
+class _SelectionBar extends StatelessWidget {
+  const new({required this.view, required this.compact});
+
+  final _DeckView view;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    // The bar uses the text colour as its background, so it is dark in the
+    // light theme and light in the dark theme.
+    final foreground = colors.background;
+    final ids = view.selected.toList();
+
+    Widget action(String key, IconData icon, String label, VoidCallback run) =>
+        compact
+        ? IconButton(
+            key: Key(key),
+            tooltip: label,
+            onPressed: run,
+            icon: Icon(icon, color: foreground),
+          )
+        : TextButton.icon(
+            key: Key(key),
+            onPressed: run,
+            style: TextButton.styleFrom(foregroundColor: foreground),
+            icon: Icon(icon, size: 18),
+            label: Text(label),
+          );
+
+    return Material(
+      key: const Key('deckScreen.selectionBar'),
+      color: colors.text,
+      elevation: 6,
+      borderRadius: BorderRadius.circular(AppRadii.listCard),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? AppSpacing.sm : AppSpacing.lg,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                l10n.selectedCount(ids.length),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(color: foreground),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            action(
+              'deckScreen.copyTo',
+              Icons.copy_rounded,
+              l10n.copyTo,
+              () => view.onCopy(ids),
+            ),
+            action(
+              'deckScreen.moveTo',
+              Icons.drive_file_move_outline,
+              l10n.moveTo,
+              () => view.onMove(ids),
+            ),
+            action(
+              'deckScreen.deleteSelected',
+              Icons.delete_outline_rounded,
+              l10n.delete,
+              () => view.onDelete(ids),
+            ),
+            IconButton(
+              key: const Key('deckScreen.clearSelection'),
+              tooltip: l10n.clearSelection,
+              onPressed: view.onClearSelection,
+              icon: Icon(Icons.close_rounded, color: foreground),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

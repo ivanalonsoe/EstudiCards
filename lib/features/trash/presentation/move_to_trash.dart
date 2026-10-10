@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/core/widgets/undo_snackbar.dart';
@@ -37,11 +39,13 @@ Future<void> confirmMoveProjectToTrash(
 
   await trash.moveProjectToTrash(project.id);
   afterMove?.call();
-  showUndoSnackBar(
-    messenger,
-    l10n,
-    message: l10n.movedToTrash(project.name),
-    undo: () => trash.restoreProject(project.id),
+  unawaited(
+    showUndoSnackBar(
+      messenger,
+      l10n,
+      message: l10n.movedToTrash(project.name),
+      undo: () => trash.restoreProject(project.id),
+    ),
   );
 }
 
@@ -70,10 +74,12 @@ Future<void> confirmMoveDeckToTrash(
   await trash.moveDeckToTrash(deck.id);
   afterMove?.call();
   // The deck is already in the trash, so undoing just restores it.
-  showUndoSnackBar(
-    messenger,
-    l10n,
-    message: l10n.movedToTrash(deck.name),
-    undo: () => trash.restoreDeck(deck.id),
+  unawaited(
+    showUndoSnackBar(
+      messenger,
+      l10n,
+      message: l10n.movedToTrash(deck.name),
+      undo: () => trash.restoreDeck(deck.id),
+    ),
   );
 }

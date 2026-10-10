@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/core/widgets/undo_snackbar.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
@@ -22,10 +24,12 @@ Future<void> archiveProject(
 
   await repository.setArchived(project.id, isArchived: true);
   afterArchive?.call();
-  showUndoSnackBar(
-    messenger,
-    l10n,
-    message: l10n.archivedNotice(project.name),
-    undo: () => repository.setArchived(project.id, isArchived: false),
+  unawaited(
+    showUndoSnackBar(
+      messenger,
+      l10n,
+      message: l10n.archivedNotice(project.name),
+      undo: () => repository.setArchived(project.id, isArchived: false),
+    ),
   );
 }

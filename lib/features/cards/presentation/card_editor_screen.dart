@@ -12,6 +12,7 @@ import 'package:estudicards/features/cards/domain/card_input.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
+import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text_controller.dart';
 import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
@@ -338,6 +339,19 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       );
   }
 
+  /// "Eliminar tarjeta" (US-11 AC2): asks, goes back to the deck and offers
+  /// "Deshacer" there. Images picked here and not saved are deleted at once.
+  Future<void> _delete() => confirmDeleteCards(
+    context,
+    ref,
+    [widget.card!.id],
+    afterConfirm: () {
+      unawaited(ref.read(imageFilesProvider).delete({..._unsavedImages}));
+      _unsavedImages.clear();
+      if (mounted) context.pop();
+    },
+  );
+
   /// Leaves the editor, asking first if there are unsaved changes. The
   /// images picked here are deleted: no card uses them.
   Future<void> _leave() async {
@@ -421,6 +435,7 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       isEditing: _isEditing,
       onSave: canSave ? () => unawaited(_save(addAnother: false)) : null,
       onSaveAndAdd: canSave ? () => unawaited(_save(addAnother: true)) : null,
+      onDelete: _isEditing ? () => unawaited(_delete()) : null,
     );
     final title = _isEditing ? l10n.editCard : l10n.newCard;
 
@@ -887,6 +902,12 @@ class _MobileFrame extends StatelessWidget {
           icon: const Icon(Icons.close_rounded),
         ),
         title: Text(title),
+        actions: [
+          if (actions.onDelete != null) ...[
+            actions.deleteButton(context, compact: true),
+            const SizedBox(width: AppSpacing.sm),
+          ],
+        ],
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -1094,6 +1115,10 @@ class _DesktopFrame extends StatelessWidget {
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                 ),
+                if (actions.onDelete != null) ...[
+                  actions.deleteButton(context, compact: false),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
                 TextButton(
                   key: const Key('cardEditor.cancel'),
                   onPressed: onCancel,
@@ -1130,16 +1155,41 @@ class _DesktopFrame extends StatelessWidget {
 }
 
 /// "Guardar" and "Guardar y añadir otra"; a null callback disables them.
+/// "Eliminar tarjeta" only when editing ([onDelete] not null).
 class _Actions {
   const new({
     required this.isEditing,
     required this.onSave,
     required this.onSaveAndAdd,
+    required this.onDelete,
   });
 
   final bool isEditing;
   final VoidCallback? onSave;
   final VoidCallback? onSaveAndAdd;
+  final VoidCallback? onDelete;
+
+  /// An icon in the mobile top bar, a text button on desktop.
+  Widget deleteButton(BuildContext context, {required bool compact}) {
+    final l10n = AppLocalizations.of(context);
+    const icon = Icon(Icons.delete_outline_rounded);
+    return compact
+        ? IconButton(
+            key: const Key('cardEditor.delete'),
+            tooltip: l10n.deleteCard,
+            onPressed: onDelete,
+            icon: icon,
+          )
+        : TextButton.icon(
+            key: const Key('cardEditor.delete'),
+            onPressed: onDelete,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.of(context).error,
+            ),
+            icon: icon,
+            label: Text(l10n.deleteCard),
+          );
+  }
 
   Widget saveButton(BuildContext context) => FilledButton.icon(
     key: const Key('cardEditor.save'),
