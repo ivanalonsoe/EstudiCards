@@ -357,6 +357,17 @@ void main() {
       expect(shownOrder(tester, [bring, arise]), ['to bring', 'to arise']);
     });
 
+    testWidgets('in a narrow desktop window the table keeps the question and '
+        'the % correct, without overflowing', (tester) async {
+      final bring = await addSimple('to bring', 'traer', correct: 11, wrong: 1);
+      await openDeck(tester, size: const Size(900, 700));
+
+      expect(tester.takeException(), isNull);
+      expect(inRow(bring, 'to bring'), findsOneWidget);
+      expect(inRow(bring, '92%'), findsOneWidget);
+      expect(find.text('ÚLTIMO REPASO'), findsNothing);
+    });
+
     testWidgets('a review days ago says how many', (tester) async {
       final seek = await addSimple(
         'to seek',

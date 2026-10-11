@@ -86,6 +86,10 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
 Future<void> tapKey(WidgetTester tester, String key) =>
     _tap(tester, find.byKey(Key(key)));
 
+/// Taps the widget found by [finder] once it appears.
+Future<void> tapFinder(WidgetTester tester, Finder finder) =>
+    _tap(tester, finder);
+
 /// Taps the visible text [text] (the last one if there are several).
 Future<void> tapText(WidgetTester tester, String text) =>
     _tap(tester, find.text(text).last);

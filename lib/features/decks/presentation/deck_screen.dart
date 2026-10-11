@@ -450,31 +450,7 @@ class _DesktopDeck extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                if (view.allCards.isNotEmpty) ...[
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 360),
-                      child: _SearchField(
-                        view: view,
-                        hint: l10n.searchCardsLong,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  _SortSelector(view: view),
-                ],
-                const SizedBox(width: AppSpacing.md),
-                const Spacer(),
-                FilledButton.icon(
-                  key: const Key('deckScreen.addCard'),
-                  onPressed: () => view.addCard(context),
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text(l10n.addCard),
-                ),
-              ],
-            ),
+            _Toolbar(view: view),
             const SizedBox(height: AppSpacing.lg),
             if (view.allCards.isEmpty)
               const _EmptyDeck()
@@ -485,6 +461,65 @@ class _DesktopDeck extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The desktop search, the three orders and "Añadir tarjeta" in one row;
+/// in a narrow window, the orders go on a second row.
+class _Toolbar extends StatelessWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  /// The width from which the three fit in one row.
+  static const _oneRowWidth = 900.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final addCard = FilledButton.icon(
+      key: const Key('deckScreen.addCard'),
+      onPressed: () => view.addCard(context),
+      icon: const Icon(Icons.add_rounded),
+      label: Text(l10n.addCard),
+    );
+    if (view.allCards.isEmpty) {
+      return Align(alignment: Alignment.centerRight, child: addCard);
+    }
+    final search = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: _SearchField(view: view, hint: l10n.searchCardsLong),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _oneRowWidth) {
+          return Row(
+            children: [
+              Flexible(child: search),
+              const SizedBox(width: AppSpacing.md),
+              _SortSelector(view: view),
+              const SizedBox(width: AppSpacing.md),
+              const Spacer(),
+              addCard,
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: search),
+                const SizedBox(width: AppSpacing.md),
+                addCard,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _SortSelector(view: view),
+          ],
+        );
+      },
     );
   }
 }
@@ -840,45 +875,64 @@ class _CardTable extends ConsumerWidget {
         .where((s) => view.selected.contains(s.card.id))
         .length;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _TableRow(
-            // All, none, or some (a dash) of the cards shown are selected.
-            select: Checkbox(
-              key: const Key('deckScreen.selectAll'),
-              tristate: true,
-              value: switch (selectedShown) {
-                0 => false,
-                _ when selectedShown == view.shownCards.length => true,
-                _ => null,
-              },
-              semanticLabel: l10n.selectAll,
-              onChanged: (_) =>
-                  view.onSelectShown(selectedShown != view.shownCards.length),
-            ),
-            question: heading(l10n.columnQuestion),
-            type: heading(l10n.columnType),
-            correct: heading(l10n.columnCorrect, align: TextAlign.end),
-            wrong: heading(l10n.columnWrong, align: TextAlign.end),
-            rate: heading(l10n.columnRate),
-            review: heading(l10n.columnLastReview),
-            menu: const SizedBox.shrink(),
+    // A narrow desktop window has no room for every column: the correct and
+    // wrong counts and the last review go, the question and the % stay.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < _fullTableWidth;
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              _TableRow(
+                compact: compact,
+                // All, none, or some (a dash) of the cards shown are selected.
+                select: Checkbox(
+                  key: const Key('deckScreen.selectAll'),
+                  tristate: true,
+                  value: switch (selectedShown) {
+                    0 => false,
+                    _ when selectedShown == view.shownCards.length => true,
+                    _ => null,
+                  },
+                  semanticLabel: l10n.selectAll,
+                  onChanged: (_) => view.onSelectShown(
+                    selectedShown != view.shownCards.length,
+                  ),
+                ),
+                question: heading(l10n.columnQuestion),
+                type: heading(l10n.columnType),
+                correct: heading(l10n.columnCorrect, align: TextAlign.end),
+                wrong: heading(l10n.columnWrong, align: TextAlign.end),
+                rate: heading(l10n.columnRate),
+                review: heading(l10n.columnLastReview),
+                menu: const SizedBox.shrink(),
+              ),
+              for (final summary in view.shownCards) ...[
+                Divider(height: 1, color: colors.border),
+                _CardTableRow(
+                  view: view,
+                  summary: summary,
+                  now: now,
+                  compact: compact,
+                ),
+              ],
+            ],
           ),
-          for (final summary in view.shownCards) ...[
-            Divider(height: 1, color: colors.border),
-            _CardTableRow(view: view, summary: summary, now: now),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
+/// The table width from which every column fits; narrower, the table is
+/// compact.
+const double _fullTableWidth = 860;
+
 /// The column widths of the table, shared by the heading and every row.
 class _TableRow extends StatelessWidget {
   const new({
+    required this.compact,
     required this.select,
     required this.question,
     required this.type,
@@ -889,6 +943,8 @@ class _TableRow extends StatelessWidget {
     required this.menu,
   });
 
+  /// Without the correct, wrong and last review columns.
+  final bool compact;
   final Widget select;
   final Widget question;
   final Widget type;
@@ -911,12 +967,16 @@ class _TableRow extends StatelessWidget {
         Expanded(child: question),
         const SizedBox(width: AppSpacing.lg),
         SizedBox(width: 128, child: type),
-        SizedBox(width: 88, child: correct),
-        SizedBox(width: 72, child: wrong),
+        if (!compact) ...[
+          SizedBox(width: 88, child: correct),
+          SizedBox(width: 72, child: wrong),
+        ],
         const SizedBox(width: AppSpacing.xl),
         SizedBox(width: 150, child: rate),
-        const SizedBox(width: AppSpacing.xl),
-        SizedBox(width: 110, child: review),
+        if (!compact) ...[
+          const SizedBox(width: AppSpacing.xl),
+          SizedBox(width: 110, child: review),
+        ],
         SizedBox(width: 48, child: menu),
       ],
     ),
@@ -924,11 +984,17 @@ class _TableRow extends StatelessWidget {
 }
 
 class _CardTableRow extends StatelessWidget {
-  const new({required this.view, required this.summary, required this.now});
+  const new({
+    required this.view,
+    required this.summary,
+    required this.now,
+    required this.compact,
+  });
 
   final _DeckView view;
   final CardSummary summary;
   final DateTime now;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -943,6 +1009,7 @@ class _CardTableRow extends StatelessWidget {
       child: Ink(
         color: isSelected ? colors.primarySoft : null,
         child: _TableRow(
+          compact: compact,
           select: Checkbox(
             key: Key('cardRow.${card.id}.select'),
             value: isSelected,

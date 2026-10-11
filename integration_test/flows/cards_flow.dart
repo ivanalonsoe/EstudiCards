@@ -68,8 +68,8 @@ void cardsFlowTests() {
     await expectSoon(tester, _cardRow('¿Qué orgánulo hace la fotosíntesis?'));
 
     // Edit the simple card.
-    await tester.tap(_cardRow('Mitocondria'));
-    await tester.pumpAndSettle();
+    await tapFinder(tester, _cardRow('Mitocondria'));
+    await waitFor(tester, find.byKey(const Key('screen.editCard')));
     await enterTextInKey(
       tester,
       'cardEditor.answer',
@@ -105,9 +105,17 @@ void cardsFlowTests() {
     expect(find.text('0 tarjetas · — aciertos'), findsOneWidget);
     expect(find.text('1 tarjeta · — aciertos'), findsWidgets);
     await tapText(tester, 'Repaso');
-    await expectSoon(tester, _cardRow('Mitocondria'));
-    await tester.tap(_cardRow('Mitocondria'));
-    await tester.pumpAndSettle();
-    await expectSoon(tester, find.text('Produce la mayor parte del ATP'));
+    await tapFinder(tester, _cardRow('Mitocondria'));
+    // The editor opens once the card has loaded (slow on the CI emulator).
+    await waitFor(tester, find.byKey(const Key('screen.editCard')));
+    final answer = find.descendant(
+      of: find.byKey(const Key('cardEditor.answer')),
+      matching: find.byType(EditableText),
+    );
+    await waitFor(tester, answer);
+    expect(
+      tester.widget<EditableText>(answer).controller.text,
+      'Produce la mayor parte del ATP',
+    );
   });
 }
