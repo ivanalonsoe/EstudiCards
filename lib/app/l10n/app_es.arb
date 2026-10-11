@@ -703,6 +703,41 @@
       "count": { "type": "int" }
     }
   },
+  "listen": "Escuchar",
+  "@listen": {
+    "description": "Tooltip of the speaker button of a card in a language deck (US-13)."
+  },
+  "voiceMissing": "Sin voz",
+  "@voiceMissing": {
+    "description": "Next to a disabled speaker button: the system has no voice for that language (US-13 AC2). Tapping it explains how to install one."
+  },
+  "voiceMissingTitle": "No hay voz para {language}",
+  "@voiceMissingTitle": {
+    "description": "Title of the dialog that explains how to install a voice, e.g. 'No hay voz para Inglés (R. U.)'.",
+    "placeholders": {
+      "language": { "type": "String" }
+    }
+  },
+  "voiceMissingAndroid": "Para escuchar esta tarjeta, instala una voz de este idioma en Ajustes › Sistema › Idiomas › Salida de texto a voz, en el motor de voz que uses (por ejemplo, «Servicios de voz de Google» › Instalar datos de voz).",
+  "@voiceMissingAndroid": {
+    "description": "How to install a voice on Android."
+  },
+  "voiceMissingWindows": "Para escuchar esta tarjeta, instala una voz de este idioma en Configuración › Hora e idioma › Voz › Agregar voces. Después, reinicia la aplicación.",
+  "@voiceMissingWindows": {
+    "description": "How to install a voice on Windows."
+  },
+  "voiceMissingMacos": "Para escuchar esta tarjeta, instala una voz de este idioma en Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces.",
+  "@voiceMissingMacos": {
+    "description": "How to install a voice on macOS."
+  },
+  "voiceMissingIos": "Para escuchar esta tarjeta, descarga una voz de este idioma en Ajustes › Accesibilidad › Contenido leído › Voces.",
+  "@voiceMissingIos": {
+    "description": "How to install a voice on iOS."
+  },
+  "voiceMissingOther": "Para escuchar esta tarjeta, instala una voz de este idioma en los ajustes de voz del sistema.",
+  "@voiceMissingOther": {
+    "description": "How to install a voice on another system."
+  },
   "percent": "{value}%",
   "@percent": {
     "description": "A % correct, e.g. '92%'.",

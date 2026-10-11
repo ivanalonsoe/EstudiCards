@@ -9,11 +9,13 @@ import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
+import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text_controller.dart';
+import 'package:estudicards/features/cards/presentation/speaker_button.dart';
 import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
@@ -518,6 +520,9 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
           : null,
       questionImage: _imageFor(_questionImage),
       answerImage: _imageFor(_answerImage),
+      // Language decks read the card aloud (US-13), also in the preview.
+      speechLanguages: speechLanguagesOf(widget.deck),
+      speaker: (speech) => SpeakerButton(speech: speech),
       onTap: () => setState(
         () => _previewFace = _previewFace == CardFace.front
             ? CardFace.back

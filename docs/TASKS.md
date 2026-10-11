@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.10 | ⏳ 9 / 10 |
+| 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -253,7 +253,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 a language deck's row shows "EN → ES" and a general deck's row shows no pair.
     - 🧩 in a project with both types, the card editor shows "Frase de ejemplo" and "Notas" in the language deck and hides them in the general one.
 
-- [ ] **T2.7 Voice (TTS)** · US-13 · Depends on: T2.5, T2.10
+- [x] **T2.7 Voice (TTS)** · US-13 · Depends on: T2.5, T2.10
+  - > **Note:** adds `flutter_tts`. Android declares the `TTS_SERVICE` query; iOS and macOS need nothing (untested until there is a Mac); building on Windows needs the NuGet CLI (installed on the owner's PC, listed in the README). See SPEC §13.2 (assumption 32).
   - Voice service behind an interface (so it can be faked in tests), speaker button and notice when the voice is missing.
   - **Tests first:**
     - 🧪 the question is read in the deck's source language and the answer in its target language.

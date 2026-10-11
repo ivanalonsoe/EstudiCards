@@ -41,5 +41,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Since Android 11 an app only sees the services it declares here.
+             flutter_tts needs to find the system text-to-speech engine to
+             read the cards aloud (T2.7). -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
     </queries>
 </manifest>

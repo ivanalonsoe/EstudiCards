@@ -10,12 +10,14 @@ import 'package:estudicards/core/files/card_image.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/voice/voice.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'fake_image_source.dart';
+import 'fake_voice.dart';
 import 'test_images.dart';
 
 const mobile = Size(390, 844);
@@ -53,6 +55,7 @@ Future<GoRouter> pumpTestApp(
   String location = AppRoutes.home,
   Directory? imagesFolder,
   ImageSource? imageSource,
+  Voice? voice,
 }) async {
   final folder = imagesFolder ?? createTempFolder();
   tester.view
@@ -77,6 +80,8 @@ Future<GoRouter> pumpTestApp(
           ),
         ),
         imageSourceProvider.overrideWithValue(imageSource ?? FakeImageSource()),
+        // The system voices need the real platform; tests use a fake.
+        voiceProvider.overrideWithValue(voice ?? FakeVoice()),
       ],
       child: EstudiCardsApp(router: router),
     ),

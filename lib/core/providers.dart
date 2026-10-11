@@ -11,7 +11,10 @@ import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
+import 'package:estudicards/core/voice/system_voice.dart';
+import 'package:estudicards/core/voice/voice.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// The app's database, opened once and closed when the app ends.
@@ -42,3 +45,13 @@ final imageFilesProvider = Provider<ImageFiles>(
 final imageSourceProvider = Provider<ImageSource>(
   (ref) => const DeviceImageSource(),
 );
+
+/// Reads cards aloud with the system voices (see `core/voice/voice.dart`).
+final voiceProvider = Provider<Voice>((ref) => SystemVoice());
+
+/// Whether the system has a voice for a language, asked once per language
+/// (see `deckSummariesProvider` for `.family`).
+final FutureProviderFamily<bool, String> voiceAvailableProvider =
+    FutureProvider.family(
+      (ref, language) => ref.watch(voiceProvider).isAvailable(language),
+    );
