@@ -4,6 +4,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
+import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
 import 'package:flutter/material.dart';
@@ -32,10 +33,20 @@ class StudyCard extends StatelessWidget {
     this.onTap,
     this.questionImage,
     this.answerImage,
+    this.speechLanguages,
+    this.speaker,
     super.key,
   });
 
   final Flashcard card;
+
+  /// The languages of a language deck, to read the card aloud (US-13); null
+  /// in a general deck, which has no speaker buttons.
+  final SpeechLanguages? speechLanguages;
+
+  /// Builds the speaker button for a text to read (`SpeakerButton` in the
+  /// app). Null shows no speakers, e.g. in tests of the card alone.
+  final Widget Function(Speech speech)? speaker;
 
   /// The card's images, already found on disk by the caller. The question
   /// image goes above the question; the answer image above the answer, or
@@ -69,6 +80,20 @@ class StudyCard extends StatelessWidget {
   final bool showFlipHint;
   final VoidCallback? onTap;
 
+  /// The speaker for [part] of the card on [face], or null when there is
+  /// nothing to read.
+  Widget? _speakerFor(CardFace face, SpeechPart part) {
+    final languages = speechLanguages;
+    final build = speaker;
+    if (languages == null || build == null) return null;
+    final speech = speechFor(card, part, languages);
+    if (speech == null) return null;
+    return KeyedSubtree(
+      key: Key('studyCard.${face.name}.speak.${part.name}'),
+      child: build(speech),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget side(CardFace face) => _CardFrame(
@@ -87,13 +112,21 @@ class StudyCard extends StatelessWidget {
                   : null,
               questionImage: questionImage,
               answerImage: answerImage,
+              questionSpeaker: _speakerFor(face, SpeechPart.question),
             )
           : face == CardFace.front
-          ? _SimpleFront(card: card, image: questionImage)
+          ? _SimpleFront(
+              card: card,
+              image: questionImage,
+              speaker: _speakerFor(face, SpeechPart.question),
+            )
           : _SimpleBack(
               card: card,
               isLanguage: languagePair != null,
               image: answerImage,
+              questionSpeaker: _speakerFor(face, SpeechPart.question),
+              answerSpeaker: _speakerFor(face, SpeechPart.answer),
+              exampleSpeaker: _speakerFor(face, SpeechPart.example),
             ),
     );
 
@@ -394,10 +427,13 @@ class _CardImage extends StatelessWidget {
 }
 
 class _SimpleFront extends StatelessWidget {
-  const new({required this.card, this.image});
+  const new({required this.card, this.image, this.speaker});
 
   final Flashcard card;
   final ImageProvider? image;
+
+  /// Under the question in a language deck (variant 9).
+  final Widget? speaker;
 
   @override
   Widget build(BuildContext context) => _Scrolling(
@@ -412,9 +448,25 @@ class _SimpleFront extends StatelessWidget {
         textAlign: TextAlign.center,
         style: _bigText(context),
       ),
+      if (speaker case final speaker?) ...[
+        const SizedBox(height: AppSpacing.md),
+        Center(child: speaker),
+      ],
     ],
   );
 }
+
+/// [text] with [speaker] at its right, as the language back of the design
+/// (variant 7); just [text] without a speaker.
+Widget _withSpeaker(Widget text, Widget? speaker) => speaker == null
+    ? text
+    : Row(
+        children: [
+          Expanded(child: text),
+          const SizedBox(width: AppSpacing.sm),
+          speaker,
+        ],
+      );
 
 /// Characters from which an answer is shown as a paragraph.
 const _longAnswer = 120;
@@ -422,11 +474,24 @@ const _longAnswer = 120;
 /// The answer under a small copy of the question; in a language project,
 /// also the example sentence and the notes (variants 2 and 7).
 class _SimpleBack extends StatelessWidget {
-  const new({required this.card, required this.isLanguage, this.image});
+  const new({
+    required this.card,
+    required this.isLanguage,
+    this.image,
+    this.questionSpeaker,
+    this.answerSpeaker,
+    this.exampleSpeaker,
+  });
 
   final Flashcard card;
   final bool isLanguage;
   final ImageProvider? image;
+
+  /// In a language deck: next to the question and the example, as in the
+  /// design, and under the answer, which US-13 also reads.
+  final Widget? questionSpeaker;
+  final Widget? answerSpeaker;
+  final Widget? exampleSpeaker;
 
   @override
   Widget build(BuildContext context) {
@@ -453,10 +518,15 @@ class _SimpleBack extends StatelessWidget {
 
     return _Scrolling(
       children: [
-        FormattedText(
-          card.question,
-          textAlign: isLanguage || isLong ? TextAlign.start : TextAlign.center,
-          style: text.titleSmall?.copyWith(color: colors.textMuted),
+        _withSpeaker(
+          FormattedText(
+            card.question,
+            textAlign: isLanguage || isLong
+                ? TextAlign.start
+                : TextAlign.center,
+            style: text.titleSmall?.copyWith(color: colors.textMuted),
+          ),
+          questionSpeaker,
         ),
         const SizedBox(height: AppSpacing.lg),
         if (image case final image?)
@@ -471,15 +541,22 @@ class _SimpleBack extends StatelessWidget {
                 )
               : _bigText(context),
         ),
+        if (answerSpeaker case final speaker?) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Center(child: speaker),
+        ],
         if (example != null || notes != null) ...[
           const SizedBox(height: AppSpacing.lg),
           Divider(color: colors.border),
         ],
         if (example != null) ...[
           heading(l10n.exampleHeading),
-          FormattedText(
-            example,
-            style: text.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+          _withSpeaker(
+            FormattedText(
+              example,
+              style: text.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+            ),
+            exampleSpeaker,
           ),
         ],
         if (notes != null) ...[
@@ -501,9 +578,13 @@ class _TestContent extends StatelessWidget {
     required this.answeredCorrectly,
     this.questionImage,
     this.answerImage,
+    this.questionSpeaker,
   });
 
   final Flashcard card;
+
+  /// Next to the question in a language deck.
+  final Widget? questionSpeaker;
   final Set<String> selectedOptionIds;
   final bool showSolution;
   final bool? answeredCorrectly;
@@ -547,9 +628,12 @@ class _TestContent extends StatelessWidget {
           ),
         if (questionImage != null)
           _CardImage(questionImage, semanticLabel: l10n.questionImageLabel),
-        FormattedText(
-          card.question,
-          style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        _withSpeaker(
+          FormattedText(
+            card.question,
+            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          questionSpeaker,
         ),
         if (card.allowMultiple) ...[
           const SizedBox(height: AppSpacing.sm),

@@ -66,7 +66,7 @@ Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. O
 | Platform | You need |
 |---|---|
 | Android | Android Studio (Android SDK and an emulator or a phone with USB debugging) |
-| Windows | A Windows PC with **Visual Studio 2022** and the *Desktop development with C++* workload |
+| Windows | A Windows PC with **Visual Studio 2022** and the *Desktop development with C++* workload, and the **NuGet CLI** on the `PATH` (`winget install Microsoft.NuGet`): the voice package (`flutter_tts`) uses it to download a Microsoft build package |
 | macOS / iOS | A **Mac** with **Xcode** (and CocoaPods). iOS and macOS can only be built on a Mac. |
 
 Check that everything is installed correctly with:

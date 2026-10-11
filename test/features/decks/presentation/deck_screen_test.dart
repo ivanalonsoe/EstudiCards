@@ -357,6 +357,17 @@ void main() {
       expect(shownOrder(tester, [bring, arise]), ['to bring', 'to arise']);
     });
 
+    testWidgets('in a narrow desktop window the table keeps the question and '
+        'the % correct, without overflowing', (tester) async {
+      final bring = await addSimple('to bring', 'traer', correct: 11, wrong: 1);
+      await openDeck(tester, size: const Size(900, 700));
+
+      expect(tester.takeException(), isNull);
+      expect(inRow(bring, 'to bring'), findsOneWidget);
+      expect(inRow(bring, '92%'), findsOneWidget);
+      expect(find.text('ÚLTIMO REPASO'), findsNothing);
+    });
+
     testWidgets('a review days ago says how many', (tester) async {
       final seek = await addSimple(
         'to seek',
@@ -479,6 +490,9 @@ void main() {
 
       await tester.tap(option(classNotes));
       await tester.pumpAndSettle();
+      // A general deck: the app warns first (see the tests below).
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
 
       expect(row(bring), findsNothing);
       expect(row(seek), findsNothing);
@@ -505,11 +519,138 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(Key('deckPicker.${classNotes.id}')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+      await tester.pumpAndSettle();
 
       expect(row(bring), findsOneWidget);
       expect(find.text('Tarjeta copiada a «Notas de clase»'), findsOneWidget);
       final [copyId] = await storedIdsIn(classNotes);
       expect(copyId, isNot(bring.id));
+    });
+
+    group('warning for another type or other languages', () {
+      late Deck phrasal;
+
+      setUp(() async {
+        // A language deck with the same languages as `verbs`.
+        phrasal = await decks.create(
+          project.id,
+          const DeckInput(
+            name: 'Phrasal verbs',
+            type: DeckType.language,
+            sourceLang: 'en-GB',
+            targetLang: 'es-ES',
+          ),
+        );
+      });
+
+      Future<void> moveToWithMenu(
+        WidgetTester tester,
+        Flashcard card,
+        Deck target, {
+        String action = 'Mover a…',
+      }) async {
+        await tester.tap(find.byKey(Key('cardRow.${card.id}.menu')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(action));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(Key('deckPicker.${target.id}')));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('moving to a general deck says the example and notes will '
+          'be hidden; cancelling keeps the card', (tester) async {
+        final bring = await cards.create(
+          verbs.id,
+          const CardInput(
+            type: CardType.simple,
+            question: 'to bring',
+            answer: 'traer',
+            example: 'Can you bring me some water?',
+          ),
+        );
+        await openDeck(tester, size: desktop);
+
+        await moveToWithMenu(tester, bring, classNotes);
+
+        expect(
+          find.text('¿Mover 1 tarjeta a «Notas de clase»?'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            'el ejemplo y las notas de 1 tarjeta se ocultarán (no se borran)',
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('confirmDialog.cancel')));
+        await tester.pumpAndSettle();
+
+        expect(row(bring), findsOneWidget);
+        expect(await storedIdsIn(verbs), [bring.id]);
+      });
+
+      testWidgets('a deck with the same type and languages needs no warning', (
+        tester,
+      ) async {
+        final bring = await addSimple('to bring', 'traer');
+        await openDeck(tester, size: desktop);
+
+        await moveToWithMenu(tester, bring, phrasal);
+
+        expect(find.byKey(const Key('confirmDialog')), findsNothing);
+        expect(await storedIdsIn(phrasal), [bring.id]);
+      });
+
+      testWidgets('copying from a general deck to a language one names its '
+          'languages', (tester) async {
+        final cell = await cards.create(
+          classNotes.id,
+          const CardInput(
+            type: CardType.simple,
+            question: 'Célula',
+            answer: 'Unidad de vida',
+          ),
+        );
+        await openDeck(tester, size: desktop, deck: classNotes);
+
+        await moveToWithMenu(tester, cell, verbs, action: 'Copiar a…');
+
+        expect(
+          find.text('¿Copiar 1 tarjeta a «Verbos irregulares»?'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Es una baraja de idioma (EN → ES)'),
+          findsOneWidget,
+        );
+        await tester.tap(find.byKey(const Key('confirmDialog.confirm')));
+        await tester.pumpAndSettle();
+
+        expect(await storedIdsIn(verbs), hasLength(1));
+      });
+
+      testWidgets('between language decks with other languages, it names '
+          'both pairs', (tester) async {
+        final definitions = await decks.create(
+          project.id,
+          const DeckInput(
+            name: 'Definitions',
+            type: DeckType.language,
+            sourceLang: 'en-GB',
+            targetLang: 'en-GB',
+          ),
+        );
+        final bring = await addSimple('to bring', 'traer');
+        await openDeck(tester, size: desktop);
+
+        await moveToWithMenu(tester, bring, definitions);
+
+        expect(
+          find.textContaining('Los idiomas cambian de EN → ES a EN → EN'),
+          findsOneWidget,
+        );
+      });
     });
 
     testWidgets('with no other decks, the picker says so', (tester) async {

@@ -22,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
 import '../../../helpers/fake_image_source.dart';
+import '../../../helpers/fake_voice.dart';
 import '../../../helpers/test_app.dart';
 import '../../../helpers/test_images.dart';
 import 'card_editor_finders.dart';
@@ -861,6 +862,93 @@ void main() {
       final [card] = await storedCards();
       expect(card.example, 'Can you **bring** me some water?');
       expect(card.notes, 'Verbo irregular');
+    });
+  });
+
+  group('voice (T2.7)', () {
+    Finder speaker(String face, String part) => find.descendant(
+      of: find.byKey(Key('studyCard.$face.speak.$part')),
+      matching: find.byType(IconButton),
+    );
+
+    Future<void> openVerb(WidgetTester tester, FakeVoice voice) async {
+      final card = await cards.create(
+        verbs.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to **bring**',
+          answer: 'traer',
+          example: 'Can you bring me some water?',
+        ),
+      );
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(english.id, verbs.id, card.id),
+        voice: voice,
+      );
+    }
+
+    testWidgets('the question is read in the source language and the answer '
+        'and example as the deck says', (tester) async {
+      final voice = FakeVoice();
+      await openVerb(tester, voice);
+      final front = find.byKey(const Key('studyCard.front'));
+
+      await tapVisible(tester, speaker('front', 'question'));
+      expect(voice.spoken, [('to bring', 'en-GB')]);
+      // The speaker does not turn the card.
+      expect(front, findsOneWidget);
+
+      // Turn it by a corner: the centre of the card is the speaker.
+      await tester.tapAt(tester.getTopLeft(front) + const Offset(30, 30));
+      await tester.pumpAndSettle();
+      await tapVisible(tester, speaker('back', 'answer'));
+      await tapVisible(tester, speaker('back', 'example'));
+
+      expect(voice.spoken, [
+        ('to bring', 'en-GB'),
+        ('traer', 'es-ES'),
+        ('Can you bring me some water?', 'en-GB'),
+      ]);
+    });
+
+    testWidgets('with no voice installed, the button is disabled and the '
+        'notice is shown', (tester) async {
+      final voice = FakeVoice(missing: {'en-GB'});
+      await openVerb(tester, voice);
+
+      final button = speaker('front', 'question');
+      await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
+      expect(tester.widget<IconButton>(button).onPressed, isNull);
+      final notice = find.descendant(
+        of: find.byKey(const Key('studyCard.front.speak.question')),
+        matching: find.text('Sin voz'),
+      );
+      expect(notice, findsOneWidget);
+
+      await tester.tap(notice);
+      await tester.pumpAndSettle();
+      expect(find.text('No hay voz para Inglés (R. U.)'), findsOneWidget);
+      // The tests run as Android.
+      expect(find.textContaining('Salida de texto a voz'), findsOneWidget);
+      expect(voice.spoken, isEmpty);
+    });
+
+    testWidgets('a card in a general deck has no speaker button', (
+      tester,
+    ) async {
+      await openNewCard(tester, deck: classNotes);
+      await tester.enterText(questionField, 'Célula');
+      await tester.pump();
+
+      expect(
+        find.byKey(const Key('studyCard.front.speak.question')),
+        findsNothing,
+      );
     });
   });
 

@@ -7,7 +7,9 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
+import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
@@ -60,18 +62,45 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final repository = ref.read(cardsRepositoryProvider);
-    final targets = [
+    final decks = [
       for (final summary
           in ref.read(deckSummariesProvider(widget.projectId)).value ??
               const <DeckSummary>[])
-        if (summary.deck.id != widget.deckId) summary.deck,
+        summary.deck,
     ];
+    final from = decks.firstWhere((deck) => deck.id == widget.deckId);
     final target = await showDeckPicker(
       context,
       title: move ? l10n.moveTo : l10n.copyTo,
-      decks: targets,
+      decks: [
+        for (final deck in decks)
+          if (deck.id != widget.deckId) deck,
+      ],
     );
-    if (target == null) return;
+    if (target == null || !mounted) return;
+
+    // A deck of another type or with other languages shows the cards
+    // differently: say how before doing it (US-07 AC4).
+    final cards = [
+      for (final summary
+          in ref.read(deckCardsProvider(widget.deckId)).value ??
+              const <CardSummary>[])
+        if (ids.contains(summary.card.id)) summary.card,
+    ];
+    final warning = transferWarning(from: from, to: target, cards: cards);
+    if (warning != null) {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: move
+            ? l10n.moveCardsTitle(ids.length, target.name)
+            : l10n.copyCardsTitle(ids.length, target.name),
+        body: _warningText(l10n, warning),
+        confirmLabel: move ? l10n.move : l10n.copy,
+        icon: Icons.info_outline_rounded,
+        destructive: false,
+      );
+      if (!confirmed) return;
+    }
     if (move) {
       await repository.moveCards(ids, target.id);
     } else {
@@ -240,6 +269,26 @@ class _DeckView {
       context.go(AppRoutes.newCard(project.id, deck.id));
 }
 
+/// The explanation of a [TransferWarning], with the pairs in short form
+/// ("EN → ES").
+String _warningText(AppLocalizations l10n, TransferWarning warning) {
+  String pair(String? source, String? target) => l10n.languagePair(
+    source == null ? '?' : shortLanguageCode(source),
+    target == null ? '?' : shortLanguageCode(target),
+  );
+  return switch (warning) {
+    ToGeneralDeck(:final cardsWithLanguageFields) => l10n.transferToGeneral(
+      cardsWithLanguageFields,
+    ),
+    ToLanguageDeck(:final sourceLang, :final targetLang) =>
+      l10n.transferToLanguage(pair(sourceLang, targetLang)),
+    LanguagesChange() => l10n.transferLanguagesChange(
+      pair(warning.fromSourceLang, warning.fromTargetLang),
+      pair(warning.toSourceLang, warning.toTargetLang),
+    ),
+  };
+}
+
 /// "92%", or "—" with no answers.
 String rateText(AppLocalizations l10n, double? rate) =>
     rate == null ? '—' : l10n.percent((rate * 100).round());
@@ -401,31 +450,7 @@ class _DesktopDeck extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                if (view.allCards.isNotEmpty) ...[
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 360),
-                      child: _SearchField(
-                        view: view,
-                        hint: l10n.searchCardsLong,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  _SortSelector(view: view),
-                ],
-                const SizedBox(width: AppSpacing.md),
-                const Spacer(),
-                FilledButton.icon(
-                  key: const Key('deckScreen.addCard'),
-                  onPressed: () => view.addCard(context),
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text(l10n.addCard),
-                ),
-              ],
-            ),
+            _Toolbar(view: view),
             const SizedBox(height: AppSpacing.lg),
             if (view.allCards.isEmpty)
               const _EmptyDeck()
@@ -436,6 +461,65 @@ class _DesktopDeck extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The desktop search, the three orders and "Añadir tarjeta" in one row;
+/// in a narrow window, the orders go on a second row.
+class _Toolbar extends StatelessWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  /// The width from which the three fit in one row.
+  static const _oneRowWidth = 900.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final addCard = FilledButton.icon(
+      key: const Key('deckScreen.addCard'),
+      onPressed: () => view.addCard(context),
+      icon: const Icon(Icons.add_rounded),
+      label: Text(l10n.addCard),
+    );
+    if (view.allCards.isEmpty) {
+      return Align(alignment: Alignment.centerRight, child: addCard);
+    }
+    final search = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: _SearchField(view: view, hint: l10n.searchCardsLong),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _oneRowWidth) {
+          return Row(
+            children: [
+              Flexible(child: search),
+              const SizedBox(width: AppSpacing.md),
+              _SortSelector(view: view),
+              const SizedBox(width: AppSpacing.md),
+              const Spacer(),
+              addCard,
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: search),
+                const SizedBox(width: AppSpacing.md),
+                addCard,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _SortSelector(view: view),
+          ],
+        );
+      },
     );
   }
 }
@@ -791,45 +875,64 @@ class _CardTable extends ConsumerWidget {
         .where((s) => view.selected.contains(s.card.id))
         .length;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _TableRow(
-            // All, none, or some (a dash) of the cards shown are selected.
-            select: Checkbox(
-              key: const Key('deckScreen.selectAll'),
-              tristate: true,
-              value: switch (selectedShown) {
-                0 => false,
-                _ when selectedShown == view.shownCards.length => true,
-                _ => null,
-              },
-              semanticLabel: l10n.selectAll,
-              onChanged: (_) =>
-                  view.onSelectShown(selectedShown != view.shownCards.length),
-            ),
-            question: heading(l10n.columnQuestion),
-            type: heading(l10n.columnType),
-            correct: heading(l10n.columnCorrect, align: TextAlign.end),
-            wrong: heading(l10n.columnWrong, align: TextAlign.end),
-            rate: heading(l10n.columnRate),
-            review: heading(l10n.columnLastReview),
-            menu: const SizedBox.shrink(),
+    // A narrow desktop window has no room for every column: the correct and
+    // wrong counts and the last review go, the question and the % stay.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < _fullTableWidth;
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              _TableRow(
+                compact: compact,
+                // All, none, or some (a dash) of the cards shown are selected.
+                select: Checkbox(
+                  key: const Key('deckScreen.selectAll'),
+                  tristate: true,
+                  value: switch (selectedShown) {
+                    0 => false,
+                    _ when selectedShown == view.shownCards.length => true,
+                    _ => null,
+                  },
+                  semanticLabel: l10n.selectAll,
+                  onChanged: (_) => view.onSelectShown(
+                    selectedShown != view.shownCards.length,
+                  ),
+                ),
+                question: heading(l10n.columnQuestion),
+                type: heading(l10n.columnType),
+                correct: heading(l10n.columnCorrect, align: TextAlign.end),
+                wrong: heading(l10n.columnWrong, align: TextAlign.end),
+                rate: heading(l10n.columnRate),
+                review: heading(l10n.columnLastReview),
+                menu: const SizedBox.shrink(),
+              ),
+              for (final summary in view.shownCards) ...[
+                Divider(height: 1, color: colors.border),
+                _CardTableRow(
+                  view: view,
+                  summary: summary,
+                  now: now,
+                  compact: compact,
+                ),
+              ],
+            ],
           ),
-          for (final summary in view.shownCards) ...[
-            Divider(height: 1, color: colors.border),
-            _CardTableRow(view: view, summary: summary, now: now),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
+/// The table width from which every column fits; narrower, the table is
+/// compact.
+const double _fullTableWidth = 860;
+
 /// The column widths of the table, shared by the heading and every row.
 class _TableRow extends StatelessWidget {
   const new({
+    required this.compact,
     required this.select,
     required this.question,
     required this.type,
@@ -840,6 +943,8 @@ class _TableRow extends StatelessWidget {
     required this.menu,
   });
 
+  /// Without the correct, wrong and last review columns.
+  final bool compact;
   final Widget select;
   final Widget question;
   final Widget type;
@@ -862,12 +967,16 @@ class _TableRow extends StatelessWidget {
         Expanded(child: question),
         const SizedBox(width: AppSpacing.lg),
         SizedBox(width: 128, child: type),
-        SizedBox(width: 88, child: correct),
-        SizedBox(width: 72, child: wrong),
+        if (!compact) ...[
+          SizedBox(width: 88, child: correct),
+          SizedBox(width: 72, child: wrong),
+        ],
         const SizedBox(width: AppSpacing.xl),
         SizedBox(width: 150, child: rate),
-        const SizedBox(width: AppSpacing.xl),
-        SizedBox(width: 110, child: review),
+        if (!compact) ...[
+          const SizedBox(width: AppSpacing.xl),
+          SizedBox(width: 110, child: review),
+        ],
         SizedBox(width: 48, child: menu),
       ],
     ),
@@ -875,11 +984,17 @@ class _TableRow extends StatelessWidget {
 }
 
 class _CardTableRow extends StatelessWidget {
-  const new({required this.view, required this.summary, required this.now});
+  const new({
+    required this.view,
+    required this.summary,
+    required this.now,
+    required this.compact,
+  });
 
   final _DeckView view;
   final CardSummary summary;
   final DateTime now;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -894,6 +1009,7 @@ class _CardTableRow extends StatelessWidget {
       child: Ink(
         color: isSelected ? colors.primarySoft : null,
         child: _TableRow(
+          compact: compact,
           select: Checkbox(
             key: Key('cardRow.${card.id}.select'),
             value: isSelected,

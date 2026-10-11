@@ -13,11 +13,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'flows/cards_flow.dart';
 import 'flows/projects_flow.dart';
 
 void main() {
   // Connects flutter_test to the real app running on the device.
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  // Typing goes through the simulated keyboard of flutter_test, never the
+  // device's own keyboard. On Android the system keyboard keeps its own copy
+  // of a field and, on a slow emulator, sent the old text back over what a
+  // test had typed.
+  binding.testTextInput.register();
 
   testWidgets('the app starts and shows the home screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: EstudiCardsApp()));
@@ -35,4 +41,5 @@ void main() {
   });
 
   group('projects', projectsFlowTests);
+  group('cards', cardsFlowTests);
 }
