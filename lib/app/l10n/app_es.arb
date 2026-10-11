@@ -635,6 +635,52 @@
       "deck": { "type": "String" }
     }
   },
+  "moveCardsTitle": "{count, plural, =1{¿Mover 1 tarjeta a «{deck}»?} other{¿Mover {count} tarjetas a «{deck}»?}}",
+  "@moveCardsTitle": {
+    "description": "Title of the warning before moving cards to a deck of another type or with other languages (US-07 AC4).",
+    "placeholders": {
+      "count": { "type": "int" },
+      "deck": { "type": "String" }
+    }
+  },
+  "copyCardsTitle": "{count, plural, =1{¿Copiar 1 tarjeta a «{deck}»?} other{¿Copiar {count} tarjetas a «{deck}»?}}",
+  "@copyCardsTitle": {
+    "description": "Title of the warning before copying cards to a deck of another type or with other languages.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "deck": { "type": "String" }
+    }
+  },
+  "transferToGeneral": "{count, plural, =0{Es una baraja general: las tarjetas no tendrán voz ni modo inverso.} =1{Es una baraja general: el ejemplo y las notas de 1 tarjeta se ocultarán (no se borran), y las tarjetas no tendrán voz ni modo inverso.} other{Es una baraja general: el ejemplo y las notas de {count} tarjetas se ocultarán (no se borran), y las tarjetas no tendrán voz ni modo inverso.}}",
+  "@transferToGeneral": {
+    "description": "Warning when cards go from a language deck to a general one; count = cards with example or notes.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "transferToLanguage": "Es una baraja de idioma ({pair}): las tarjetas tendrán voz y modo inverso con esos idiomas.",
+  "@transferToLanguage": {
+    "description": "Warning when cards go from a general deck to a language one, e.g. pair 'EN → ES'.",
+    "placeholders": {
+      "pair": { "type": "String" }
+    }
+  },
+  "transferLanguagesChange": "Los idiomas cambian de {from} a {to}: la voz leerá las tarjetas en los nuevos idiomas.",
+  "@transferLanguagesChange": {
+    "description": "Warning when cards go between language decks with other languages, e.g. 'EN → ES' to 'EN → EN'.",
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "move": "Mover",
+  "@move": {
+    "description": "Confirm button of the warning before moving cards."
+  },
+  "copy": "Copiar",
+  "@copy": {
+    "description": "Confirm button of the warning before copying cards."
+  },
   "deleteCard": "Eliminar tarjeta",
   "@deleteCard": {
     "description": "Button of the card editor when editing a card (P06)."

@@ -7,7 +7,9 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
+import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
@@ -60,18 +62,45 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final repository = ref.read(cardsRepositoryProvider);
-    final targets = [
+    final decks = [
       for (final summary
           in ref.read(deckSummariesProvider(widget.projectId)).value ??
               const <DeckSummary>[])
-        if (summary.deck.id != widget.deckId) summary.deck,
+        summary.deck,
     ];
+    final from = decks.firstWhere((deck) => deck.id == widget.deckId);
     final target = await showDeckPicker(
       context,
       title: move ? l10n.moveTo : l10n.copyTo,
-      decks: targets,
+      decks: [
+        for (final deck in decks)
+          if (deck.id != widget.deckId) deck,
+      ],
     );
-    if (target == null) return;
+    if (target == null || !mounted) return;
+
+    // A deck of another type or with other languages shows the cards
+    // differently: say how before doing it (US-07 AC4).
+    final cards = [
+      for (final summary
+          in ref.read(deckCardsProvider(widget.deckId)).value ??
+              const <CardSummary>[])
+        if (ids.contains(summary.card.id)) summary.card,
+    ];
+    final warning = transferWarning(from: from, to: target, cards: cards);
+    if (warning != null) {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: move
+            ? l10n.moveCardsTitle(ids.length, target.name)
+            : l10n.copyCardsTitle(ids.length, target.name),
+        body: _warningText(l10n, warning),
+        confirmLabel: move ? l10n.move : l10n.copy,
+        icon: Icons.info_outline_rounded,
+        destructive: false,
+      );
+      if (!confirmed) return;
+    }
     if (move) {
       await repository.moveCards(ids, target.id);
     } else {
@@ -238,6 +267,26 @@ class _DeckView {
 
   void addCard(BuildContext context) =>
       context.go(AppRoutes.newCard(project.id, deck.id));
+}
+
+/// The explanation of a [TransferWarning], with the pairs in short form
+/// ("EN → ES").
+String _warningText(AppLocalizations l10n, TransferWarning warning) {
+  String pair(String? source, String? target) => l10n.languagePair(
+    source == null ? '?' : shortLanguageCode(source),
+    target == null ? '?' : shortLanguageCode(target),
+  );
+  return switch (warning) {
+    ToGeneralDeck(:final cardsWithLanguageFields) => l10n.transferToGeneral(
+      cardsWithLanguageFields,
+    ),
+    ToLanguageDeck(:final sourceLang, :final targetLang) =>
+      l10n.transferToLanguage(pair(sourceLang, targetLang)),
+    LanguagesChange() => l10n.transferLanguagesChange(
+      pair(warning.fromSourceLang, warning.fromTargetLang),
+      pair(warning.toSourceLang, warning.toTargetLang),
+    ),
+  };
 }
 
 /// "92%", or "—" with no answers.

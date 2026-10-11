@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 
 /// Asks the user to confirm an action (`docs/design/movil-claro/
 /// dialogos.png`): an icon, a title, an explanation, "Cancelar" and the
-/// [confirmLabel] button, red for destructive actions. Returns true if the
+/// [confirmLabel] button, red for destructive actions. A non-[destructive]
+/// one (e.g. a warning) uses the primary colour instead. Returns true if the
 /// user confirmed.
 ///
 /// Keys: `confirmDialog`, `confirmDialog.cancel`, `confirmDialog.confirm`.
@@ -15,12 +16,14 @@ Future<bool> showConfirmDialog(
   required String body,
   required String confirmLabel,
   IconData icon = Icons.delete_outline_rounded,
+  bool destructive = true,
 }) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) {
       final colors = AppColors.of(context);
       final text = Theme.of(context).textTheme;
+      final accent = destructive ? colors.error : colors.primaryStrong;
       return AlertDialog(
         key: const Key('confirmDialog'),
         title: Column(
@@ -30,10 +33,10 @@ Future<bool> showConfirmDialog(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colors.error.withValues(alpha: 0.12),
+                color: accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadii.control),
               ),
-              child: Icon(icon, color: colors.error),
+              child: Icon(icon, color: accent),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(title, style: text.titleLarge),
@@ -52,8 +55,10 @@ Future<bool> showConfirmDialog(
           FilledButton(
             key: const Key('confirmDialog.confirm'),
             style: FilledButton.styleFrom(
-              backgroundColor: colors.error,
-              foregroundColor: colors.onError,
+              backgroundColor: accent,
+              foregroundColor: destructive
+                  ? colors.onError
+                  : colors.onPrimaryStrong,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(confirmLabel),

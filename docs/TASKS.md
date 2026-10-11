@@ -266,7 +266,7 @@ Goal: a project that starts, with automated quality from day one.
   - **Tests first:** 🧩 the list shows type and % correct; 🧩 search filters as you type; 🧩 with no cards, the empty state is shown (import and template arrive in phase 5).
 
 - [x] **T2.9 Multi-select, copy, move and delete** · US-07, US-11 · Depends on: T2.8
-  - > **Note:** deleted cards are hidden at once and deleted for good when the 5-second "Deshacer" runs out; copies get their own image files; the card editor gets "Eliminar tarjeta". The phase wrap-up test goes with T2.7 in the next PR. See SPEC §13.2 (assumption 31).
+  - > **Note:** deleted cards are hidden at once and deleted for good when the 5-second "Deshacer" runs out; copies get their own image files; the card editor gets "Eliminar tarjeta". The phase wrap-up test goes with T2.7 in the next PR, which also adds a warning before moving or copying to a deck of another type or with other languages (decided with the owner). See SPEC §13.2 (assumption 31).
   - **Tests first:**
     - 🧪 moving keeps the ID and statistics.
     - 🧪 copying creates cards with a new ID, copied options and no history.
