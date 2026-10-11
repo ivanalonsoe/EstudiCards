@@ -274,7 +274,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 "Mover a…" only offers decks from the same project, of either type.
     - 🧪 moving a card with example and notes to a general deck keeps them.
     - 🧩 deleting a card and tapping "Deshacer" recovers it; without undo, it is gone for good.
-  - **Phase wrap-up:** 🔗 create cards of both types, edit, move and delete them.
+  - **Phase wrap-up:** 🔗 create cards of both types, edit, move and delete them. Done with T2.7 in `integration_test/flows/cards_flow.dart`; it passed on Windows before the PR. See SPEC §13.2 (assumption 33).
 
 ---
 

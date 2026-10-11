@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'flows/cards_flow.dart';
 import 'flows/projects_flow.dart';
 
 void main() {
@@ -35,4 +36,5 @@ void main() {
   });
 
   group('projects', projectsFlowTests);
+  group('cards', cardsFlowTests);
 }
