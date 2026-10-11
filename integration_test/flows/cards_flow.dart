@@ -19,6 +19,15 @@ Finder _cardRow(String question) => find.ancestor(
   ),
 );
 
+/// The text field of the answer in the card editor.
+final Finder _answerField = find.descendant(
+  of: find.byKey(const Key('cardEditor.answer')),
+  matching: find.byType(EditableText),
+);
+
+String _answerText(WidgetTester tester) =>
+    tester.widget<EditableText>(_answerField).controller.text;
+
 /// Selects a card: with its checkbox on desktop, with a long press on a
 /// phone.
 Future<void> _selectCard(WidgetTester tester, String question) async {
@@ -75,6 +84,12 @@ void cardsFlowTests() {
       'cardEditor.answer',
       'Produce la mayor parte del ATP',
     );
+    // On a real Android device the system keyboard keeps its own copy of
+    // the field and can send the old text back; leaving the field closes
+    // that connection before saving.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(_answerText(tester), 'Produce la mayor parte del ATP');
     await tapKey(tester, 'cardEditor.save');
     await expectSoon(tester, _cardRow('Mitocondria'));
 
@@ -108,14 +123,7 @@ void cardsFlowTests() {
     await tapFinder(tester, _cardRow('Mitocondria'));
     // The editor opens once the card has loaded (slow on the CI emulator).
     await waitFor(tester, find.byKey(const Key('screen.editCard')));
-    final answer = find.descendant(
-      of: find.byKey(const Key('cardEditor.answer')),
-      matching: find.byType(EditableText),
-    );
-    await waitFor(tester, answer);
-    expect(
-      tester.widget<EditableText>(answer).controller.text,
-      'Produce la mayor parte del ATP',
-    );
+    await waitFor(tester, _answerField);
+    expect(_answerText(tester), 'Produce la mayor parte del ATP');
   });
 }
