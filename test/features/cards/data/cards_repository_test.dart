@@ -499,6 +499,39 @@ void main() {
       expect(summary.correctRate, 0.8);
     });
 
+    test('returns the last review in either direction', () async {
+      final card = await repository.create(deck.id, simple);
+      final never = await repository.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to seek',
+          answer: 'buscar',
+        ),
+      );
+      await addTestStats(
+        db,
+        card.id,
+        correct: 1,
+        lastAttemptAt: DateTime.utc(2026, 10, 3),
+      );
+      await addTestStats(
+        db,
+        card.id,
+        direction: 'reverse',
+        wrong: 1,
+        lastAttemptAt: DateTime.utc(2026, 10, 5),
+      );
+
+      final summaries = {
+        for (final s in await repository.watchCards(deck.id).first)
+          s.card.id: s.lastReviewedAt,
+      };
+
+      expect(summaries[card.id], DateTime.utc(2026, 10, 5));
+      expect(summaries[never.id], isNull);
+    });
+
     test('emits again when the cards change', () async {
       final stream = repository.watchCards(deck.id);
       final names = stream.map(
@@ -529,6 +562,175 @@ void main() {
       await repository.delete(card.id);
 
       await expectation;
+    });
+  });
+
+  group('several cards', () {
+    late Deck target;
+
+    setUp(() async {
+      target = await decks.create(project.id, const DeckInput(name: 'Tejidos'));
+    });
+
+    Future<List<String>> idsIn(Deck deck) async => [
+      for (final row in await (db.select(
+        db.cards,
+      )..where((c) => c.deckId.equals(deck.id))).get())
+        row.id,
+    ];
+
+    test('moving keeps the ID and the statistics', () async {
+      final card = await repository.create(deck.id, simple);
+      final other = await repository.create(deck.id, atp);
+      await addTestStats(db, card.id, correct: 3, wrong: 1);
+      await addTestAttempt(db, projectId: project.id, cardId: card.id);
+      clock.advance(const Duration(hours: 1));
+
+      await repository.moveCards([card.id], target.id);
+
+      expect(await idsIn(target), [card.id]);
+      expect(await idsIn(deck), [other.id]);
+      final moved = (await repository.watchCards(target.id).first).single;
+      expect(moved.correctCount, 3);
+      expect(moved.wrongCount, 1);
+      expect(await db.select(db.attempts).get(), hasLength(1));
+      expect(moved.card.createdAt, start);
+    });
+
+    test('moving a card with example and notes to a general deck keeps '
+        'them', () async {
+      final card = await repository.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to bring',
+          answer: 'traer',
+          example: 'Can you bring me some water?',
+          notes: 'Verbo irregular',
+        ),
+      );
+
+      await repository.moveCards([card.id], target.id);
+
+      final moved = (await repository.getById(card.id))!;
+      expect(moved.deckId, target.id);
+      expect(moved.example, 'Can you bring me some water?');
+      expect(moved.notes, 'Verbo irregular');
+    });
+
+    test(
+      'copying creates cards with a new ID, copied options and no history',
+      () async {
+        final card = await repository.create(deck.id, atp);
+        await addTestStats(db, card.id, correct: 3, wrong: 1);
+        clock.advance(const Duration(hours: 1));
+
+        await repository.copyCards([card.id], target.id);
+
+        final [copyId] = await idsIn(target);
+        expect(copyId, isNot(card.id));
+        final copy = (await repository.getById(copyId))!;
+        final original = (await repository.getById(card.id))!;
+        expect(copy.question, original.question);
+        expect(copy.explanation, original.explanation);
+        expect(copy.createdAt, start.add(const Duration(hours: 1)));
+        expect(
+          [for (final o in copy.options) (o.text, o.isCorrect, o.position)],
+          [for (final o in original.options) (o.text, o.isCorrect, o.position)],
+        );
+        expect(
+          copy.options
+              .map((o) => o.id)
+              .toSet()
+              .intersection(original.options.map((o) => o.id).toSet()),
+          isEmpty,
+        );
+        final summary = (await repository.watchCards(target.id).first).single;
+        expect(summary.correctCount, 0);
+        expect(summary.wrongCount, 0);
+        // The original stays where it was, with its statistics.
+        expect(await idsIn(deck), [card.id]);
+      },
+    );
+
+    test('copying gives the copy its own image files', () async {
+      final card = await repository.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'Mitocondria',
+          answer: 'Orgánulo',
+          questionImage: 'question.jpg',
+          answerImage: 'answer.jpg',
+        ),
+      );
+
+      await repository.copyCards([card.id], target.id);
+
+      final [copyId] = await idsIn(target);
+      final copy = (await repository.getById(copyId))!;
+      expect(images.copied, ['question.jpg', 'answer.jpg']);
+      expect(copy.questionImage, 'copy-of-question.jpg');
+      expect(copy.answerImage, 'copy-of-answer.jpg');
+    });
+
+    test(
+      'moving and copying mark the target deck and project as used',
+      () async {
+        final card = await repository.create(deck.id, simple);
+        clock.advance(const Duration(days: 1));
+
+        await repository.moveCards([card.id], target.id);
+
+        expect((await decks.getById(target.id))!.lastUsedAt, clock.now());
+        clock.advance(const Duration(days: 1));
+        await repository.copyCards([card.id], deck.id);
+        expect((await decks.getById(deck.id))!.lastUsedAt, clock.now());
+        expect((await projects.getById(project.id))!.lastUsedAt, clock.now());
+      },
+    );
+
+    test(
+      'a copy that fails copies nothing and deletes the copied images',
+      () async {
+        final card = await repository.create(
+          deck.id,
+          const CardInput(
+            type: CardType.simple,
+            question: 'Mitocondria',
+            answer: 'Orgánulo',
+            questionImage: 'question.jpg',
+          ),
+        );
+
+        // The foreign key rejects a deck that does not exist.
+        await expectLater(
+          repository.copyCards([card.id], 'missing'),
+          throwsA(anything),
+        );
+
+        expect(await db.select(db.cards).get(), hasLength(1));
+        expect(images.deleted, ['copy-of-question.jpg']);
+      },
+    );
+
+    test('deleting several deletes them and their images', () async {
+      final first = await repository.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'Mitocondria',
+          answer: 'Orgánulo',
+          questionImage: 'question.jpg',
+        ),
+      );
+      final second = await repository.create(deck.id, atp);
+      final kept = await repository.create(deck.id, simple);
+
+      await repository.deleteCards([first.id, second.id]);
+
+      expect(await idsIn(deck), [kept.id]);
+      expect(images.deleted, ['question.jpg']);
     });
   });
 }

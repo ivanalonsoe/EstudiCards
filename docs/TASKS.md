@@ -20,7 +20,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 |---|---|---|
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
-| 2. Cards | T2.1 – T2.10 | ⏳ 7 / 10 |
+| 2. Cards | T2.1 – T2.10 | ⏳ 9 / 10 |
 | 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
@@ -260,11 +260,13 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 a card in a general deck has no speaker button.
     - 🧩 with no voice installed, the button is disabled and the notice is shown.
 
-- [ ] **T2.8 Deck screen** · P05 · US-12 · Depends on: T2.2
+- [x] **T2.8 Deck screen** · P05 · US-12 · Depends on: T2.2
+  - > **Note:** buttons of later phases are hidden, so the empty state shows only "Añade tu primera tarjeta" until phase 5; language decks show their pair in the header (both decided with the owner). The numbers come from `card_stats` and show "—" until the study session records answers. See SPEC §13.2 (assumption 30).
   - List (table on desktop), search, sorting, actions and empty state.
-  - **Tests first:** 🧩 the list shows type and % correct; 🧩 search filters as you type; 🧩 with no cards, the empty state with import and template is shown.
+  - **Tests first:** 🧩 the list shows type and % correct; 🧩 search filters as you type; 🧩 with no cards, the empty state is shown (import and template arrive in phase 5).
 
-- [ ] **T2.9 Multi-select, copy, move and delete** · US-07, US-11 · Depends on: T2.8
+- [x] **T2.9 Multi-select, copy, move and delete** · US-07, US-11 · Depends on: T2.8
+  - > **Note:** deleted cards are hidden at once and deleted for good when the 5-second "Deshacer" runs out; copies get their own image files; the card editor gets "Eliminar tarjeta". The phase wrap-up test goes with T2.7 in the next PR. See SPEC §13.2 (assumption 31).
   - **Tests first:**
     - 🧪 moving keeps the ID and statistics.
     - 🧪 copying creates cards with a new ID, copied options and no history.

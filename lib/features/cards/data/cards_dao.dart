@@ -5,8 +5,14 @@ import 'package:estudicards/core/db/app_database.dart';
 
 part 'cards_dao.g.dart';
 
-/// A card row with its first-attempt results, both directions added up.
-typedef CardWithResults = ({CardRow card, int correctCount, int wrongCount});
+/// A card row with its first-attempt results, both directions added up, and
+/// its last answer.
+typedef CardWithResults = ({
+  CardRow card,
+  int correctCount,
+  int wrongCount,
+  DateTime? lastAttemptAt,
+});
 
 @DriftAccessor(tables: [Cards, CardOptions, CardStats, Decks, Projects])
 class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
@@ -21,6 +27,20 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   Future<CardRow?> findById(String id) =>
       (select(cards)..where((c) => c.id.equals(id))).getSingleOrNull();
+
+  /// These cards, oldest first.
+  Future<List<CardRow>> findByIds(Iterable<String> ids) =>
+      (select(cards)
+            ..where((c) => c.id.isIn(ids))
+            ..orderBy([(c) => OrderingTerm.asc(c.createdAt)]))
+          .get();
+
+  /// Puts the cards in [deckId]. Their IDs, options, statistics and
+  /// attempts stay as they are.
+  Future<void> moveCards(Iterable<String> ids, String deckId, DateTime now) =>
+      (update(cards)..where((c) => c.id.isIn(ids))).write(
+        CardsCompanion(deckId: Value(deckId), updatedAt: Value(now)),
+      );
 
   /// Deletes the card for good. The foreign keys cascade the delete to its
   /// options, statistics and attempts.
@@ -57,8 +77,13 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
         );
     final correct = total(cardStats.correctCount);
     final wrong = total(cardStats.wrongCount);
+    final lastAttempt = subqueryExpression<DateTime>(
+      selectOnly(cardStats)
+        ..addColumns([cardStats.lastAttemptAt.max()])
+        ..where(cardStats.cardId.equalsExp(cards.id)),
+    );
     final query = select(cards).join([])
-      ..addColumns([correct, wrong])
+      ..addColumns([correct, wrong, lastAttempt])
       ..where(cards.deckId.equals(deckId));
     return [
       for (final row in await query.get())
@@ -66,6 +91,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
           card: row.readTable(cards),
           correctCount: row.read(correct) ?? 0,
           wrongCount: row.read(wrong) ?? 0,
+          lastAttemptAt: row.read(lastAttempt),
         ),
     ];
   }

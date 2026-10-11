@@ -14,6 +14,11 @@ abstract interface class ImageFiles {
   /// bytes are not an image.
   Future<String?> save(Uint8List bytes);
 
+  /// Stores a copy of the image at [relativePath] under a new name, for a
+  /// copied card: each card owns its files, so deleting one card never
+  /// removes the image of another. Null if the file does not exist.
+  Future<String?> copy(String relativePath);
+
   /// Deletes the images at these paths, relative to the images folder.
   /// Paths that do not exist are ignored.
   Future<void> delete(Iterable<String> relativePaths);
@@ -25,6 +30,9 @@ class NoImageFiles implements ImageFiles {
 
   @override
   Future<String?> save(Uint8List bytes) async => null;
+
+  @override
+  Future<String?> copy(String relativePath) async => null;
 
   @override
   Future<void> delete(Iterable<String> relativePaths) async {}
@@ -52,6 +60,16 @@ class DiskImageFiles implements ImageFiles {
     // same inside widget tests, where asynchronous ones never finish.
     folder.createSync(recursive: true);
     File('${folder.path}/$name').writeAsBytesSync(prepared);
+    return name;
+  }
+
+  @override
+  Future<String?> copy(String relativePath) async {
+    final folder = await _folder();
+    final original = File('${folder.path}/$relativePath');
+    if (!original.existsSync()) return null;
+    final name = '${newId()}.jpg';
+    original.copySync('${folder.path}/$name');
     return name;
   }
 

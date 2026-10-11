@@ -18,10 +18,6 @@
   "@project": {
     "description": "Title of the project screen (P03)."
   },
-  "deck": "Baraja",
-  "@deck": {
-    "description": "Title of the deck screen (P05)."
-  },
   "newCard": "Nueva tarjeta",
   "@newCard": {
     "description": "Title of the card editor when creating a card (P06)."
@@ -505,6 +501,168 @@
   "addCard": "Añadir tarjeta",
   "@addCard": {
     "description": "Button of the deck screen that opens the card editor (P05)."
+  },
+  "searchCards": "Buscar tarjetas",
+  "@searchCards": {
+    "description": "Hint of the card search field on mobile (P05)."
+  },
+  "searchCardsLong": "Buscar en preguntas y respuestas",
+  "@searchCardsLong": {
+    "description": "Hint of the card search field on desktop (P05)."
+  },
+  "sortNewest": "Recientes",
+  "@sortNewest": {
+    "description": "Card list order: newest first (US-12 AC2)."
+  },
+  "sortAlphabetical": "A–Z",
+  "@sortAlphabetical": {
+    "description": "Card list order: alphabetical by question."
+  },
+  "sortMostMissed": "Más falladas",
+  "@sortMostMissed": {
+    "description": "Card list order: most misses first."
+  },
+  "sortCards": "Ordenar tarjetas",
+  "@sortCards": {
+    "description": "Tooltip of the sort menu of the card list on mobile."
+  },
+  "emptyCards": "Añade tu primera tarjeta",
+  "@emptyCards": {
+    "description": "Empty state of a deck with no cards (SPEC §5.3)."
+  },
+  "noCardResults": "Ninguna tarjeta coincide con «{query}»",
+  "@noCardResults": {
+    "description": "The card search found nothing.",
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "deckNotFound": "Esta baraja ya no existe",
+  "@deckNotFound": {
+    "description": "Deck screen opened with the ID of a deck that does not exist or is in the trash."
+  },
+  "deleteDeck": "Eliminar baraja",
+  "@deleteDeck": {
+    "description": "Item of the deck screen menu that moves the deck to the trash."
+  },
+  "cardOptions": "Opciones de la tarjeta",
+  "@cardOptions": {
+    "description": "Tooltip of the ⋮ menu of a card in the deck screen."
+  },
+  "columnQuestion": "Pregunta",
+  "@columnQuestion": {
+    "description": "Column of the desktop card table (shown in capitals)."
+  },
+  "columnType": "Tipo",
+  "@columnType": {
+    "description": "Column of the desktop card table: simple or test."
+  },
+  "columnCorrect": "Aciertos",
+  "@columnCorrect": {
+    "description": "Column of the desktop card table: correct first attempts."
+  },
+  "columnWrong": "Fallos",
+  "@columnWrong": {
+    "description": "Column of the desktop card table: wrong first attempts."
+  },
+  "columnRate": "% aciertos",
+  "@columnRate": {
+    "description": "Column of the desktop card table: % correct with a bar."
+  },
+  "columnLastReview": "Último repaso",
+  "@columnLastReview": {
+    "description": "Column of the desktop card table: when the card was last answered."
+  },
+  "reviewedToday": "Hoy",
+  "@reviewedToday": {
+    "description": "Last review of a card: today."
+  },
+  "reviewedYesterday": "Ayer",
+  "@reviewedYesterday": {
+    "description": "Last review of a card: yesterday."
+  },
+  "reviewedDaysAgo": "Hace {count} días",
+  "@reviewedDaysAgo": {
+    "description": "Last review of a card: 2 or more days ago.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewedNever": "Nunca",
+  "@reviewedNever": {
+    "description": "Last review of a card that was never studied."
+  },
+  "selectedCount": "{count, plural, =1{1 seleccionada} other{{count} seleccionadas}}",
+  "@selectedCount": {
+    "description": "Selection bar of the deck screen: how many cards are selected (US-07).",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectAll": "Seleccionar todas",
+  "@selectAll": {
+    "description": "Tooltip of the checkbox in the heading of the desktop card table."
+  },
+  "clearSelection": "Cancelar selección",
+  "@clearSelection": {
+    "description": "Tooltip of the ✕ of the selection bar."
+  },
+  "copyTo": "Copiar a…",
+  "@copyTo": {
+    "description": "Copies the selected cards to another deck of the project (US-07); also the title of the deck picker."
+  },
+  "moveTo": "Mover a…",
+  "@moveTo": {
+    "description": "Moves the selected cards to another deck of the project (US-07); also the title of the deck picker."
+  },
+  "noOtherDecks": "No hay otras barajas en este proyecto",
+  "@noOtherDecks": {
+    "description": "Deck picker of 'Copiar a…' / 'Mover a…' when the project has no other deck."
+  },
+  "cardsMoved": "{count, plural, =1{Tarjeta movida a «{deck}»} other{{count} tarjetas movidas a «{deck}»}}",
+  "@cardsMoved": {
+    "description": "Snackbar after moving cards.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "deck": { "type": "String" }
+    }
+  },
+  "cardsCopied": "{count, plural, =1{Tarjeta copiada a «{deck}»} other{{count} tarjetas copiadas a «{deck}»}}",
+  "@cardsCopied": {
+    "description": "Snackbar after copying cards.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "deck": { "type": "String" }
+    }
+  },
+  "deleteCard": "Eliminar tarjeta",
+  "@deleteCard": {
+    "description": "Button of the card editor when editing a card (P06)."
+  },
+  "deleteCardsTitle": "{count, plural, =1{¿Eliminar 1 tarjeta?} other{¿Eliminar {count} tarjetas?}}",
+  "@deleteCardsTitle": {
+    "description": "Title of the dialog before deleting cards (US-11 AC2).",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "deleteCardsBody": "Se borrarán para siempre, con sus estadísticas. Podrás deshacerlo durante 5 segundos.",
+  "@deleteCardsBody": {
+    "description": "Body of the dialog before deleting cards: they do not go to the trash."
+  },
+  "cardsDeleted": "{count, plural, =1{Tarjeta eliminada} other{{count} tarjetas eliminadas}}",
+  "@cardsDeleted": {
+    "description": "Snackbar with 'Deshacer' after deleting cards.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "percent": "{value}%",
+  "@percent": {
+    "description": "A % correct, e.g. '92%'.",
+    "placeholders": {
+      "value": { "type": "int" }
+    }
   },
   "deckPath": "{project} › {deck}",
   "@deckPath": {

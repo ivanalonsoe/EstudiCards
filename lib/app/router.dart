@@ -12,7 +12,7 @@ import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
 import 'package:estudicards/features/cards/presentation/card_editor_screen.dart';
-import 'package:estudicards/features/decks/presentation/deck_placeholder_screen.dart';
+import 'package:estudicards/features/decks/presentation/deck_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
@@ -93,7 +93,7 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                   screen('study', 'sessionSetup', (l10n) => l10n.sessionSetup),
                   GoRoute(
                     path: 'deck/:deckId',
-                    builder: (context, state) => DeckPlaceholderScreen(
+                    builder: (context, state) => DeckScreen(
                       key: const Key('screen.deck'),
                       projectId: state.pathParameters['projectId']!,
                       deckId: state.pathParameters['deckId']!,

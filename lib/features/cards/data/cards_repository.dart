@@ -84,6 +84,80 @@ class CardsRepository {
     await _images.delete(images);
   }
 
+  /// Moves the cards to [deckId], keeping their IDs and statistics
+  /// (US-07 AC3). The deck can be of another type: example and notes stay,
+  /// hidden in a general deck (US-07 AC4). Marks the deck and its project as
+  /// used (R 7.7).
+  Future<void> moveCards(Iterable<String> ids, String deckId) {
+    final now = _clock.now();
+    return _dao.transaction(() async {
+      await _dao.moveCards(ids, deckId, now);
+      await _dao.markDeckAndProjectUsed(deckId, now);
+    });
+  }
+
+  /// Copies the cards to [deckId] as new cards: new IDs, options copied
+  /// with new IDs, their own image files, and no history (US-07 AC3).
+  /// Marks the deck and its project as used (R 7.7).
+  Future<void> copyCards(Iterable<String> ids, String deckId) async {
+    final now = _clock.now();
+    final originals = await _dao.findByIds(ids);
+    final options = await _dao.optionsOf(ids);
+
+    // Each copy gets its own image files, made before the transaction.
+    final imageCopies = <String, String?>{
+      for (final row in originals)
+        for (final image in [?row.questionImage, ?row.answerImage])
+          image: await _images.copy(image),
+    };
+    try {
+      await _dao.transaction(() async {
+        for (final row in originals) {
+          final copyId = newId();
+          await _dao.insertCard(
+            row
+                .toCompanion(true)
+                .copyWith(
+                  id: Value(copyId),
+                  deckId: Value(deckId),
+                  questionImage: Value(imageCopies[row.questionImage]),
+                  answerImage: Value(imageCopies[row.answerImage]),
+                  createdAt: Value(now),
+                  updatedAt: Value(now),
+                ),
+          );
+          for (final option in options) {
+            if (option.cardId != row.id) continue;
+            await _dao.saveOption(
+              option
+                  .toCompanion(true)
+                  .copyWith(id: Value(newId()), cardId: Value(copyId)),
+            );
+          }
+        }
+        await _dao.markDeckAndProjectUsed(deckId, now);
+      });
+    } catch (_) {
+      // Nothing was copied, so the copied images are not needed.
+      await _images.delete(imageCopies.values.nonNulls);
+      rethrow;
+    }
+  }
+
+  /// Deletes several cards for good, as [delete] does, in one transaction.
+  Future<void> deleteCards(Iterable<String> ids) async {
+    final images = await _dao.transaction(() async {
+      final rows = await _dao.findByIds(ids);
+      for (final row in rows) {
+        await _dao.deleteCard(row.id);
+      }
+      return [
+        for (final row in rows) ...[?row.questionImage, ?row.answerImage],
+      ];
+    });
+    await _images.delete(images);
+  }
+
   /// A deck's cards with their results, filtered by [query] and sorted by
   /// [sort] (P05, US-12), read again whenever cards change.
   ///
@@ -115,6 +189,7 @@ class CardsRepository {
           ]),
           correctCount: row.correctCount,
           wrongCount: row.wrongCount,
+          lastReviewedAt: row.lastAttemptAt,
         ),
     ];
     return sortCards(

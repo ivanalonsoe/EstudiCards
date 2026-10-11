@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/core/widgets/undo_snackbar.dart';
@@ -37,21 +39,25 @@ Future<void> confirmMoveProjectToTrash(
 
   await trash.moveProjectToTrash(project.id);
   afterMove?.call();
-  showUndoSnackBar(
-    messenger,
-    l10n,
-    message: l10n.movedToTrash(project.name),
-    undo: () => trash.restoreProject(project.id),
+  unawaited(
+    showUndoSnackBar(
+      messenger,
+      l10n,
+      message: l10n.movedToTrash(project.name),
+      undo: () => trash.restoreProject(project.id),
+    ),
   );
 }
 
-/// Deletes a deck as US-06 AC2 asks: a dialog with its number of cards,
-/// then the trash, with "Deshacer" for 5 seconds.
+/// Deletes a deck as US-06 AC4 asks: a dialog with its number of cards,
+/// then the trash, with "Deshacer" for 5 seconds. [afterMove] runs once it
+/// is in the trash, e.g. to leave the deck screen.
 Future<void> confirmMoveDeckToTrash(
   BuildContext context,
   WidgetRef ref, {
   required Deck deck,
   required int cardCount,
+  VoidCallback? afterMove,
 }) async {
   final l10n = AppLocalizations.of(context);
   final trash = ref.read(trashRepositoryProvider);
@@ -66,11 +72,14 @@ Future<void> confirmMoveDeckToTrash(
   if (!confirmed) return;
 
   await trash.moveDeckToTrash(deck.id);
+  afterMove?.call();
   // The deck is already in the trash, so undoing just restores it.
-  showUndoSnackBar(
-    messenger,
-    l10n,
-    message: l10n.movedToTrash(deck.name),
-    undo: () => trash.restoreDeck(deck.id),
+  unawaited(
+    showUndoSnackBar(
+      messenger,
+      l10n,
+      message: l10n.movedToTrash(deck.name),
+      undo: () => trash.restoreDeck(deck.id),
+    ),
   );
 }
