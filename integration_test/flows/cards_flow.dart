@@ -84,11 +84,6 @@ void cardsFlowTests() {
       'cardEditor.answer',
       'Produce la mayor parte del ATP',
     );
-    // On a real Android device the system keyboard keeps its own copy of
-    // the field and can send the old text back; leaving the field closes
-    // that connection before saving.
-    FocusManager.instance.primaryFocus?.unfocus();
-    await tester.pumpAndSettle();
     expect(_answerText(tester), 'Produce la mayor parte del ATP');
     await tapKey(tester, 'cardEditor.save');
     await expectSoon(tester, _cardRow('Mitocondria'));
