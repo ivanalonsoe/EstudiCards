@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 0 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 2 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -280,7 +280,8 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 3 — Study session
 
-- [ ] **T3.1 Card selection and shuffling** · R 7.2 · Depends on: T2.2, T0.5
+- [x] **T3.1 Card selection and shuffling** · R 7.2 · Depends on: T2.2, T0.5
+  - > **Note:** each card is filtered and weighted by its stats in the direction it is studied in (in a reverse session, test cards and general-deck cards use the normal direction). "Solo errores" shows 0 cards until phase 4 fills `card_stats` (decided with the owner). Reading the candidates from the database arrives with T3.6. See SPEC §13.2 (assumption 34).
   - Pure domain service.
   - **Tests first:**
     - 🧪 with a fixed seed, the result is always the same.
@@ -301,7 +302,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 on exit, pending cards are recorded as `unanswered`.
     - 🧪 in reverse direction, test cards and the cards of general decks are recorded as `normal`; simple cards of language decks as `reverse`.
 
-- [ ] **T3.3 Grading test cards** · US-16 · Depends on: T2.1
+- [x] **T3.3 Grading test cards** · US-16 · Depends on: T2.1
+  - > **Note:** grading compares option IDs, so the shuffled order does not matter. See SPEC §13.2 (assumption 35).
   - **Tests first:**
     - 🧪 one correct option ticked = correct.
     - 🧪 multiple answer: ticking exactly the correct ones = correct; one missing or one extra = wrong (no partial credit).

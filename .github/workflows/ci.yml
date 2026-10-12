@@ -129,14 +129,11 @@ jobs:
       - name: Install Patrol CLI
         run: dart pub global activate patrol_cli 4.8.0
 
-      # Do the heavy first Gradle build before the emulator starts. With the
-      # emulator running too, the runner can run out of resources and the
-      # emulator crashes; afterwards only a quick incremental build remains.
-      - name: Build the Android app
-        run: flutter build apk --debug
-
-      # The runner's disk is nearly full; the emulator needs room for its
-      # data partition. Remove preinstalled tools this project never uses.
+      # The runner's disk is nearly full. The Android build may download the
+      # NDK and CMake (several GB), and the emulator needs room for its data
+      # partition, so this runs before both: a build that ran first once
+      # filled the disk ("No space left on device"). Remove preinstalled
+      # tools this project never uses.
       - name: Free disk space
         run: |
           df -h /
@@ -144,6 +141,12 @@ jobs:
             /usr/local/share/boost /usr/local/share/chromium /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force > /dev/null
           df -h /
+
+      # Do the heavy first Gradle build before the emulator starts. With the
+      # emulator running too, the runner can run out of resources and the
+      # emulator crashes; afterwards only a quick incremental build remains.
+      - name: Build the Android app
+        run: flutter build apk --debug
 
       # Hardware acceleration, so the emulator runs at usable speed.
       - name: Enable KVM
