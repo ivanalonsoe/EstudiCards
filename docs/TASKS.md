@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 2 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 3 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -292,7 +292,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the output order does not match the creation order.
     - 🧪 test options are shuffled.
 
-- [ ] **T3.2 Session engine** · R 7.3 · US-15 to US-17 · Depends on: T3.1
+- [x] **T3.2 Session engine** · R 7.3 · US-15 to US-17 · Depends on: T3.1
+  - > **Note:** the state machine was agreed with the owner before writing it. Decided then: the ✓/✗ counters count first attempts only, and pending repeats are not recorded when the session ends ("No respondidas" lists original cards only). Events that do not apply are ignored, and card events carry their card's turn so a double tap never acts on the next card. See SPEC §13.1 ("Study session") and §13.2 (assumption 36).
   - Session state machine, with no UI: queue, answer, "show answer", "leave for later", repeat missed cards, end of session.
   - **Tests first:**
     - 🧪 answering correctly or wrongly moves to the next card and updates the counters.
