@@ -61,6 +61,12 @@ final class Resume extends SessionEvent {
   const new();
 }
 
+/// Sent every second while a session runs, so the engine can see a timer
+/// run out (R 7.5).
+final class Tick extends SessionEvent {
+  const new();
+}
+
 /// "Salir", after confirming.
 final class Exit extends SessionEvent {
   const new();

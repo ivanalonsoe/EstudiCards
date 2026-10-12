@@ -7,14 +7,31 @@ import 'package:estudicards/features/study/domain/active_time.dart';
 import 'package:estudicards/features/study/domain/attempt_record.dart';
 import 'package:estudicards/features/study/domain/card_selection.dart';
 
+/// `none` | `per_card` | `global` (R 7.5). Only one timer at a time.
+enum TimerType { none, perCard, global }
+
 /// The session choices the engine applies.
 class SessionSettings {
-  const new({this.repeatFailed = false});
+  const new({
+    this.repeatFailed = false,
+    this.timerType = TimerType.none,
+    this.timerLimit = Duration.zero,
+  });
 
   /// "Repetir falladas al final": a missed card comes back at the end of
   /// the queue until it is answered correctly.
   final bool repeatFailed;
+  final TimerType timerType;
+
+  /// The time of the timer: per question (5–120 s) or for the whole
+  /// session (1–120 min). P08 only offers values in those ranges.
+  final Duration timerLimit;
 }
+
+/// The per-question timer shows a warning in its last 5 seconds, and the
+/// global timer in its last minute (R 7.5).
+const questionWarningTime = Duration(seconds: 5);
+const sessionWarningTime = Duration(minutes: 1);
 
 /// How a session ended (SPEC §4.2 `study_sessions.status`).
 enum SessionStatus { completed, abandoned, timeUp }
@@ -66,6 +83,7 @@ class CurrentCard {
     required this.options,
     required this.clock,
     this.step = const Answering(),
+    this.thinkingTime,
   });
 
   final QueueEntry entry;
@@ -82,14 +100,23 @@ class CurrentCard {
   final ActiveTime clock;
   final CardStep step;
 
+  /// The time the per-question timer stopped at: when the card was flipped,
+  /// checked, revealed or timed out. Null while it runs (R 7.5).
+  final Duration? thinkingTime;
+
   Flashcard get card => entry.card;
 
-  CurrentCard copyWith({ActiveTime? clock, CardStep? step}) => CurrentCard(
+  CurrentCard copyWith({
+    ActiveTime? clock,
+    CardStep? step,
+    Duration? thinkingTime,
+  }) => CurrentCard(
     entry: entry,
     turn: turn,
     options: options,
     clock: clock ?? this.clock,
     step: step ?? this.step,
+    thinkingTime: thinkingTime ?? this.thinkingTime,
   );
 }
 
@@ -134,6 +161,33 @@ final class InProgress extends SessionState {
     final waiting = queue.where((entry) => entry.isRepeat).length;
     final onScreen = current.entry.isRepeat && current.step is! Resolved;
     return waiting + (onScreen ? 1 : 0);
+  }
+
+  /// What the per-question timer shows at [at]; null without that timer.
+  /// It stays still once the card is flipped, checked or revealed.
+  Duration? questionTimeLeft(DateTime at) {
+    if (settings.timerType != TimerType.perCard) return null;
+    final used = current.thinkingTime ?? current.clock.elapsedAt(at);
+    return _timeLeft(used);
+  }
+
+  /// What the global timer shows at [at]; null without that timer.
+  Duration? sessionTimeLeft(DateTime at) {
+    if (settings.timerType != TimerType.global) return null;
+    return _timeLeft(clock.elapsedAt(at));
+  }
+
+  /// Whether the timer shows its warning at [at] (R 7.5).
+  bool isTimeRunningOut(DateTime at) => switch (settings.timerType) {
+    TimerType.none => false,
+    TimerType.perCard => questionTimeLeft(at)! <= questionWarningTime,
+    TimerType.global => sessionTimeLeft(at)! <= sessionWarningTime,
+  };
+
+  /// The timer's limit minus [used], never below zero.
+  Duration _timeLeft(Duration used) {
+    final limit = settings.timerLimit;
+    return used >= limit ? Duration.zero : limit - used;
   }
 
   InProgress copyWith({

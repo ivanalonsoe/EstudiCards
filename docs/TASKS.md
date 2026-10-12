@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 3 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 4 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -309,7 +309,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 one correct option ticked = correct.
     - 🧪 multiple answer: ticking exactly the correct ones = correct; one missing or one extra = wrong (no partial credit).
 
-- [ ] **T3.4 Timers** · R 7.5 · US-18 · Depends on: T3.2
+- [x] **T3.4 Timers** · R 7.5 · US-18 · Depends on: T3.2
+  - > **Note:** the per-question timer stops when a simple card is flipped, on "Comprobar" and on "Ver respuesta"; the response time keeps counting until "Acerté" or "Fallé" (decided with the owner). `SessionRunner` sends a tick every second; tests use `fake_async`, now declared as a dev dependency. Pausing when the app goes to the background arrives with T3.8. See SPEC §13.1 ("Study session") and §13.2 (assumption 37).
   - Per-question and global timers, mutually exclusive, frozen while paused and in the background.
   - **Tests first** (with `fake_async`):
     - 🧪 per question: reaching 0 records a wrong answer with source `timeout`.

@@ -589,6 +589,7 @@ They are **mutually exclusive**: no timer, per question or global.
 | Global | 1–120 min | The session ends (`status = time_up`). Unresolved cards are recorded as `unanswered` and appear under "No respondidas". |
 
 - The timer freezes while paused and while the app is in the background.
+- The per-question timer stops when a simple card is flipped, on "Comprobar" and on "Ver respuesta": it limits the time to think of the answer. The response time keeps counting until "Acerté" or "Fallé".
 - Visual warning in the last 5 s (per question) or the last minute (global).
 
 ### 7.6 Percentages and metrics
@@ -1134,3 +1135,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Without "Permitir varias correctas", tapping an option replaces the ticked one; with it, each tap ticks or unticks the option. A test answer records the ticked options; "Ver respuesta" on a test card records the ones ticked so far.
     - Any wrong answer (self-graded, checked, revealed or timed out) adds a repeat at the end with "Repetir falladas al final".
     - Times come from `ActiveTime`, a stopwatch written as an immutable value. Each card has one that restarts from zero every time it is shown, and the session has another for `active_duration_ms`; pausing stops both.
+37. **Timers (T3.4):**
+    - The engine handles a `Tick` event: the global timer ends the session (`time_up`) and the per-question timer records a wrong answer (`timeout`) on a card still unanswered. Both are recorded at the moment the time ran out, not at the tick that noticed it. The time left and the warning come from the state (`questionTimeLeft`, `sessionTimeLeft`, `isTimeRunningOut`); the warning includes 0, so a timed-out card keeps showing it.
+    - The per-question timer stops at the time the card had when it was flipped, checked or revealed (`CurrentCard.thinkingTime`) and shows that time until the next card (§13.1, "Study session").
+    - `SessionRunner` (`domain/session_runner.dart`) is the only piece with a running timer: it keeps the current state, stamps each event with the clock's time and, only when the session has a timer, sends a `Tick` every second with `Timer.periodic`. It stops when the session finishes or when it is disposed. A tick while paused changes nothing, so time does not run during a pause.
+    - Tests use `fake_async` (now declared in `dev_dependencies`; it already came with `flutter_test`) and `FakeAsyncClock` (`test/helpers/`), a clock that moves with `fake_async`'s fake time, so no test waits for real.
+    - The engine trusts the limit it receives; P08 (T3.6) only offers the ranges of R 7.5.

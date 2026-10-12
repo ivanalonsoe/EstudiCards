@@ -82,6 +82,7 @@ class SessionEngine {
       at,
       SessionStatus.abandoned,
     ),
+    (final InProgress session, Tick()) => _checkTimers(session, at),
     (final InProgress session, final CardEvent cardEvent)
         when cardEvent.turn == session.current.turn =>
       _applyToCard(session, cardEvent, at),
@@ -94,8 +95,15 @@ class SessionEngine {
     final isTest = current.card.type == CardType.test;
 
     return switch ((current.step, event)) {
+      // Flipping stops the per-question timer (R 7.5), but not the response
+      // time, which runs until "Acerté" or "Fallé".
       (Answering(), Flip()) when !isTest => SessionStep(
-        _withStep(session, const Flipped()),
+        session.copyWith(
+          current: current.copyWith(
+            step: const Flipped(),
+            thinkingTime: current.clock.elapsedAt(at),
+          ),
+        ),
       ),
       (final Answering answering, ToggleOption(:final optionId)) when isTest =>
         SessionStep(
@@ -173,7 +181,12 @@ class SessionEngine {
     );
 
     return SessionStep(
-      _withStep(session, Resolved(attempt: attempt)).copyWith(
+      session.copyWith(
+        // The per-question timer stops here unless flipping stopped it.
+        current: current.copyWith(
+          step: Resolved(attempt: attempt),
+          thinkingTime: current.thinkingTime ?? current.clock.elapsedAt(at),
+        ),
         correctCount:
             session.correctCount + (isFirstAttempt && !missed ? 1 : 0),
         wrongCount: session.wrongCount + (isFirstAttempt && missed ? 1 : 0),
@@ -186,6 +199,37 @@ class SessionEngine {
       ),
       [attempt],
     );
+  }
+
+  /// What a [Tick] does (R 7.5). The answer or the end is recorded at the
+  /// moment the time ran out, not at the tick that noticed it.
+  SessionStep _checkTimers(InProgress session, DateTime at) {
+    final limit = session.settings.timerLimit;
+    switch (session.settings.timerType) {
+      case TimerType.global:
+        final used = session.clock.elapsedAt(at);
+        if (used >= limit) {
+          return _finish(
+            session,
+            at.subtract(used - limit),
+            SessionStatus.timeUp,
+          );
+        }
+      case TimerType.perCard:
+        final current = session.current;
+        final used = current.clock.elapsedAt(at);
+        if (current.step is Answering && used >= limit) {
+          return _resolve(
+            session,
+            at.subtract(used - limit),
+            AttemptResult.wrong,
+            AttemptSource.timeout,
+          );
+        }
+      case TimerType.none:
+        break;
+    }
+    return SessionStep(session);
   }
 
   /// [session] with the card on screen moved to [step].
