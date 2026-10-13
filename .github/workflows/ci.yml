@@ -159,9 +159,10 @@ jobs:
       #
       # A green run takes under 10 minutes. Sometimes the CI emulator hangs
       # after installing the app and no test ever starts; the limit makes
-      # that fail fast instead of using up the whole job's 45 minutes.
+      # that fail fast instead of using up the whole job's 45 minutes. It
+      # leaves room for the Patrol retry below.
       - name: Run integration and E2E tests on an Android emulator
-        timeout-minutes: 20
+        timeout-minutes: 25
         uses: reactivecircus/android-emulator-runner@v2
         with:
           # The default renderer (`-gpu swiftshader_indirect`) logged graphics
@@ -178,6 +179,24 @@ jobs:
           disk-size: 2048M
           # Leaves memory for the Gradle build that runs next to it.
           ram-size: 2048M
+          # Patrol sometimes runs the first E2E test and then stops before
+          # the next one starts, with no error but "Gradle test execution
+          # failed" (twice by T3.9; the same commit passed when run again).
+          # `--verbose` shows Gradle's output in the log, to find the cause,
+          # and a failed run is tried once more. Two failures in a row still
+          # fail the job.
           script: |
             flutter test integration_test -d emulator-5554
-            patrol test --device emulator-5554
+            patrol test --device emulator-5554 --verbose || patrol test --device emulator-5554 --verbose
+
+      # The Android test reports, kept when the tests fail so the cause can
+      # be studied (they stay for a few days in the run's "Artifacts").
+      - name: Upload the Android test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-reports
+          path: |
+            build/app/outputs/androidTest-results
+            build/app/reports/androidTests
+          if-no-files-found: ignore
