@@ -8,7 +8,16 @@ import 'package:estudicards/features/study/domain/attempt_record.dart';
 import 'package:estudicards/features/study/domain/card_selection.dart';
 
 /// `none` | `per_card` | `global` (R 7.5). Only one timer at a time.
-enum TimerType { none, perCard, global }
+enum TimerType {
+  none('none'),
+  perCard('per_card'),
+  global('global');
+
+  new(this.stored);
+
+  /// The value saved in `study_sessions.timer_type`.
+  final String stored;
+}
 
 /// The session choices the engine applies.
 class SessionSettings {
@@ -33,8 +42,19 @@ class SessionSettings {
 const questionWarningTime = Duration(seconds: 5);
 const sessionWarningTime = Duration(minutes: 1);
 
-/// How a session ended (SPEC §4.2 `study_sessions.status`).
-enum SessionStatus { completed, abandoned, timeUp }
+/// How a session ended (SPEC §4.2 `study_sessions.status`). A session
+/// still running is stored as `in_progress`, which has no case here: the
+/// engine knows it as [InProgress] or [Paused].
+enum SessionStatus {
+  completed('completed'),
+  abandoned('abandoned'),
+  timeUp('time_up');
+
+  new(this.stored);
+
+  /// The value saved in `study_sessions.status`.
+  final String stored;
+}
 
 /// A card waiting in the queue.
 class QueueEntry {

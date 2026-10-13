@@ -2,25 +2,40 @@
 // saved in `attempts` (SPEC §4.2).
 import 'package:estudicards/features/study/domain/study_options.dart';
 
-/// `correct` | `wrong` | `unanswered`.
-enum AttemptResult { correct, wrong, unanswered }
+/// `correct` | `wrong` | `unanswered`. The enum name is the stored value.
+enum AttemptResult {
+  correct,
+  wrong,
+  unanswered;
+
+  /// The result for a stored value. Unknown values fall back to
+  /// [unanswered], which changes no statistics.
+  static AttemptResult fromStored(String value) =>
+      values.asNameMap()[value] ?? unanswered;
+}
 
 /// How the result was reached (SPEC §4.2 `attempts.source`).
 enum AttemptSource {
   /// "Acerté" or "Fallé" on a simple card.
-  selfEval,
+  selfEval('self_eval'),
 
   /// "Comprobar" on a test card.
-  testCheck,
+  testCheck('test_check'),
 
   /// The per-question timer ran out (R 7.5).
-  timeout,
+  timeout('timeout'),
 
   /// "Ver respuesta" (R 7.3).
-  revealed,
+  revealed('revealed'),
 
   /// The session ended with the card still unresolved (R 7.3).
-  sessionEnd,
+  sessionEnd('session_end');
+
+  // An enum can carry values: each case above passes its stored text.
+  new(this.stored);
+
+  /// The value saved in `attempts.source`.
+  final String stored;
 }
 
 class AttemptRecord {
