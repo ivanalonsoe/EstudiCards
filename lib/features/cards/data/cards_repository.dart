@@ -68,7 +68,7 @@ class CardsRepository {
   Future<Flashcard?> getById(String id) async {
     final row = await _dao.findById(id);
     if (row == null) return null;
-    return _toFlashcard(row, await _dao.optionsOf([id]));
+    return flashcardFromRows(row, await _dao.optionsOf([id]));
   }
 
   /// Deletes the card for good, with its options, statistics and attempts,
@@ -183,7 +183,7 @@ class CardsRepository {
     final summaries = [
       for (final row in rows)
         CardSummary(
-          card: _toFlashcard(row.card, [
+          card: flashcardFromRows(row.card, [
             for (final option in options)
               if (option.cardId == row.card.id) option,
           ]),
@@ -249,30 +249,32 @@ class CardsRepository {
     final errors = input.validate();
     if (errors.isNotEmpty) throw InvalidCardException(errors);
   }
-
-  static Flashcard _toFlashcard(CardRow row, List<CardOptionRow> options) =>
-      Flashcard(
-        id: row.id,
-        deckId: row.deckId,
-        type: CardType.fromStored(row.type),
-        question: row.question,
-        questionImage: row.questionImage,
-        answer: row.answer,
-        answerImage: row.answerImage,
-        explanation: row.explanation,
-        allowMultiple: row.allowMultiple,
-        example: row.example,
-        notes: row.notes,
-        options: [
-          for (final option in options)
-            CardOption(
-              id: option.id,
-              text: option.optionText,
-              isCorrect: option.isCorrect,
-              position: option.position,
-            ),
-        ],
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      );
 }
+
+/// The domain card for a stored [row] and its [options] (already in their
+/// editing order). The study session reads cards with it too.
+Flashcard flashcardFromRows(CardRow row, List<CardOptionRow> options) =>
+    Flashcard(
+      id: row.id,
+      deckId: row.deckId,
+      type: CardType.fromStored(row.type),
+      question: row.question,
+      questionImage: row.questionImage,
+      answer: row.answer,
+      answerImage: row.answerImage,
+      explanation: row.explanation,
+      allowMultiple: row.allowMultiple,
+      example: row.example,
+      notes: row.notes,
+      options: [
+        for (final option in options)
+          CardOption(
+            id: option.id,
+            text: option.optionText,
+            isCorrect: option.isCorrect,
+            position: option.position,
+          ),
+      ],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    );

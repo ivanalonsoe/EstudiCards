@@ -36,6 +36,13 @@ enum AttemptSource {
 
   /// The value saved in `attempts.source`.
   final String stored;
+
+  /// The source for a stored value. Unknown values fall back to
+  /// [sessionEnd].
+  static AttemptSource fromStored(String value) => values.firstWhere(
+    (source) => source.stored == value,
+    orElse: () => sessionEnd,
+  );
 }
 
 class AttemptRecord {

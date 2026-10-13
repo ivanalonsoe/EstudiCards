@@ -6,11 +6,14 @@ import 'package:drift/drift.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/ids.dart';
+import 'package:estudicards/features/cards/data/cards_repository.dart';
 import 'package:estudicards/features/study/data/study_dao.dart';
 import 'package:estudicards/features/study/domain/attempt_record.dart';
 import 'package:estudicards/features/study/domain/session_config.dart';
 import 'package:estudicards/features/study/domain/session_engine.dart';
+import 'package:estudicards/features/study/domain/session_results.dart';
 import 'package:estudicards/features/study/domain/session_state.dart';
+import 'package:estudicards/features/study/domain/study_options.dart';
 
 class StudyRepository {
   new(this._dao, this._clock);
@@ -65,6 +68,49 @@ class StudyRepository {
     });
   }
 
+  /// What the results screen shows about session [sessionId] (P11); null
+  /// if there is no such session.
+  Future<SessionResults?> results(String sessionId) async {
+    final session = await _dao.findSession(sessionId);
+    if (session == null) return null;
+    final project = await _dao.findProject(session.projectId);
+    final decks = await _dao.decksOf(sessionId);
+    final attemptRows = await _dao.attemptsOf(sessionId);
+    final cardIds = {for (final row in attemptRows) row.cardId};
+    final cardRows = await _dao.cardsByIds(cardIds);
+    final options = await _dao.optionsOf(cardIds);
+
+    return SessionResults(
+      sessionId: session.id,
+      projectId: session.projectId,
+      projectName: project?.name ?? '',
+      deckNames: [for (final deck in decks) deck.name],
+      config: SessionConfig(
+        deckIds: [for (final deck in decks) deck.id],
+        mode: StudyMode.fromStored(session.mode),
+        direction: StudyDirection.fromStored(session.direction),
+        requestedCount: session.requestedCount,
+        prioritizeFailed: session.prioritizeFailed,
+        repeatFailed: session.repeatFailed,
+        timerType: TimerType.fromStored(session.timerType),
+        timerSeconds: session.timerSeconds,
+      ),
+      status: SessionStatus.fromStored(session.status),
+      correctCount: session.correctTotal,
+      wrongCount: session.wrongTotal,
+      unansweredCount: session.unansweredTotal,
+      activeDuration: Duration(milliseconds: session.activeDurationMs),
+      attempts: [for (final row in attemptRows) _attemptRecord(row)],
+      cards: {
+        for (final row in cardRows)
+          row.id: flashcardFromRows(row, [
+            for (final option in options)
+              if (option.cardId == row.id) option,
+          ]),
+      },
+    );
+  }
+
   /// Saves how the session ended. The totals are counted from the saved
   /// attempts, first attempts only (SPEC §4.2), so repeats never count.
   Future<void> _finish(String sessionId, Finished finished) async {
@@ -85,6 +131,25 @@ class StudyRepository {
         wrongTotal: Value(total(AttemptResult.wrong)),
         unansweredTotal: Value(total(AttemptResult.unanswered)),
       ),
+    );
+  }
+
+  static AttemptRecord _attemptRecord(AttemptRow row) {
+    final selected = row.selectedOptionIds;
+    final responseTime = row.responseTimeMs;
+    return AttemptRecord(
+      cardId: row.cardId,
+      direction: StudyDirection.fromStored(row.direction),
+      result: AttemptResult.fromStored(row.result),
+      source: AttemptSource.fromStored(row.source),
+      isFirstAttempt: row.isFirstAttempt,
+      selectedOptionIds: selected == null
+          ? null
+          : {for (final id in jsonDecode(selected) as List<dynamic>) '$id'},
+      responseTime: responseTime == null
+          ? null
+          : Duration(milliseconds: responseTime),
+      answeredAt: row.answeredAt,
     );
   }
 

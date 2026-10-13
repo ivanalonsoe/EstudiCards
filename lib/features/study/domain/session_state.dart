@@ -17,6 +17,10 @@ enum TimerType {
 
   /// The value saved in `study_sessions.timer_type`.
   final String stored;
+
+  /// The type for a stored value. Unknown values fall back to [none].
+  static TimerType fromStored(String value) =>
+      values.firstWhere((type) => type.stored == value, orElse: () => none);
 }
 
 /// The session choices the engine applies.
@@ -54,6 +58,10 @@ enum SessionStatus {
 
   /// The value saved in `study_sessions.status`.
   final String stored;
+
+  /// The status for a stored value; null for `in_progress` (or unknown).
+  static SessionStatus? fromStored(String value) =>
+      values.where((status) => status.stored == value).firstOrNull;
 }
 
 /// A card waiting in the queue.

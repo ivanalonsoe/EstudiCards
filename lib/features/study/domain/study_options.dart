@@ -2,8 +2,23 @@
 // SPEC §4.2 `study_sessions`). The enum names are the stored values.
 
 /// `normal` | `errors` ("Solo errores", R 7.2).
-enum StudyMode { normal, errors }
+enum StudyMode {
+  normal,
+  errors;
+
+  /// The mode for a stored value. Unknown values fall back to [normal].
+  static StudyMode fromStored(String value) =>
+      values.asNameMap()[value] ?? normal;
+}
 
 /// `normal` | `reverse` ("Sentido"). Reverse only affects simple cards of
 /// language decks (R 7.3).
-enum StudyDirection { normal, reverse }
+enum StudyDirection {
+  normal,
+  reverse;
+
+  /// The direction for a stored value. Unknown values fall back to
+  /// [normal].
+  static StudyDirection fromStored(String value) =>
+      values.asNameMap()[value] ?? normal;
+}

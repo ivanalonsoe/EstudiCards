@@ -936,7 +936,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 1. Test cards are always studied in the normal direction, even in a reverse session.
 2. Archived projects cannot be studied until unarchived and do not count for the dashboard "Review errors" shortcut. They do count in the global statistics.
 3. Unanswered cards do not affect statistics, errors or the streak.
-4. The results screen celebration appears at 80% correct or more.
+4. The results screen celebration appears at 80% correct or more. The design screenshots show it at 79%; the threshold stays at 80% (decided with the owner in T3.9).
 5. On desktop, "Share" saves the file with "Save as…" instead of a share menu.
 6. Images are compressed to 1600 px / JPEG 80 and travel as base64 inside the JSON.
 7. The pre-commit format check (§10.4) uses `dart format --output=none`: it only reports badly formatted files and does not rewrite them, so the working copy never silently differs from what was staged. The developer runs `dart format .` and stages again.
@@ -1147,3 +1147,11 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The totals are counted from the saved attempts, first attempts only, not taken from the engine's counters. `ended_at` is the clock's time when the end is saved.
     - The ticked options are stored as a sorted JSON list of option IDs. Stored texts come from the enums (`AttemptSource.stored`, `TimerType.stored`, `SessionStatus.stored`), e.g. `self_eval`, `per_card` and `time_up`.
     - Attempts do not update `card_stats` yet: that is T4.1. Until then, the deck and project numbers still show "—" after studying (assumption 30).
+39. **Results (T3.9):**
+    - `ResultsScreen` (`lib/features/study/presentation/results_screen.dart`) is on `/results/:sessionId`, next to the sidebar on desktop (assumption 12). `SessionResults` (`domain/session_results.dart`) works out what it shows; `StudyRepository.results` reads the session, its decks, its attempts and its cards.
+    - Title (decided with the owner): "¡Buen trabajo!" from 80% with the celebration, "Sesión terminada" below it, and "¡Se acabó el tiempo!" when the global timer ended the session (the celebration still depends on the %). The celebration uses the % as shown, rounded, so "80%" always comes with it; with no answers the ring shows "—". For now it is a still set of small shapes around the ring; its animation is part of phase 6.
+    - The counts are the session's saved totals (first attempts), so they stay if cards or statistics are deleted later (R 7.4). The total is correct + wrong + unanswered. The average time is the mean response time of the answered first attempts, like every other number on this screen.
+    - "Falladas" lists the cards missed at their first attempt and "No respondidas" the original cards left unanswered, in the order they were answered; deleted cards are left out. Each row shows what was asked, in grey, and the correct answer: in reverse, the answer was asked and the question is the solution, and a test card shows its correct options. On mobile both lists share one card and open and close from their heading ("Falladas" starts open); on desktop they are two cards side by side.
+    - "Repasar falladas ahora" (US-20 AC1) saves a new session with the same decks, direction, timer and "Repetir falladas al final", in normal mode and asking for exactly the missed cards, shuffles those cards and opens `/session/:sessionId`. It is not shown when nothing was missed. Until the session screen (T3.7) the route still shows its placeholder: the queue waits in `launchedSessionsProvider` (`presentation/session_launch.dart`), which T3.7 reads.
+    - "Repetir sesión" is hidden until the session setup (T3.6) can load the candidate cards (decided with the owner, as in assumption 16). The ✕ on mobile, "Volver" and "Volver al proyecto" go back to the project. An unknown session shows "Esta sesión ya no existe".
+    - `randomProvider` (`core/providers.dart`) gives the app its `Random`; widget tests get a seeded one from `pumpTestApp`.
