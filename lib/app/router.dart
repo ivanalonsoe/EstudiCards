@@ -16,6 +16,7 @@ import 'package:estudicards/features/decks/presentation/deck_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
+import 'package:estudicards/features/study/presentation/results_screen.dart';
 import 'package:estudicards/features/trash/presentation/trash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -129,7 +130,13 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                 (l10n) => l10n.studySession,
                 fullScreen: true,
               ),
-              screen('results/:sessionId', 'results', (l10n) => l10n.results),
+              GoRoute(
+                path: 'results/:sessionId',
+                builder: (context, state) => ResultsScreen(
+                  key: const Key('screen.results'),
+                  sessionId: state.pathParameters['sessionId']!,
+                ),
+              ),
               screen('import', 'import', (l10n) => l10n.importTitle),
               screen('statistics', 'statistics', (l10n) => l10n.statistics),
               GoRoute(

@@ -6,11 +6,13 @@
 // overrides `databaseProvider` with an in-memory database and
 // `clockProvider` with a `FakeClock`.
 import 'dart:io';
+import 'dart:math';
 
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
+import 'package:estudicards/core/random.dart';
 import 'package:estudicards/core/voice/system_voice.dart';
 import 'package:estudicards/core/voice/voice.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +28,10 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 /// The current time (see `core/clock.dart`).
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
+
+/// Randomness for card selection and shuffling (see `core/random.dart`).
+/// Tests override it with a seeded one.
+final randomProvider = Provider<Random>((ref) => createRandom());
 
 /// The folder with the card images: `<app documents>/images` (SPEC §3.4).
 /// A `FutureProvider` because the system answers where the documents

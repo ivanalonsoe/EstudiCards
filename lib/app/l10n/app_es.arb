@@ -34,10 +34,6 @@
   "@studySession": {
     "description": "Title of the study session screen (P09)."
   },
-  "results": "Resultados",
-  "@results": {
-    "description": "Title of the session results screen (P11)."
-  },
   "importTitle": "Importar",
   "@importTitle": {
     "description": "Title of the import wizard (P07)."
@@ -1043,5 +1039,62 @@
   "languageZhCN": "Chino",
   "@languageZhCN": { "description": "Language name (zh-CN) in the language selectors." },
   "languageJaJP": "Japonés",
-  "@languageJaJP": { "description": "Language name (ja-JP) in the language selectors." }
+  "@languageJaJP": { "description": "Language name (ja-JP) in the language selectors." },
+  "resultsGoodJob": "¡Buen trabajo!",
+  "@resultsGoodJob": { "description": "Results title (P11) at 80% correct or more, with the celebration." },
+  "resultsFinished": "Sesión terminada",
+  "@resultsFinished": { "description": "Results title (P11) below 80% correct." },
+  "resultsTimeUp": "¡Se acabó el tiempo!",
+  "@resultsTimeUp": { "description": "Results title (P11) when the global timer ended the session." },
+  "resultsCorrectRateLabel": "aciertos",
+  "@resultsCorrectRateLabel": { "description": "Word under the % inside the results ring, e.g. '79%' / 'aciertos'." },
+  "resultsCorrect": "acertadas",
+  "@resultsCorrect": { "description": "Label under the number of correct cards in the results tiles." },
+  "resultsWrong": "falladas",
+  "@resultsWrong": { "description": "Label under the number of missed cards in the results tiles." },
+  "resultsUnanswered": "sin responder",
+  "@resultsUnanswered": { "description": "Label under the number of unanswered cards in the results tiles." },
+  "resultsTimeTile": "tiempo · {average}/tarjeta",
+  "@resultsTimeTile": {
+    "description": "Label of the desktop time tile, under the total time; average is e.g. '18 s'.",
+    "placeholders": { "average": { "type": "String" } }
+  },
+  "resultsTotalTime": "{time} en total",
+  "@resultsTotalTime": {
+    "description": "Total study time in the results summary line, e.g. '6:12 en total'.",
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "resultsAverageTime": "{average} de media",
+  "@resultsAverageTime": {
+    "description": "Average answer time in the results summary line, e.g. '18 s de media'.",
+    "placeholders": { "average": { "type": "String" } }
+  },
+  "secondsShort": "{count} s",
+  "@secondsShort": {
+    "description": "A short time in seconds, e.g. '18 s'.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "listAnd": "{items} y {last}",
+  "@listAnd": {
+    "description": "Joins the last item of a list, e.g. 'Verbos irregulares y Phrasal verbs'.",
+    "placeholders": { "items": { "type": "String" }, "last": { "type": "String" } }
+  },
+  "resultsMissedList": "Falladas ({count})",
+  "@resultsMissedList": {
+    "description": "Heading of the list of cards missed in the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "resultsUnansweredList": "No respondidas ({count})",
+  "@resultsUnansweredList": {
+    "description": "Heading of the list of cards left unanswered in the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reviewMissedNow": "Repasar falladas ahora",
+  "@reviewMissedNow": { "description": "Results button that starts a session with only the cards missed (US-20 AC1)." },
+  "back": "Volver",
+  "@back": { "description": "Results button (mobile) that goes back to the project." },
+  "backToProject": "Volver al proyecto",
+  "@backToProject": { "description": "Results button (desktop) that goes back to the project." },
+  "sessionNotFound": "Esta sesión ya no existe",
+  "@sessionNotFound": { "description": "Shown on the results screen when the session does not exist." }
 }

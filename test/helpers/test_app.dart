@@ -10,6 +10,7 @@ import 'package:estudicards/core/files/card_image.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/random.dart';
 import 'package:estudicards/core/voice/voice.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,6 +73,8 @@ Future<GoRouter> pumpTestApp(
         clockProvider.overrideWithValue(
           clock ?? FakeClock(DateTime.utc(2026, 10, 6, 12)),
         ),
+        // A seeded Random, so shuffling is the same on every run.
+        randomProvider.overrideWithValue(createRandom(seed: 1)),
         imagesFolderProvider.overrideWith((ref) => folder),
         imageFilesProvider.overrideWithValue(
           DiskImageFiles(

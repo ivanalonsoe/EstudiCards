@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 4 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 6 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -319,7 +319,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 time does not advance while paused.
     - 🧪 the warning turns on in the last 5 s or the last minute.
 
-- [ ] **T3.5 Saving attempts and sessions** · Depends on: T3.2
+- [x] **T3.5 Saving attempts and sessions** · Depends on: T3.2
+  - > **Note:** `StudyRepository.record` saves each engine step (its attempts and, at the end, the session's status and first-attempt totals) in one transaction. `card_stats` is not updated until T4.1. See SPEC §13.2 (assumption 38).
   - Each answer is saved immediately, in a transaction.
   - **Tests first:**
     - 🧪 answering saves an attempt with the response time, excluding pauses.
@@ -347,7 +348,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 sending the app to the background pauses it.
     - 🧩 "Salir" asks for confirmation and goes to results.
 
-- [ ] **T3.9 Results** · P11 · US-20 · Depends on: T3.5
+- [x] **T3.9 Results** · P11 · US-20 · Depends on: T3.5
+  - > **Note:** decided with the owner: the celebration stays at 80% (the screenshots show 79%); the title is "¡Buen trabajo!" from 80%, "Sesión terminada" below and "¡Se acabó el tiempo!" when the global timer ran out; "Repetir sesión" is hidden until T3.6. "Repasar falladas ahora" saves the new session and leaves its cards for the session screen (T3.7), which until then shows its placeholder. See SPEC §13.2 (assumptions 4 and 39).
   - **Tests first:**
     - 🧩 shows %, correct, wrong, unanswered, total and average time.
     - 🧩 at ≥ 80% the celebration is shown; at 79% it is not.
