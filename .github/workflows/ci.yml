@@ -98,7 +98,7 @@ jobs:
     name: e2e-android
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Check out the code
         uses: actions/checkout@v7
@@ -142,6 +142,35 @@ jobs:
           sudo docker image prune --all --force > /dev/null
           df -h /
 
+      # The project's gradle.properties lets Gradle use up to 8 GB of heap
+      # plus 4 GB of metaspace, which is fine on a developer PC. Here the
+      # runner has 16 GB for Gradle, the Dart compiler and the emulator
+      # together: when Gradle built with the emulator running, the emulator
+      # froze ("detected a hanging thread") and GitHub shut the runner down.
+      # Settings in ~/.gradle/gradle.properties win over the project's, so
+      # this lowers the limits on CI only.
+      - name: Limit Gradle's memory
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -XX:ReservedCodeCacheSize=256m
+          kotlin.daemon.jvmargs=-Xmx1g
+          EOF
+
+      # The Android build needs this NDK and CMake (the versions Flutter
+      # asks for), which the runner does not have. Gradle downloads them
+      # itself, but a broken download ("Error on ZipFile unknown archive")
+      # once failed the whole build. Installing them here lets a bad
+      # download be tried again.
+      - name: Install the Android NDK and CMake
+        run: |
+          for attempt in 1 2 3; do
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+              "ndk;28.2.13676358" "cmake;3.22.1" > /dev/null && exit 0
+            echo "Download failed (attempt $attempt), trying again"
+          done
+          exit 1
+
       # Do the heavy first Gradle build before the emulator starts. With the
       # emulator running too, the runner can run out of resources and the
       # emulator crashes; afterwards only a quick incremental build remains.
@@ -157,12 +186,10 @@ jobs:
 
       # Starts an emulator, runs the script on it and shuts it down.
       #
-      # A green run takes under 10 minutes. Sometimes the CI emulator hangs
-      # after installing the app and no test ever starts; the limit makes
-      # that fail fast instead of using up the whole job's 45 minutes. It
-      # leaves room for the Patrol retry below.
+      # A green run takes under 10 minutes. The limit leaves room for the
+      # retries below and still stops a stuck emulator before the job's own.
       - name: Run integration and E2E tests on an Android emulator
-        timeout-minutes: 25
+        timeout-minutes: 35
         uses: reactivecircus/android-emulator-runner@v2
         with:
           # The default renderer (`-gpu swiftshader_indirect`) logged graphics
@@ -179,15 +206,16 @@ jobs:
           disk-size: 2048M
           # Leaves memory for the Gradle build that runs next to it.
           ram-size: 2048M
-          # Patrol sometimes runs the first E2E test and then stops before
-          # the next one starts, with no error but "Gradle test execution
-          # failed" (twice by T3.9; the same commit passed when run again).
-          # `--verbose` shows Gradle's output in the log, to find the cause,
-          # and a failed run is tried once more. Two failures in a row still
-          # fail the job.
+          # Both test commands sometimes hang or stop on the CI emulator
+          # while the same commit passes when run again: after installing
+          # the app no test starts, or Patrol stops after its first test with
+          # "Gradle test execution failed". Each attempt gets 8 minutes (a
+          # green one takes about 4) and a failed or stuck one is tried once
+          # more; two failures in a row still fail the job. `--verbose` shows
+          # Gradle's output in the log, to find the cause.
           script: |
-            flutter test integration_test -d emulator-5554
-            patrol test --device emulator-5554 --verbose || patrol test --device emulator-5554 --verbose
+            timeout 8m flutter test integration_test -d emulator-5554 || timeout 8m flutter test integration_test -d emulator-5554
+            timeout 8m patrol test --device emulator-5554 --verbose || timeout 8m patrol test --device emulator-5554 --verbose
 
       # The Android test reports, kept when the tests fail so the cause can
       # be studied (they stay for a few days in the run's "Artifacts").
