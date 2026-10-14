@@ -120,7 +120,6 @@ void main() {
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
-        AppRoutes.sessionSetup('p1'): 'Configurar sesión',
         AppRoutes.session('s1'): 'Sesión de estudio',
         AppRoutes.import: 'Importar',
         AppRoutes.statistics: 'Estadísticas',

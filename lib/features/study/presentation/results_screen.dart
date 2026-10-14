@@ -16,9 +16,6 @@ import 'package:go_router/go_router.dart';
 
 /// P11: the results of a study session (`docs/design/movil-claro/
 /// resultados.png`, `escritorio-claro/resultados.png`).
-///
-/// "Repetir sesión" arrives with the session setup (T3.6), as decided with
-/// the owner.
 class ResultsScreen extends ConsumerWidget {
   const new({required this.sessionId, super.key});
 
@@ -141,6 +138,8 @@ class _MobileResults extends StatelessWidget {
                   _ReviewMissedButton(results: results, expanded: true),
                   const SizedBox(height: AppSpacing.md),
                 ],
+                _RepeatSessionButton(results: results, expanded: true),
+                const SizedBox(height: AppSpacing.sm),
                 TextButton(
                   key: const Key('results.back'),
                   style: TextButton.styleFrom(
@@ -244,6 +243,7 @@ class _DesktopResults extends StatelessWidget {
                     onPressed: () => _backToProject(context, results),
                     child: Text(l10n.backToProject),
                   ),
+                  _RepeatSessionButton(results: results, expanded: false),
                   if (results.missed.isNotEmpty)
                     _ReviewMissedButton(results: results, expanded: false),
                 ],
@@ -571,9 +571,8 @@ class _CardRow extends StatelessWidget {
   }
 }
 
-/// "Repasar falladas ahora" (US-20 AC1). It starts the new session once,
-/// even if tapped twice.
-class _ReviewMissedButton extends ConsumerStatefulWidget {
+/// "Repasar falladas ahora" (US-20 AC1), the main button.
+class _ReviewMissedButton extends StatelessWidget {
   const new({required this.results, required this.expanded});
 
   final SessionResults results;
@@ -582,36 +581,89 @@ class _ReviewMissedButton extends ConsumerStatefulWidget {
   final bool expanded;
 
   @override
-  ConsumerState<_ReviewMissedButton> createState() =>
-      _ReviewMissedButtonState();
+  Widget build(BuildContext context) => _StartSessionButton(
+    key: const Key('results.reviewMissed'),
+    label: AppLocalizations.of(context).reviewMissedNow,
+    icon: expanded ? Icons.refresh_rounded : Icons.play_arrow_rounded,
+    filled: true,
+    expanded: expanded,
+    start: (ref) => startReviewOfMissed(ref, results),
+  );
 }
 
-class _ReviewMissedButtonState extends ConsumerState<_ReviewMissedButton> {
+/// "Repetir sesión" (US-20 AC2): the same configuration, with a new random
+/// selection of cards.
+class _RepeatSessionButton extends StatelessWidget {
+  const new({required this.results, required this.expanded});
+
+  final SessionResults results;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context) => _StartSessionButton(
+    key: const Key('results.repeatSession'),
+    label: AppLocalizations.of(context).repeatSession,
+    icon: Icons.replay_rounded,
+    filled: false,
+    expanded: expanded,
+    start: (ref) => launchSession(ref, results.projectId, results.config),
+  );
+}
+
+/// A button that starts a new session with [start] and opens it. It starts
+/// the session once, even if tapped twice.
+class _StartSessionButton extends ConsumerStatefulWidget {
+  const new({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    required this.expanded,
+    required this.start,
+    super.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool filled;
+  final bool expanded;
+
+  /// Starts the session and returns its ID.
+  final Future<String> Function(WidgetRef ref) start;
+
+  @override
+  ConsumerState<_StartSessionButton> createState() =>
+      _StartSessionButtonState();
+}
+
+class _StartSessionButtonState extends ConsumerState<_StartSessionButton> {
   bool _starting = false;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return FilledButton.icon(
-      key: const Key('results.reviewMissed'),
-      style: widget.expanded
-          ? FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(
-                minTouchTarget + AppSpacing.sm,
-              ),
-            )
-          : null,
-      onPressed: _starting ? null : _start,
-      icon: Icon(
-        widget.expanded ? Icons.refresh_rounded : Icons.play_arrow_rounded,
-      ),
-      label: Text(l10n.reviewMissedNow),
-    );
+    final size = widget.expanded
+        ? const Size.fromHeight(minTouchTarget + AppSpacing.sm)
+        : null;
+    final onPressed = _starting ? null : _start;
+    final icon = Icon(widget.icon);
+    final label = Text(widget.label);
+    return widget.filled
+        ? FilledButton.icon(
+            style: FilledButton.styleFrom(minimumSize: size),
+            onPressed: onPressed,
+            icon: icon,
+            label: label,
+          )
+        : OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: size),
+            onPressed: onPressed,
+            icon: icon,
+            label: label,
+          );
   }
 
   Future<void> _start() async {
     setState(() => _starting = true);
-    final sessionId = await startReviewOfMissed(ref, widget.results);
+    final sessionId = await widget.start(ref);
     if (mounted) context.go(AppRoutes.session(sessionId));
   }
 }

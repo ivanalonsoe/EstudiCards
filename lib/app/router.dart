@@ -17,6 +17,7 @@ import 'package:estudicards/features/projects/presentation/archived_screen.dart'
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
 import 'package:estudicards/features/study/presentation/results_screen.dart';
+import 'package:estudicards/features/study/presentation/session_setup_screen.dart';
 import 'package:estudicards/features/trash/presentation/trash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -32,7 +33,11 @@ abstract final class AppRoutes {
   static const settings = '/settings';
 
   static String project(String projectId) => '/project/$projectId';
-  static String sessionSetup(String projectId) => '/project/$projectId/study';
+
+  /// The session setup; opened from a deck ([deckId]), only that deck is
+  /// chosen.
+  static String sessionSetup(String projectId, {String? deckId}) =>
+      '/project/$projectId/study${deckId == null ? '' : '?deck=$deckId'}';
   static String deck(String projectId, String deckId) =>
       '/project/$projectId/deck/$deckId';
   static String newCard(String projectId, String deckId) =>
@@ -91,7 +96,15 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                   projectId: state.pathParameters['projectId']!,
                 ),
                 routes: [
-                  screen('study', 'sessionSetup', (l10n) => l10n.sessionSetup),
+                  GoRoute(
+                    path: 'study',
+                    builder: (context, state) => SessionSetupScreen(
+                      key: const Key('screen.sessionSetup'),
+                      projectId: state.pathParameters['projectId']!,
+                      // `?deck=` when opened from a deck.
+                      deckId: state.uri.queryParameters['deck'],
+                    ),
+                  ),
                   GoRoute(
                     path: 'deck/:deckId',
                     builder: (context, state) => DeckScreen(

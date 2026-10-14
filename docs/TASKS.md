@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 6 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 7 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -327,7 +327,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 if the app "closes" midway (the engine is discarded), the answered attempts are in the database.
     - 🧪 session totals only count first attempts.
 
-- [ ] **T3.6 Session setup** · P08 · US-14 · Depends on: T3.1, T1.5
+- [x] **T3.6 Session setup** · P08 · US-14 · Depends on: T3.1, T1.5
+  - > **Note:** decided with the owner: "Otro" uses a − / + row; opened from a deck, only that deck is chosen; "Sentido" names the language pair when the chosen language decks share it and says "Normal" / "Inverso" otherwise. The last configuration is saved when a session starts. "Estudiar" appears on the project and deck screens, and "Repetir sesión" on the results. See SPEC §13.2 (assumptions 39 and 40).
   - **Tests first:**
     - 🧩 loads the project's last configuration.
     - 🧩 the number of available cards changes when the decks or mode change.
