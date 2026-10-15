@@ -35,10 +35,26 @@ class StudyCard extends StatelessWidget {
     this.answerImage,
     this.speechLanguages,
     this.speaker,
+    this.options,
+    this.onOptionTap,
+    this.reversed = false,
     super.key,
   });
 
   final Flashcard card;
+
+  /// Test cards: the options in the order to show them. The session
+  /// shuffles them every time it shows the card (R 7.2); null keeps the
+  /// card's own order, as in the editor preview.
+  final List<CardOption>? options;
+
+  /// Test cards: called with an option's ID when it is tapped, until the
+  /// solution is shown. Null makes the options read-only.
+  final ValueChanged<String>? onOptionTap;
+
+  /// A simple card studied in reverse (R 7.3): the front shows the answer
+  /// and the back shows the question, the one to guess, under it.
+  final bool reversed;
 
   /// The languages of a language deck, to read the card aloud (US-13); null
   /// in a general deck, which has no speaker buttons.
@@ -105,6 +121,10 @@ class StudyCard extends StatelessWidget {
       child: card.type == CardType.test
           ? _TestContent(
               card: card,
+              options: options ?? card.options,
+              onOptionTap: checked || face == CardFace.back
+                  ? null
+                  : onOptionTap,
               selectedOptionIds: selectedOptionIds,
               showSolution: checked || face == CardFace.back,
               answeredCorrectly: face == CardFace.front
@@ -116,16 +136,29 @@ class StudyCard extends StatelessWidget {
             )
           : face == CardFace.front
           ? _SimpleFront(
-              card: card,
-              image: questionImage,
-              speaker: _speakerFor(face, SpeechPart.question),
+              text: reversed ? card.answer ?? '' : card.question,
+              image: reversed ? answerImage : questionImage,
+              speaker: _speakerFor(
+                face,
+                reversed ? SpeechPart.answer : SpeechPart.question,
+              ),
             )
           : _SimpleBack(
               card: card,
+              // In reverse the answer was shown, and the question is the
+              // solution.
+              prompt: reversed ? card.answer ?? '' : card.question,
+              solution: reversed ? card.question : card.answer ?? '',
               isLanguage: languagePair != null,
-              image: answerImage,
-              questionSpeaker: _speakerFor(face, SpeechPart.question),
-              answerSpeaker: _speakerFor(face, SpeechPart.answer),
+              image: reversed ? questionImage : answerImage,
+              promptSpeaker: _speakerFor(
+                face,
+                reversed ? SpeechPart.answer : SpeechPart.question,
+              ),
+              solutionSpeaker: _speakerFor(
+                face,
+                reversed ? SpeechPart.question : SpeechPart.answer,
+              ),
               exampleSpeaker: _speakerFor(face, SpeechPart.example),
             ),
     );
@@ -426,13 +459,14 @@ class _CardImage extends StatelessWidget {
   }
 }
 
+/// The front of a simple card: its question, or its answer in reverse.
 class _SimpleFront extends StatelessWidget {
-  const new({required this.card, this.image, this.speaker});
+  const new({required this.text, this.image, this.speaker});
 
-  final Flashcard card;
+  final String text;
   final ImageProvider? image;
 
-  /// Under the question in a language deck (variant 9).
+  /// Under the text in a language deck (variant 9).
   final Widget? speaker;
 
   @override
@@ -444,7 +478,7 @@ class _SimpleFront extends StatelessWidget {
           semanticLabel: AppLocalizations.of(context).questionImageLabel,
         ),
       FormattedText(
-        card.question,
+        text,
         textAlign: TextAlign.center,
         style: _bigText(context),
       ),
@@ -471,26 +505,31 @@ Widget _withSpeaker(Widget text, Widget? speaker) => speaker == null
 /// Characters from which an answer is shown as a paragraph.
 const _longAnswer = 120;
 
-/// The answer under a small copy of the question; in a language project,
-/// also the example sentence and the notes (variants 2 and 7).
+/// The [solution] under a small copy of the [prompt]: the answer under the
+/// question, or the other way round in reverse. In a language project, also
+/// the example sentence and the notes (variants 2 and 7).
 class _SimpleBack extends StatelessWidget {
   const new({
     required this.card,
+    required this.prompt,
+    required this.solution,
     required this.isLanguage,
     this.image,
-    this.questionSpeaker,
-    this.answerSpeaker,
+    this.promptSpeaker,
+    this.solutionSpeaker,
     this.exampleSpeaker,
   });
 
   final Flashcard card;
+  final String prompt;
+  final String solution;
   final bool isLanguage;
   final ImageProvider? image;
 
-  /// In a language deck: next to the question and the example, as in the
-  /// design, and under the answer, which US-13 also reads.
-  final Widget? questionSpeaker;
-  final Widget? answerSpeaker;
+  /// In a language deck: next to the prompt and the example, as in the
+  /// design, and under the solution, which US-13 also reads.
+  final Widget? promptSpeaker;
+  final Widget? solutionSpeaker;
   final Widget? exampleSpeaker;
 
   @override
@@ -500,7 +539,7 @@ class _SimpleBack extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final example = isLanguage ? card.example : null;
     final notes = isLanguage ? card.notes : null;
-    final answer = card.answer ?? '';
+    final answer = solution;
     // A long answer is read like a paragraph: smaller and aligned to the
     // left, with the question above it (variant 11).
     final isLong = answer.length > _longAnswer;
@@ -520,13 +559,13 @@ class _SimpleBack extends StatelessWidget {
       children: [
         _withSpeaker(
           FormattedText(
-            card.question,
+            prompt,
             textAlign: isLanguage || isLong
                 ? TextAlign.start
                 : TextAlign.center,
             style: text.titleSmall?.copyWith(color: colors.textMuted),
           ),
-          questionSpeaker,
+          promptSpeaker,
         ),
         const SizedBox(height: AppSpacing.lg),
         if (image case final image?)
@@ -541,7 +580,7 @@ class _SimpleBack extends StatelessWidget {
                 )
               : _bigText(context),
         ),
-        if (answerSpeaker case final speaker?) ...[
+        if (solutionSpeaker case final speaker?) ...[
           const SizedBox(height: AppSpacing.sm),
           Center(child: speaker),
         ],
@@ -573,6 +612,8 @@ class _SimpleBack extends StatelessWidget {
 class _TestContent extends StatelessWidget {
   const new({
     required this.card,
+    required this.options,
+    required this.onOptionTap,
     required this.selectedOptionIds,
     required this.showSolution,
     required this.answeredCorrectly,
@@ -582,6 +623,8 @@ class _TestContent extends StatelessWidget {
   });
 
   final Flashcard card;
+  final List<CardOption> options;
+  final ValueChanged<String>? onOptionTap;
 
   /// Next to the question in a language deck.
   final Widget? questionSpeaker;
@@ -669,7 +712,7 @@ class _TestContent extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.md),
-        for (final (i, option) in card.options.indexed)
+        for (final (i, option) in options.indexed)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: _OptionTile(
@@ -679,6 +722,9 @@ class _TestContent extends StatelessWidget {
               selected: selectedOptionIds.contains(option.id),
               showSolution: showSolution,
               anySelected: selectedOptionIds.isNotEmpty,
+              onTap: onOptionTap == null
+                  ? null
+                  : () => onOptionTap?.call(option.id),
             ),
           ),
         if (answerImage != null) ...[
@@ -721,6 +767,7 @@ class _OptionTile extends StatelessWidget {
     required this.selected,
     required this.showSolution,
     required this.anySelected,
+    this.onTap,
     super.key,
   });
 
@@ -728,6 +775,9 @@ class _OptionTile extends StatelessWidget {
   final bool allowMultiple;
   final bool selected;
   final bool showSolution;
+
+  /// Ticks or unticks the option in a session; null when read-only.
+  final VoidCallback? onTap;
 
   /// Whether the user answered at all: only then "Correcta" is added to a
   /// correct option they missed.
@@ -771,7 +821,7 @@ class _OptionTile extends StatelessWidget {
       _ => (unticked, null, null),
     };
 
-    return Container(
+    final tile = Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
@@ -802,6 +852,18 @@ class _OptionTile extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+    final onTap = this.onTap;
+    if (onTap == null) return tile;
+    // A radio or checkbox for screen readers, with the tile as its target.
+    return Semantics(
+      checked: selected,
+      inMutuallyExclusiveGroup: !allowMultiple,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.control),
+        child: tile,
       ),
     );
   }

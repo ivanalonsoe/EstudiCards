@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 7 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 8 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -335,7 +335,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 "Sentido" (direction) only appears when at least one chosen deck is a language deck.
     - 🧩 with no cards available, "Empezar" is disabled.
 
-- [ ] **T3.7 Session screen** · P09 · US-15, US-16 · Depends on: T3.2, T3.3, T3.4, T2.5
+- [x] **T3.7 Session screen** · P09 · US-15, US-16 · Depends on: T3.2, T3.3, T3.4, T2.5
+  - > **Note:** "Salir" with its confirmation came forward from T3.8 (decided with the owner); "Pausa" stays hidden until T3.8. Haptics use Flutter's `HapticFeedback`, with no new package. See SPEC §13.2 (assumption 41).
   - Top bar, card with flip, buttons per state, swipe gestures with haptics on mobile. Full screen on desktop.
   - **Tests first:**
     - 🧩 unflipped shows "Girar", "Ver respuesta" and "Dejar para el final"; flipped shows "Acerté" and "Fallé".
@@ -344,6 +345,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 the "n / total" progress and "+N repasos" update.
 
 - [ ] **T3.8 Pause and exit** · P10 · US-19 · Depends on: T3.7
+  - > **Note:** "Salir" and its test were done with T3.7 (assumption 41).
   - **Tests first:**
     - 🧩 while paused, the card is not visible.
     - 🧩 sending the app to the background pauses it.

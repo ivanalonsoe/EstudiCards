@@ -17,6 +17,7 @@ import 'package:estudicards/features/projects/presentation/archived_screen.dart'
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
 import 'package:estudicards/features/study/presentation/results_screen.dart';
+import 'package:estudicards/features/study/presentation/session_screen.dart';
 import 'package:estudicards/features/study/presentation/session_setup_screen.dart';
 import 'package:estudicards/features/trash/presentation/trash_screen.dart';
 import 'package:flutter/material.dart';
@@ -137,11 +138,13 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                 ],
               ),
               // The study session covers the whole window, without sidebar.
-              screen(
-                'session/:sessionId',
-                'session',
-                (l10n) => l10n.studySession,
-                fullScreen: true,
+              GoRoute(
+                path: 'session/:sessionId',
+                parentNavigatorKey: rootKey,
+                builder: (context, state) => SessionScreen(
+                  key: const Key('screen.session'),
+                  sessionId: state.pathParameters['sessionId']!,
+                ),
               ),
               GoRoute(
                 path: 'results/:sessionId',

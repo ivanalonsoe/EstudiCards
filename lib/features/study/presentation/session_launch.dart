@@ -8,10 +8,17 @@ import 'package:estudicards/features/study/domain/session_state.dart';
 import 'package:estudicards/features/study/presentation/study_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A session ready to be shown: its cards in order and its settings.
+/// A session ready to be shown: its project, its cards in order and its
+/// settings.
 class SessionLaunch {
-  const new({required this.cards, required this.settings});
+  const new({
+    required this.projectId,
+    required this.cards,
+    required this.settings,
+  });
 
+  /// The card labels show the project's and deck's names and colours.
+  final String projectId;
   final List<SelectedCard> cards;
   final SessionSettings settings;
 }
@@ -26,6 +33,10 @@ class LaunchedSessions extends Notifier<Map<String, SessionLaunch>> {
 
   void add(String sessionId, SessionLaunch launch) =>
       state = {...state, sessionId: launch};
+
+  /// Forgets a finished session, so going back to its path cannot start it
+  /// again.
+  void remove(String sessionId) => state = {...state}..remove(sessionId);
 }
 
 final launchedSessionsProvider =
@@ -55,7 +66,14 @@ Future<String> launchSession(
   final sessionId = await repository.startSession(projectId, config);
   ref
       .read(launchedSessionsProvider.notifier)
-      .add(sessionId, SessionLaunch(cards: cards, settings: config.settings));
+      .add(
+        sessionId,
+        SessionLaunch(
+          projectId: projectId,
+          cards: cards,
+          settings: config.settings,
+        ),
+      );
   return sessionId;
 }
 
@@ -72,6 +90,13 @@ Future<String> startReviewOfMissed(
       .startSession(results.projectId, config);
   ref
       .read(launchedSessionsProvider.notifier)
-      .add(sessionId, SessionLaunch(cards: cards, settings: config.settings));
+      .add(
+        sessionId,
+        SessionLaunch(
+          projectId: results.projectId,
+          cards: cards,
+          settings: config.settings,
+        ),
+      );
   return sessionId;
 }

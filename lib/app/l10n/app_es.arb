@@ -26,10 +26,6 @@
   "@editCard": {
     "description": "Title of the card editor when editing a card (P06)."
   },
-  "studySession": "Sesión de estudio",
-  "@studySession": {
-    "description": "Title of the study session screen (P09)."
-  },
   "importTitle": "Importar",
   "@importTitle": {
     "description": "Title of the import wizard (P07)."
@@ -1211,5 +1207,51 @@
   "@configRemembered": {
     "description": "Under the desktop 'Empezar' button.",
     "placeholders": { "project": { "type": "String" } }
+  },
+
+  "flipCard": "Girar",
+  "@flipCard": { "description": "Study session button that turns a simple card over (P09)." },
+  "revealAnswer": "Ver respuesta",
+  "@revealAnswer": { "description": "Study session button that shows the solution and records a wrong answer (R 7.3)." },
+  "leaveForLater": "Dejar para el final",
+  "@leaveForLater": { "description": "Study session button that moves the card to the end of the queue (R 7.3)." },
+  "checkAnswer": "Comprobar",
+  "@checkAnswer": { "description": "Study session button that grades a test card." },
+  "gotItRight": "Acerté",
+  "@gotItRight": { "description": "Study session button: the user knew the answer of a simple card." },
+  "gotItWrong": "Fallé",
+  "@gotItWrong": { "description": "Study session button: the user did not know the answer of a simple card." },
+  "nextCard": "Siguiente",
+  "@nextCard": { "description": "Study session button that shows the next card." },
+  "exitSession": "Salir",
+  "@exitSession": { "description": "Study session button that ends the session, and its confirmation button." },
+  "exitSessionTitle": "¿Salir de la sesión?",
+  "@exitSessionTitle": { "description": "Title of the dialog that confirms leaving a study session." },
+  "exitSessionBody": "Se guardarán tus respuestas.",
+  "@exitSessionBody": { "description": "Body of the dialog that confirms leaving a study session (brief §6.14)." },
+  "sessionProgress": "{done} / {total}",
+  "@sessionProgress": {
+    "description": "Progress of a study session: original cards answered of the total, e.g. '7 / 20'.",
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "pendingRepeats": "{count, plural, =1{+1 repaso} other{+{count} repasos}}",
+  "@pendingRepeats": {
+    "description": "Repeats of missed cards still to come in the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "correctCountLabel": "{count, plural, =1{1 acierto} other{{count} aciertos}}",
+  "@correctCountLabel": {
+    "description": "What screen readers say for the ✓ counter of the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "wrongCountLabel": "{count, plural, =1{1 fallo} other{{count} fallos}}",
+  "@wrongCountLabel": {
+    "description": "What screen readers say for the ✗ counter of the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeLeftLabel": "Tiempo restante: {time}",
+  "@timeLeftLabel": {
+    "description": "What screen readers say for the session timer.",
+    "placeholders": { "time": { "type": "String" } }
   }
 }
