@@ -367,7 +367,8 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 4 — Statistics and errors
 
-- [ ] **T4.1 Per-card statistics and error list** · R 7.4 · US-21 · Depends on: T3.5
+- [x] **T4.1 Per-card statistics and error list** · R 7.4 · US-21 · Depends on: T3.5
+  - > **Note:** `card_stats` is updated in the transaction that saves each attempt; the recalculation is one SQL statement (`AppDatabase.recomputeCardStats`). Schema version 4 runs it once to fill the attempts saved in phase 3 (decided with the owner). See SPEC §13.2 (assumption 44).
   - Update `card_stats` when attempts are recorded, plus a full recalculation from `attempts`.
   - **Tests first:**
     - 🧪 a wrong answer puts the card in errors; two correct in a row take it out; correct-wrong-correct does not.
@@ -375,7 +376,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 normal and reverse directions keep separate statistics.
     - 🧪 recalculating from `attempts` gives the same result as the incremental update.
 
-- [ ] **T4.2 Metrics and streak** · R 7.6 · US-23 · Depends on: T4.1
+- [x] **T4.2 Metrics and streak** · R 7.6 · US-23 · Depends on: T4.1
+  - > **Note:** each attempt stores its local day (`attempts.local_day`, schema version 4, decided with the owner), worked out with the injectable clock; tests cross midnight and both summer time changes in Madrid. The best streak is included for P13. Counts are SQL queries in `StatsDao`. See SPEC §13.2 (assumption 45).
   - **Tests first:**
     - 🧪 % correct with and without data ("—").
     - 🧪 streak: consecutive days in local time; if there is no activity yet today, yesterday's streak still stands; a day with no activity breaks it.

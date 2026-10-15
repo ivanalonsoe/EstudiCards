@@ -105,6 +105,19 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
     return query.map((row) => row.readTable(cardStats)).get();
   }
 
+  /// The `card_stats` row of [cardId] in [direction]; null if the card was
+  /// never answered in that direction.
+  Future<CardStatsRow?> findStats(String cardId, String direction) =>
+      (select(cardStats)..where(
+            (s) => s.cardId.equals(cardId) & s.direction.equals(direction),
+          ))
+          .getSingleOrNull();
+
+  /// Saves a `card_stats` row, replacing the one of the same card and
+  /// direction.
+  Future<void> saveStats(CardStatsCompanion stats) =>
+      into(cardStats).insertOnConflictUpdate(stats);
+
   Future<String?> readSetting(String key) async {
     final row = await (select(
       settings,

@@ -56,8 +56,8 @@ void main() {
         );
   }
 
-  test('opens in memory with schema version 3 and every table empty', () async {
-    expect(db.schemaVersion, 3);
+  test('opens in memory with schema version 4 and every table empty', () async {
+    expect(db.schemaVersion, 4);
     expect(
       db.allTables.map((t) => t.actualTableName),
       unorderedEquals([
@@ -94,6 +94,7 @@ void main() {
         'cards_deck',
         'attempts_card_direction_answered',
         'attempts_session',
+        'attempts_local_day',
         'card_stats_in_error_list',
       ]),
     );
