@@ -331,6 +331,7 @@ Up to schema version 2, `type`, `source_lang` and `target_lang` were project col
 | selected_option_ids | TEXT? | JSON with the ticked options (test only) |
 | response_time_ms | INT? | From when the card is shown until it is answered, excluding pauses |
 | answered_at | DATETIME | |
+| local_day | TEXT? | Calendar day of `answered_at` in the user's local time, `YYYY-MM-DD` (schema version 4). Streaks and "per day" statistics group by it. Always filled by the app; nullable only because SQLite cannot add a required column to existing rows. |
 
 #### `settings` (key–value)
 
@@ -345,7 +346,7 @@ Up to schema version 2, `type`, `source_lang` and `target_lang` were project col
 
 - `decks(project_id, deleted_at)`
 - `cards(deck_id)`
-- `attempts(card_id, direction, answered_at)` and `attempts(session_id)`
+- `attempts(card_id, direction, answered_at)`, `attempts(session_id)` and `attempts(local_day)`
 - `card_stats(in_error_list)`
 
 ---
@@ -1186,5 +1187,11 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Rule 7.4 lives in `CardDirectionStats.after` (`lib/features/stats/domain/card_direction_stats.dart`): one card in one direction, pure Dart. Repeats and unanswered cards return the same stats, so nothing is written for them.
     - `StudyRepository.record` updates each attempt's `card_stats` row in the same transaction that saves the attempt (and the session's end); if any part fails, nothing is saved.
     - The full recalculation is `AppDatabase.recomputeCardStats()`: one SQL statement over `attempts`, with no attempts loaded into Dart. It numbers each card's first answered attempts in each direction by `answered_at`, with SQLite's `rowid` (the insertion order) breaking ties, so it matches the incremental update; a test checks both on 300 random steps. A `card_stats` row with no attempts behind it disappears.
-    - Filling the attempts of phase 3 (decided with the owner): schema version 4 runs the recalculation once, at the end of the upgrade, so it always runs on the current tables. It changes no table, but the version goes up so the step runs exactly once, before any screen reads. The owner's database is migrated by opening the app.
+    - Filling the attempts of phase 3 (decided with the owner): schema version 4 runs the recalculation once, at the end of the upgrade, so it always runs on the current tables and exactly once, before any screen reads. The same version adds `attempts.local_day` (T4.2, assumption 45). A copy of the owner's Windows database was migrated before the PR: its 7 attempts gave 6 `card_stats` rows, 1 in errors, and every attempt got its local day.
     - From here the deck screen, the card list and "Solo errores" read real numbers after studying (assumptions 30 and 34).
+45. **Metrics and streak (T4.2):**
+    - Local days (decided with the owner): each attempt stores the calendar day it was answered on in the user's local time (`attempts.local_day`, `YYYY-MM-DD`, with an index), worked out when it is saved. Streaks and "per day" numbers group by it in SQL, and the day stays as the user lived it even after travelling to another time zone. Schema version 4 adds the column and fills it for older attempts with SQLite's `date(answered_at, 'localtime')`, the device's zone, like the app. The phase 5 export and import must carry it or work it out again.
+    - The clock gives the local day: `Clock.localDay(instant)` returns that date as midnight UTC, so one day is always 24 hours and summer time never stretches or shortens a streak. `SystemClock` uses the device's zone; `FakeClock` takes a `utcOffset` function, and the tests use Madrid's rules (`test/helpers/time_zones.dart`) to cross midnight and both summer time changes. `dayKey` and `parseDayKey` convert to and from the stored text.
+    - What counts: first attempts answered correct or wrong (R 7.6, assumption 3), of decks and projects not in the trash (R 7.1); archived projects count. This applies to the streak and to the cards answered today, which the daily goal also uses. Repeats do not count.
+    - The rules are pure (`lib/features/stats/domain/metrics.dart`): `AnswerCounts` (% correct, null = "—"), `streakFrom` (current streak, which keeps yesterday's while today has nothing yet, and the best streak, for "Récord") and `dailyGoalProgress` (null without a goal). `StatsRepository` (`lib/features/stats/data/`) reads the active days and today's count with SQL in `StatsDao`, with no attempts loaded into Dart.
+    - The daily goal is read from `settings.daily_goal`; nothing sets it until Settings (T6.2), so it stays hidden.

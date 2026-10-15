@@ -376,7 +376,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 normal and reverse directions keep separate statistics.
     - 🧪 recalculating from `attempts` gives the same result as the incremental update.
 
-- [ ] **T4.2 Metrics and streak** · R 7.6 · US-23 · Depends on: T4.1
+- [x] **T4.2 Metrics and streak** · R 7.6 · US-23 · Depends on: T4.1
+  - > **Note:** each attempt stores its local day (`attempts.local_day`, schema version 4, decided with the owner), worked out with the injectable clock; tests cross midnight and both summer time changes in Madrid. The best streak is included for P13. Counts are SQL queries in `StatsDao`. See SPEC §13.2 (assumption 45).
   - **Tests first:**
     - 🧪 % correct with and without data ("—").
     - 🧪 streak: consecutive days in local time; if there is no activity yet today, yesterday's streak still stands; a day with no activity breaks it.

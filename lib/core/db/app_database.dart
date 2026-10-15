@@ -41,7 +41,8 @@ class AppDatabase extends _$AppDatabase {
   /// 2. `projects.archived_at` (T1.9).
   /// 3. `type`, `source_lang` and `target_lang` move from `projects` to
   ///    `decks` (T2.10).
-  /// 4. `card_stats` is filled from the attempts saved in phase 3 (T4.1).
+  /// 4. `card_stats` is filled from the attempts saved in phase 3 (T4.1),
+  ///    and `attempts.local_day` is added with its index (T4.2).
   @override
   int get schemaVersion => 4;
 
@@ -62,6 +63,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(projects, projects.archivedAt);
       }
       if (from < 3) await _moveTypeToDecks(m);
+      if (from < 4) await _addLocalDay(m);
       // Phase 3 saved attempts without `card_stats` (T3.5). This runs last,
       // once every table has its current columns, so it always uses the
       // current recalculation. It is safe to repeat: it starts from scratch.
@@ -102,6 +104,24 @@ class AppDatabase extends _$AppDatabase {
         await m.dropColumn(projects, column);
       }
     }
+  }
+
+  /// Version 4: each attempt gets its local day. Attempts saved before have
+  /// none, so they get the day of their `answered_at` in the device's time
+  /// zone now (SQLite's `localtime` uses the same zone as the app).
+  Future<void> _addLocalDay(Migrator m) async {
+    if (!await _hasColumn('attempts', 'local_day')) {
+      await m.addColumn(attempts, attempts.localDay);
+    }
+    await customStatement(
+      "UPDATE attempts SET local_day = date(answered_at, 'localtime') "
+      'WHERE local_day IS NULL',
+    );
+    // Drift's own statement has no `IF NOT EXISTS`, and this step must be
+    // safe to repeat.
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS attempts_local_day ON attempts (local_day)',
+    );
   }
 
   /// Rebuilds every `card_stats` row from `attempts` (R 7.4). Saving an

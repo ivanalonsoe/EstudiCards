@@ -235,10 +235,7 @@ class StudyRepository {
     );
   }
 
-  static AttemptsCompanion _attemptRow(
-    String sessionId,
-    AttemptRecord attempt,
-  ) {
+  AttemptsCompanion _attemptRow(String sessionId, AttemptRecord attempt) {
     final selected = attempt.selectedOptionIds;
     return AttemptsCompanion.insert(
       id: newId(),
@@ -254,6 +251,8 @@ class StudyRepository {
       ),
       responseTimeMs: Value(attempt.responseTime?.inMilliseconds),
       answeredAt: attempt.answeredAt,
+      // The day the user saw on their calendar, for streaks (R 7.6).
+      localDay: Value(dayKey(_clock.localDay(attempt.answeredAt))),
     );
   }
 }

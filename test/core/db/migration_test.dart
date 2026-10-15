@@ -282,6 +282,18 @@ void main() {
         reason: 'the repeat at minute 2 does not count',
       );
     });
+
+    test('gives each attempt its local day, in the device time '
+        'zone', () async {
+      final db = await migrate(await versionThreeWithAttempts());
+
+      final local = DateTime.utc(2026, 9, 2, 10, 1).toLocal();
+      final expected =
+          '${local.year}-${local.month.toString().padLeft(2, '0')}-'
+          '${local.day.toString().padLeft(2, '0')}';
+      final attempts = await db.select(db.attempts).get();
+      expect(attempts.map((a) => a.localDay).toSet(), {expected});
+    });
   });
 }
 

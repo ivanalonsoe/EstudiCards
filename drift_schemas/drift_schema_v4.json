@@ -1128,6 +1128,16 @@
             "default_dart": null,
             "default_client_dart": null,
             "dsl_features": []
+          },
+          {
+            "name": "local_day",
+            "getter_name": "localDay",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -1281,6 +1291,25 @@
           }
         ]
       }
+    },
+    {
+      "id": 14,
+      "references": [
+        7
+      ],
+      "type": "index",
+      "data": {
+        "on": 7,
+        "name": "attempts_local_day",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "local_day",
+            "order_by": null
+          }
+        ]
+      }
     }
   ],
   "fixed_sql": [
@@ -1352,7 +1381,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"attempts\" (\"id\" TEXT NOT NULL, \"session_id\" TEXT NOT NULL REFERENCES study_sessions (id) ON DELETE CASCADE, \"card_id\" TEXT NOT NULL REFERENCES cards (id) ON DELETE CASCADE, \"direction\" TEXT NOT NULL, \"result\" TEXT NOT NULL, \"source\" TEXT NOT NULL, \"is_first_attempt\" INTEGER NOT NULL CHECK (\"is_first_attempt\" IN (0, 1)), \"selected_option_ids\" TEXT NULL, \"response_time_ms\" INTEGER NULL, \"answered_at\" TEXT NOT NULL, PRIMARY KEY (\"id\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"attempts\" (\"id\" TEXT NOT NULL, \"session_id\" TEXT NOT NULL REFERENCES study_sessions (id) ON DELETE CASCADE, \"card_id\" TEXT NOT NULL REFERENCES cards (id) ON DELETE CASCADE, \"direction\" TEXT NOT NULL, \"result\" TEXT NOT NULL, \"source\" TEXT NOT NULL, \"is_first_attempt\" INTEGER NOT NULL CHECK (\"is_first_attempt\" IN (0, 1)), \"selected_option_ids\" TEXT NULL, \"response_time_ms\" INTEGER NULL, \"answered_at\" TEXT NOT NULL, \"local_day\" TEXT NULL, PRIMARY KEY (\"id\"));"
         }
       ]
     },
@@ -1407,6 +1436,15 @@
         {
           "dialect": "sqlite",
           "sql": "CREATE INDEX attempts_session ON attempts (session_id)"
+        }
+      ]
+    },
+    {
+      "name": "attempts_local_day",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX attempts_local_day ON attempts (local_day)"
         }
       ]
     }

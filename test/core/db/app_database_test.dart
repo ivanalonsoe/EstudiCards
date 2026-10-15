@@ -94,6 +94,7 @@ void main() {
         'cards_deck',
         'attempts_card_direction_answered',
         'attempts_session',
+        'attempts_local_day',
         'card_stats_in_error_list',
       ]),
     );

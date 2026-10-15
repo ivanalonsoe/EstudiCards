@@ -12,4 +12,9 @@ class FakeAsyncClock implements Clock {
 
   @override
   DateTime now() => _start.add(_async.elapsed);
+
+  /// UTC days, like a `FakeClock` without a time zone.
+  @override
+  DateTime localDay(DateTime time) =>
+      DateTime.utc(time.year, time.month, time.day);
 }

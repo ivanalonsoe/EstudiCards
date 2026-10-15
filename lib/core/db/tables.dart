@@ -203,6 +203,7 @@ class SessionDecks extends Table {
   columns: {#cardId, #direction, #answeredAt},
 )
 @TableIndex(name: 'attempts_session', columns: {#sessionId})
+@TableIndex(name: 'attempts_local_day', columns: {#localDay})
 class Attempts extends Table {
   TextColumn get id => text()();
   TextColumn get sessionId =>
@@ -226,6 +227,12 @@ class Attempts extends Table {
   TextColumn get selectedOptionIds => text().nullable()();
   IntColumn get responseTimeMs => integer().nullable()();
   DateTimeColumn get answeredAt => dateTime()();
+
+  /// The calendar day of [answeredAt] in the user's local time, as
+  /// `YYYY-MM-DD` text (schema version 4). Streaks and "per day" statistics
+  /// group by it. The app always fills it; it is nullable only because
+  /// SQLite cannot add a required column to a table that has rows.
+  TextColumn get localDay => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
