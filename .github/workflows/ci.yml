@@ -98,7 +98,7 @@ jobs:
     name: e2e-android
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Check out the code
         uses: actions/checkout@v7
@@ -186,10 +186,10 @@ jobs:
 
       # Starts an emulator, runs the script on it and shuts it down.
       #
-      # A green run takes under 10 minutes. The limit leaves room for the
+      # A green run takes about 12 minutes. The limit leaves room for the
       # retries below and still stops a stuck emulator before the job's own.
       - name: Run integration and E2E tests on an Android emulator
-        timeout-minutes: 35
+        timeout-minutes: 50
         uses: reactivecircus/android-emulator-runner@v2
         with:
           # The default renderer (`-gpu swiftshader_indirect`) logged graphics
@@ -209,13 +209,16 @@ jobs:
           # Both test commands sometimes hang or stop on the CI emulator
           # while the same commit passes when run again: after installing
           # the app no test starts, or Patrol stops after its first test with
-          # "Gradle test execution failed". Each attempt gets 8 minutes (a
-          # green one takes about 4) and a failed or stuck one is tried once
-          # more; two failures in a row still fail the job. `--verbose` shows
+          # "Gradle test execution failed". An integration attempt gets 8
+          # minutes (a green one takes about 4) and a Patrol attempt 15: the
+          # E2E tests of phase 3 wait a real minute for the global timer, and
+          # the first use of the system voice on a freshly booted emulator
+          # once took minutes. A failed or stuck attempt is tried once more;
+          # two failures in a row still fail the job. `--verbose` shows
           # Gradle's output in the log, to find the cause.
           script: |
             timeout 8m flutter test integration_test -d emulator-5554 || timeout 8m flutter test integration_test -d emulator-5554
-            timeout 8m patrol test --device emulator-5554 --verbose || timeout 8m patrol test --device emulator-5554 --verbose
+            timeout 15m patrol test --device emulator-5554 --verbose || timeout 15m patrol test --device emulator-5554 --verbose
 
       # The Android test reports, kept when the tests fail so the cause can
       # be studied (they stay for a few days in the run's "Artifacts").
