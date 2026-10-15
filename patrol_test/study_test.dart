@@ -56,7 +56,9 @@ void main() {
     await tapKey(tester, 'session.exit');
     await tapKey(tester, 'confirmDialog.confirm');
     await $('Sesión terminada').waitUntilVisible();
-    await $('No respondidas (1)').waitUntilVisible();
+    // On a short phone screen the list is below the fold: `scrollTo`
+    // scrolls until it is visible.
+    await $('No respondidas (1)').scrollTo();
 
     // A 1-minute global timer: nothing is answered and the session ends.
     await backFromResults(tester);
@@ -66,6 +68,6 @@ void main() {
     await startSession(tester);
     await $('¡Se acabó el tiempo!')
         .waitUntilVisible(timeout: const Duration(seconds: 90));
-    await $('No respondidas (2)').waitUntilVisible();
+    await $('No respondidas (2)').scrollTo();
   });
 }

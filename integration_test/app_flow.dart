@@ -212,24 +212,21 @@ Future<void> answerCorrectly(
   await tapKey(tester, 'session.next');
 }
 
-/// From the results back to the project: "Volver" on a phone, "Volver al
-/// proyecto" on desktop.
+/// From the results back to the project: "Volver al proyecto" on desktop,
+/// the ✕ at the top on a phone.
+///
+/// A phone's results are a list that only builds what is on screen: after
+/// scrolling down, the ✕ is gone, so the list is scrolled back up to it.
 Future<void> backFromResults(WidgetTester tester) async {
-  final mobileBack = find.byKey(const Key('results.back'));
-  await waitFor(
-    tester,
-    find.byWidgetPredicate(
-      (widget) =>
-          widget.key == const Key('results.back') ||
-          widget.key == const Key('results.backToProject'),
-    ),
-  );
-  await tapFinder(
-    tester,
-    mobileBack.evaluate().isNotEmpty
-        ? mobileBack
-        : find.byKey(const Key('results.backToProject')),
-  );
+  await waitFor(tester, find.byKey(const Key('screen.results')));
+  final desktopBack = find.byKey(const Key('results.backToProject'));
+  final close = find.byKey(const Key('results.close'));
+  if (desktopBack.evaluate().isNotEmpty) {
+    await tapFinder(tester, desktopBack);
+  } else {
+    await tester.scrollUntilVisible(close, -300);
+    await tapFinder(tester, close);
+  }
   await waitFor(tester, find.byKey(const Key('projectScreen.study')));
 }
 
