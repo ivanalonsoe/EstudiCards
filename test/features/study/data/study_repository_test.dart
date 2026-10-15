@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
@@ -28,6 +29,7 @@ import 'package:estudicards/features/study/domain/study_options.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/test_data.dart';
 
 /// A session being played: its ID, a way to send events and the turn of
 /// the card on screen.
@@ -306,6 +308,103 @@ void main() {
 
     test('an unknown session has no results', () async {
       expect(await repository.results('missing'), isNull);
+    });
+  });
+
+  group('session setup', () {
+    test('the candidates are the cards of the decks of the project, with '
+        'their deck type and their stats in each direction', () async {
+      final language = await DecksRepository(DecksDao(db), clock).create(
+        project.id,
+        const DeckInput(
+          name: 'Phrasal verbs',
+          type: DeckType.language,
+          sourceLang: 'en-GB',
+          targetLang: 'es-ES',
+        ),
+      );
+      final languageCard =
+          await CardsRepository(CardsDao(db), clock, FakeImageFiles()).create(
+            language.id,
+            const CardInput(
+              type: CardType.simple,
+              question: 'to give up',
+              answer: 'x',
+            ),
+          );
+      await addTestStats(db, cards[0].id, wrong: 2);
+      await addTestStats(db, cards[0].id, direction: 'reverse', correct: 1);
+
+      final candidates = await repository.candidates(project.id);
+
+      expect(
+        candidates.map((c) => c.card.id),
+        unorderedEquals([...cards.map((c) => c.id), languageCard.id]),
+      );
+      StudyCandidate of(String id) =>
+          candidates.firstWhere((c) => c.card.id == id);
+      expect(of(languageCard.id).isLanguageDeck, isTrue);
+      expect(of(cards[0].id).isLanguageDeck, isFalse);
+      expect(of(cards[0].id).normalStats.inErrorList, isTrue);
+      expect(of(cards[0].id).normalStats.studied, isTrue);
+      expect(of(cards[0].id).reverseStats.inErrorList, isFalse);
+      expect(of(cards[0].id).reverseStats.studied, isTrue);
+      expect(of(cards[1].id).normalStats.studied, isFalse);
+      expect(of(cards[3].id).card.options, hasLength(2));
+    });
+
+    test('cards of decks in the trash and of other projects are not '
+        'candidates', () async {
+      await (db.update(db.decks)..where((d) => d.id.equals(deck.id))).write(
+        DecksCompanion(deletedAt: Value(clock.now())),
+      );
+      final other = await ProjectsRepository(ProjectsDao(db), clock).create(
+        const ProjectInput(name: 'Biología', color: 'green', icon: 'flask'),
+      );
+      final otherProjectDeck = await DecksRepository(
+        DecksDao(db),
+        clock,
+      ).create(other.id, const DeckInput(name: 'Célula'));
+      await addTestCard(db, otherProjectDeck.id);
+
+      expect(await repository.candidates(project.id), isEmpty);
+    });
+
+    test('starting a session remembers its configuration for the '
+        'project', () async {
+      expect(await repository.lastConfig(project.id), isNull);
+
+      await repository.startSession(
+        project.id,
+        SessionConfig(
+          deckIds: [otherDeck.id],
+          requestedCount: 50,
+          timerType: TimerType.global,
+          timerSeconds: 600,
+        ),
+      );
+
+      final last = (await repository.lastConfig(project.id))!;
+      expect(last.deckIds, [otherDeck.id]);
+      expect(last.requestedCount, 50);
+      expect(last.timerType, TimerType.global);
+      expect(last.timerSeconds, 600);
+      expect(await repository.lastConfig('another project'), isNull);
+    });
+
+    test('the newest session replaces the remembered configuration', () async {
+      await repository.startSession(
+        project.id,
+        SessionConfig(deckIds: [deck.id]),
+      );
+      await repository.startSession(
+        project.id,
+        SessionConfig(deckIds: [otherDeck.id], mode: StudyMode.errors),
+      );
+
+      final last = (await repository.lastConfig(project.id))!;
+      expect(last.deckIds, [otherDeck.id]);
+      expect(last.mode, StudyMode.errors);
     });
   });
 

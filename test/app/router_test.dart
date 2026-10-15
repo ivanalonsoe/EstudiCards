@@ -120,8 +120,6 @@ void main() {
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
-        AppRoutes.sessionSetup('p1'): 'Configurar sesión',
-        AppRoutes.session('s1'): 'Sesión de estudio',
         AppRoutes.import: 'Importar',
         AppRoutes.statistics: 'Estadísticas',
         AppRoutes.archived: 'Archivados',
@@ -142,7 +140,7 @@ void main() {
     ) async {
       await pumpApp(tester, size: desktop, location: AppRoutes.session('s1'));
 
-      expect(screenTitle('Sesión de estudio'), findsOneWidget);
+      expect(find.byKey(const Key('screen.session')), findsOneWidget);
       expect(sidebar, findsNothing);
     });
 

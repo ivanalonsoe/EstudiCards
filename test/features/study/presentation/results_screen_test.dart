@@ -298,6 +298,57 @@ void main() {
     });
   });
 
+  testWidgets('"Repetir sesión" starts a session with the same configuration '
+      'and a new selection', (tester) async {
+    final db = createTestDatabase();
+    final saved = await saveFinishedSession(
+      db,
+      correct: 2,
+      wrong: 2,
+      config: (deckId) => SessionConfig(
+        deckIds: [deckId],
+        requestedCount: 3,
+        repeatFailed: true,
+        timerType: TimerType.global,
+        timerSeconds: 600,
+      ),
+    );
+    final router = await pumpTestApp(
+      tester,
+      size: mobile,
+      db: db,
+      location: AppRoutes.results(saved.sessionId),
+    );
+
+    final repeat = find.byKey(const Key('results.repeatSession'));
+    await tester.ensureVisible(repeat);
+    await tester.pumpAndSettle();
+    await tester.tap(repeat);
+    await tester.pumpAndSettle();
+
+    final launched = ProviderScope.containerOf(
+      tester.element(find.byType(EstudiCardsApp)),
+    ).read(launchedSessionsProvider);
+    final newId = launched.keys.single;
+    // Three of the deck's four cards, chosen again at random.
+    expect(launched[newId]!.cards, hasLength(3));
+    expect(
+      launched[newId]!.cards.map((c) => c.card.id),
+      everyElement(isIn(saved.cardIds)),
+    );
+    expect(launched[newId]!.settings.repeatFailed, isTrue);
+    expect(launched[newId]!.settings.timerType, TimerType.global);
+    final stored = await (db.select(
+      db.studySessions,
+    )..where((s) => s.id.equals(newId))).getSingle();
+    expect(stored.requestedCount, 3);
+    expect(stored.timerSeconds, 600);
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      AppRoutes.session(newId),
+    );
+  });
+
   for (final (name, size, key) in [
     ('mobile', mobile, 'results.close'),
     ('desktop', desktop, 'results.backToProject'),

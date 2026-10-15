@@ -26,14 +26,6 @@
   "@editCard": {
     "description": "Title of the card editor when editing a card (P06)."
   },
-  "sessionSetup": "Configurar sesión",
-  "@sessionSetup": {
-    "description": "Title of the study session setup screen (P08)."
-  },
-  "studySession": "Sesión de estudio",
-  "@studySession": {
-    "description": "Title of the study session screen (P09)."
-  },
   "importTitle": "Importar",
   "@importTitle": {
     "description": "Title of the import wizard (P07)."
@@ -1096,5 +1088,170 @@
   "backToProject": "Volver al proyecto",
   "@backToProject": { "description": "Results button (desktop) that goes back to the project." },
   "sessionNotFound": "Esta sesión ya no existe",
-  "@sessionNotFound": { "description": "Shown on the results screen when the session does not exist." }
+  "@sessionNotFound": { "description": "Shown on the results screen when the session does not exist." },
+  "repeatSession": "Repetir sesión",
+  "@repeatSession": { "description": "Results button that starts a session with the same configuration (US-20 AC2)." },
+
+  "study": "Estudiar",
+  "@study": { "description": "Button on the project and deck screens that opens the session setup (P08)." },
+  "newSession": "Nueva sesión",
+  "@newSession": { "description": "Title of the session setup on mobile, and its breadcrumb on desktop (P08)." },
+  "newStudySession": "Nueva sesión de estudio",
+  "@newStudySession": { "description": "Title of the session setup on desktop (P08)." },
+  "setupDecksChosen": "{chosen} de {total}",
+  "@setupDecksChosen": {
+    "description": "How many decks are chosen in the session setup, e.g. '2 de 3'.",
+    "placeholders": { "chosen": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "allDecks": "Todo el proyecto",
+  "@allDecks": { "description": "Session setup chip that chooses every deck of the project." },
+  "deckWithCount": "{name} · {count}",
+  "@deckWithCount": {
+    "description": "A deck chip of the desktop session setup with its number of cards, e.g. 'Phrasal verbs · 52'.",
+    "placeholders": { "name": { "type": "String" }, "count": { "type": "int" } }
+  },
+  "setupCount": "Número de tarjetas",
+  "@setupCount": { "description": "Session setup section: how many cards to study." },
+  "countAll": "Todas",
+  "@countAll": { "description": "Session setup choice: study every available card." },
+  "countCustom": "Otro",
+  "@countCustom": { "description": "Session setup choice: choose the number of cards with − and +." },
+  "setupMode": "Modo",
+  "@setupMode": { "description": "Session setup section: normal or errors only." },
+  "modeNormal": "Normal",
+  "@modeNormal": { "description": "Session setup mode: every card." },
+  "modeErrors": "Solo errores",
+  "@modeErrors": { "description": "Session setup mode: only the cards in the error list." },
+  "modeErrorsCount": "Solo errores ({count})",
+  "@modeErrorsCount": {
+    "description": "Desktop session setup mode with the number of cards in errors.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "setupDirection": "Sentido",
+  "@setupDirection": { "description": "Session setup section: normal or reverse direction." },
+  "directionNormal": "Normal",
+  "@directionNormal": { "description": "Session direction when the chosen language decks have different languages." },
+  "directionReverse": "Inverso",
+  "@directionReverse": { "description": "Reverse session direction when the chosen language decks have different languages." },
+  "setupOrder": "Orden",
+  "@setupOrder": { "description": "Desktop session setup section with the two switches." },
+  "prioritizeFailed": "Priorizar las más falladas",
+  "@prioritizeFailed": { "description": "Session setup switch (R 7.2)." },
+  "repeatFailed": "Repetir falladas al final",
+  "@repeatFailed": { "description": "Session setup switch (R 7.3)." },
+  "setupTimer": "Temporizador",
+  "@setupTimer": { "description": "Session setup section: the timer." },
+  "timerNone": "Sin timer",
+  "@timerNone": { "description": "Session setup timer choice: no timer." },
+  "timerPerQuestion": "Por pregunta",
+  "@timerPerQuestion": { "description": "Session setup timer choice: a time limit per question." },
+  "timerGlobal": "General",
+  "@timerGlobal": { "description": "Session setup timer choice: a time limit for the whole session." },
+  "questionTime": "Tiempo por pregunta",
+  "@questionTime": { "description": "Label of the per-question timer value in the session setup." },
+  "sessionTime": "Tiempo total",
+  "@sessionTime": { "description": "Label of the global timer value in the session setup." },
+  "minutesShort": "{count} min",
+  "@minutesShort": {
+    "description": "A time in minutes, e.g. '10 min'.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "customCountLabel": "Tarjetas",
+  "@customCountLabel": { "description": "Label of the − / + row that sets the number of cards ('Otro')." },
+  "decrease": "Menos",
+  "@decrease": { "description": "Tooltip of a − button." },
+  "increase": "Más",
+  "@increase": { "description": "Tooltip of a + button." },
+  "availableCards": "{count, plural, =1{1 tarjeta disponible} other{{count} tarjetas disponibles}}",
+  "@availableCards": {
+    "description": "How many cards the session setup can use.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "willUseCount": "se usarán {count}",
+  "@willUseCount": {
+    "description": "After the available cards: how many the session will use.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "willUseAll": "se usarán todas",
+  "@willUseAll": { "description": "After the available cards, when the session uses all of them (US-14 AC3)." },
+  "noCardsAvailable": "No hay tarjetas disponibles",
+  "@noCardsAvailable": { "description": "Session setup with no card to study." },
+  "startSession": "Empezar",
+  "@startSession": { "description": "Session setup button that starts the session." },
+  "summary": "Resumen",
+  "@summary": { "description": "Title of the desktop session setup summary." },
+  "summaryCards": "Tarjetas",
+  "@summaryCards": { "description": "Summary row: number of cards." },
+  "cardsOfAvailable": "{used} de {available}",
+  "@cardsOfAvailable": {
+    "description": "Summary: cards the session will use of those available, e.g. '20 de 136'.",
+    "placeholders": { "used": { "type": "int" }, "available": { "type": "int" } }
+  },
+  "summaryTimer": "Timer",
+  "@summaryTimer": { "description": "Summary row: the timer." },
+  "perQuestionSummary": "{count} s por pregunta",
+  "@perQuestionSummary": {
+    "description": "Summary of a per-question timer.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "globalSummary": "{count} min en total",
+  "@globalSummary": {
+    "description": "Summary of a global timer.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "orderRandom": "Aleatorio",
+  "@orderRandom": { "description": "Summary: the cards come in random order." },
+  "orderPrioritized": "Aleatorio, prioriza falladas",
+  "@orderPrioritized": { "description": "Summary: random order with 'Priorizar las más falladas'." },
+  "configRemembered": "Se recordará esta configuración para {project}",
+  "@configRemembered": {
+    "description": "Under the desktop 'Empezar' button.",
+    "placeholders": { "project": { "type": "String" } }
+  },
+
+  "flipCard": "Girar",
+  "@flipCard": { "description": "Study session button that turns a simple card over (P09)." },
+  "revealAnswer": "Ver respuesta",
+  "@revealAnswer": { "description": "Study session button that shows the solution and records a wrong answer (R 7.3)." },
+  "leaveForLater": "Dejar para el final",
+  "@leaveForLater": { "description": "Study session button that moves the card to the end of the queue (R 7.3)." },
+  "checkAnswer": "Comprobar",
+  "@checkAnswer": { "description": "Study session button that grades a test card." },
+  "gotItRight": "Acerté",
+  "@gotItRight": { "description": "Study session button: the user knew the answer of a simple card." },
+  "gotItWrong": "Fallé",
+  "@gotItWrong": { "description": "Study session button: the user did not know the answer of a simple card." },
+  "nextCard": "Siguiente",
+  "@nextCard": { "description": "Study session button that shows the next card." },
+  "exitSession": "Salir",
+  "@exitSession": { "description": "Study session button that ends the session, and its confirmation button." },
+  "exitSessionTitle": "¿Salir de la sesión?",
+  "@exitSessionTitle": { "description": "Title of the dialog that confirms leaving a study session." },
+  "exitSessionBody": "Se guardarán tus respuestas.",
+  "@exitSessionBody": { "description": "Body of the dialog that confirms leaving a study session (brief §6.14)." },
+  "sessionProgress": "{done} / {total}",
+  "@sessionProgress": {
+    "description": "Progress of a study session: original cards answered of the total, e.g. '7 / 20'.",
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "pendingRepeats": "{count, plural, =1{+1 repaso} other{+{count} repasos}}",
+  "@pendingRepeats": {
+    "description": "Repeats of missed cards still to come in the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "correctCountLabel": "{count, plural, =1{1 acierto} other{{count} aciertos}}",
+  "@correctCountLabel": {
+    "description": "What screen readers say for the ✓ counter of the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "wrongCountLabel": "{count, plural, =1{1 fallo} other{{count} fallos}}",
+  "@wrongCountLabel": {
+    "description": "What screen readers say for the ✗ counter of the session.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeLeftLabel": "Tiempo restante: {time}",
+  "@timeLeftLabel": {
+    "description": "What screen readers say for the session timer.",
+    "placeholders": { "time": { "type": "String" } }
+  }
 }

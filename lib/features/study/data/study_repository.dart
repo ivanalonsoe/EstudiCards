@@ -7,8 +7,10 @@ import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/ids.dart';
 import 'package:estudicards/features/cards/data/cards_repository.dart';
+import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/study/data/study_dao.dart';
 import 'package:estudicards/features/study/domain/attempt_record.dart';
+import 'package:estudicards/features/study/domain/card_selection.dart';
 import 'package:estudicards/features/study/domain/session_config.dart';
 import 'package:estudicards/features/study/domain/session_engine.dart';
 import 'package:estudicards/features/study/domain/session_results.dart';
@@ -49,9 +51,52 @@ class StudyRepository {
         );
       }
       await _dao.markUsed(projectId, config.deckIds, now);
+      // The next setup of this project starts from here (US-14 AC1).
+      await _dao.writeSetting(_lastConfigKey(projectId), config.toJson());
     });
     return id;
   }
+
+  /// The configuration of the last session started in [projectId], or null
+  /// if none was started yet.
+  Future<SessionConfig?> lastConfig(String projectId) async {
+    final json = await _dao.readSetting(_lastConfigKey(projectId));
+    return json == null ? null : SessionConfig.fromJson(json);
+  }
+
+  /// The cards a session of [projectId] can choose from (R 7.2, step 1):
+  /// those of its decks not in the trash, with what selection needs to
+  /// know about their deck and their `card_stats`.
+  Future<List<StudyCandidate>> candidates(String projectId) async {
+    final rows = await _dao.cardsOfProject(projectId);
+    final options = <String, List<CardOptionRow>>{};
+    for (final option in await _dao.optionsOfProject(projectId)) {
+      (options[option.cardId] ??= []).add(option);
+    }
+    final stats = {
+      for (final row in await _dao.statsOfProject(projectId))
+        (row.cardId, row.direction): DirectionStats(
+          inErrorList: row.inErrorList,
+          // Unanswered attempts do not count (SPEC §13.2, assumption 3).
+          studied: row.correctCount + row.wrongCount > 0,
+        ),
+    };
+    DirectionStats statsOf(String cardId, StudyDirection direction) =>
+        stats[(cardId, direction.name)] ?? const DirectionStats();
+
+    return [
+      for (final (card, deck) in rows)
+        StudyCandidate(
+          card: flashcardFromRows(card, options[card.id] ?? const []),
+          isLanguageDeck: DeckType.fromStored(deck.type) == DeckType.language,
+          normalStats: statsOf(card.id, StudyDirection.normal),
+          reverseStats: statsOf(card.id, StudyDirection.reverse),
+        ),
+    ];
+  }
+
+  static String _lastConfigKey(String projectId) =>
+      'last_session_config:$projectId';
 
   /// Saves what one engine [step] recorded in session [sessionId], at once
   /// and in one transaction: its answers and, when the session finished,

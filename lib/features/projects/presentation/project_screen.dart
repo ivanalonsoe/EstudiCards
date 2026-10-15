@@ -24,7 +24,7 @@ import 'package:go_router/go_router.dart';
 /// `escritorio-claro/proyecto.png`).
 ///
 /// Until the statistics of phase 4, % correct shows "—", errors 0, and the
-/// statistics tab and the desktop summary show an empty state. "Estudiar",
+/// statistics tab and the desktop summary show an empty state.
 /// "Repasar errores", "Compartir" and "Importar" arrive with their phases.
 class ProjectScreen extends ConsumerWidget {
   const new({required this.projectId, super.key});
@@ -104,6 +104,8 @@ class _MobileProjectState extends State<_MobileProject>
               _ProjectHeader(project: project),
               const SizedBox(height: AppSpacing.xl),
               _Metrics(projectId: project.id),
+              const SizedBox(height: AppSpacing.lg),
+              _StudyButton(project: project, expanded: true),
               const SizedBox(height: AppSpacing.xl),
               TabBar(
                 controller: _tabs,
@@ -161,6 +163,8 @@ class _DesktopProject extends StatelessWidget {
                 Expanded(child: _ProjectHeader(project: project, large: true)),
                 const SizedBox(width: AppSpacing.lg),
                 _ProjectMenu(project: project),
+                const SizedBox(width: AppSpacing.sm),
+                _StudyButton(project: project, expanded: false),
               ],
             ),
             const SizedBox(height: AppSpacing.xxl),
@@ -289,6 +293,32 @@ class _ProjectHeader extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Estudiar": opens the session setup (P08) with the project's last
+/// configuration. Full width on mobile.
+class _StudyButton extends StatelessWidget {
+  const new({required this.project, required this.expanded});
+
+  final Project project;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      key: const Key('projectScreen.study'),
+      style: expanded
+          ? FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(
+                minTouchTarget + AppSpacing.sm,
+              ),
+            )
+          : null,
+      onPressed: () => context.go(AppRoutes.sessionSetup(project.id)),
+      icon: const Icon(Icons.play_arrow_rounded),
+      label: Text(AppLocalizations.of(context).study),
     );
   }
 }

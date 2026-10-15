@@ -2,15 +2,23 @@
 // cards waits in memory until the session screen (T3.7) shows it.
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/study/domain/card_selection.dart';
+import 'package:estudicards/features/study/domain/session_config.dart';
 import 'package:estudicards/features/study/domain/session_results.dart';
 import 'package:estudicards/features/study/domain/session_state.dart';
 import 'package:estudicards/features/study/presentation/study_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A session ready to be shown: its cards in order and its settings.
+/// A session ready to be shown: its project, its cards in order and its
+/// settings.
 class SessionLaunch {
-  const new({required this.cards, required this.settings});
+  const new({
+    required this.projectId,
+    required this.cards,
+    required this.settings,
+  });
 
+  /// The card labels show the project's and deck's names and colours.
+  final String projectId;
   final List<SelectedCard> cards;
   final SessionSettings settings;
 }
@@ -25,12 +33,49 @@ class LaunchedSessions extends Notifier<Map<String, SessionLaunch>> {
 
   void add(String sessionId, SessionLaunch launch) =>
       state = {...state, sessionId: launch};
+
+  /// Forgets a finished session, so going back to its path cannot start it
+  /// again.
+  void remove(String sessionId) => state = {...state}..remove(sessionId);
 }
 
 final launchedSessionsProvider =
     NotifierProvider<LaunchedSessions, Map<String, SessionLaunch>>(
       LaunchedSessions.new,
     );
+
+/// Starts a session of [projectId] with [config]: chooses its cards from
+/// the chosen decks (R 7.2), saves the session and leaves its queue for the
+/// session screen. Returns its ID. Used by "Empezar" (P08) and "Repetir
+/// sesión" (US-20 AC2).
+Future<String> launchSession(
+  WidgetRef ref,
+  String projectId,
+  SessionConfig config,
+) async {
+  final repository = ref.read(studyRepositoryProvider);
+  final candidates = await repository.candidates(projectId);
+  final cards = selectCards(
+    candidates.where((c) => config.deckIds.contains(c.card.deckId)),
+    mode: config.mode,
+    direction: config.direction,
+    random: ref.read(randomProvider),
+    count: config.requestedCount,
+    prioritizeFailed: config.prioritizeFailed,
+  );
+  final sessionId = await repository.startSession(projectId, config);
+  ref
+      .read(launchedSessionsProvider.notifier)
+      .add(
+        sessionId,
+        SessionLaunch(
+          projectId: projectId,
+          cards: cards,
+          settings: config.settings,
+        ),
+      );
+  return sessionId;
+}
 
 /// "Repasar falladas ahora" (US-20 AC1): a new session with only the cards
 /// missed in [results], shuffled. Returns its ID.
@@ -45,6 +90,13 @@ Future<String> startReviewOfMissed(
       .startSession(results.projectId, config);
   ref
       .read(launchedSessionsProvider.notifier)
-      .add(sessionId, SessionLaunch(cards: cards, settings: config.settings));
+      .add(
+        sessionId,
+        SessionLaunch(
+          projectId: results.projectId,
+          cards: cards,
+          settings: config.settings,
+        ),
+      );
   return sessionId;
 }

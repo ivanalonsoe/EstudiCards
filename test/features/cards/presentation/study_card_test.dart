@@ -375,4 +375,91 @@ void main() {
 
     expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
   });
+
+  group('in a study session', () {
+    testWidgets('the options are shown in the order given', (tester) async {
+      final card = testCard();
+      await pumpComponent(
+        tester,
+        StudyCard(
+          card: card,
+          label: 'Biología',
+          color: 'green',
+          face: CardFace.front,
+          options: card.options.reversed.toList(),
+        ),
+      );
+
+      final tops = [
+        for (final text in ['Lisosoma', 'Aparato de Golgi', 'Ribosoma'])
+          tester.getTopLeft(find.text(text)).dy,
+      ];
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(
+        find.descendant(of: option(0), matching: find.text('Lisosoma')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('tapping an option reports it until the solution is shown', (
+      tester,
+    ) async {
+      final tapped = <String>[];
+      Future<void> pump({required bool checked}) => pumpComponent(
+        tester,
+        StudyCard(
+          card: testCard(),
+          label: 'Biología',
+          color: 'green',
+          face: CardFace.front,
+          checked: checked,
+          onOptionTap: tapped.add,
+        ),
+      );
+
+      await pump(checked: false);
+      await tester.tap(find.text('Mitocondria'));
+      expect(tapped, ['o1']);
+
+      await pump(checked: true);
+      await tester.tap(find.text('Ribosoma'));
+      expect(tapped, ['o1']);
+    });
+
+    testWidgets('in reverse, the front shows the answer and the back the '
+        'question under it', (tester) async {
+      Future<void> pump(CardFace face) => pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(question: 'to bring', answer: 'traer'),
+          label: 'Inglés B2 · Verbos',
+          color: 'blue',
+          face: face,
+          languagePair: 'Español → Inglés',
+          reversed: true,
+          speechLanguages: (source: 'en-GB', target: 'es-ES'),
+          speaker: (speech) => Text('🔊 ${speech.language}'),
+        ),
+      );
+
+      await pump(CardFace.front);
+      expect(find.text('traer'), findsOneWidget);
+      expect(find.text('to bring'), findsNothing);
+      // The answer is read in the target language.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('studyCard.front.speak.answer')),
+          matching: find.text('🔊 es-ES'),
+        ),
+        findsOneWidget,
+      );
+
+      await pump(CardFace.back);
+      await tester.pumpAndSettle();
+      final small = tester.getTopLeft(find.text('traer')).dy;
+      final big = tester.getTopLeft(find.text('to bring')).dy;
+      expect(small, lessThan(big));
+      expect(tester.widget<Text>(find.text('to bring')).style?.fontSize, 26);
+    });
+  });
 }

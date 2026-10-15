@@ -14,6 +14,8 @@ part 'study_dao.g.dart';
     Projects,
     Cards,
     CardOptions,
+    CardStats,
+    Settings,
   ],
 )
 class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
@@ -70,6 +72,51 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
             ..where((o) => o.cardId.isIn(cardIds))
             ..orderBy([(o) => OrderingTerm.asc(o.position)]))
           .get();
+
+  /// The cards of a project's decks that are not in the trash, each with
+  /// its deck.
+  Future<List<(CardRow, DeckRow)>> cardsOfProject(String projectId) {
+    final query = select(cards).join([
+      innerJoin(decks, decks.id.equalsExp(cards.deckId)),
+    ])..where(decks.projectId.equals(projectId) & decks.deletedAt.isNull());
+    return query
+        .map((row) => (row.readTable(cards), row.readTable(decks)))
+        .get();
+  }
+
+  /// The options of the cards of a project, in their editing order.
+  Future<List<CardOptionRow>> optionsOfProject(String projectId) {
+    final query =
+        select(cardOptions).join([
+            innerJoin(cards, cards.id.equalsExp(cardOptions.cardId)),
+            innerJoin(decks, decks.id.equalsExp(cards.deckId)),
+          ])
+          ..where(decks.projectId.equals(projectId))
+          ..orderBy([OrderingTerm.asc(cardOptions.position)]);
+    return query.map((row) => row.readTable(cardOptions)).get();
+  }
+
+  /// The `card_stats` rows of the cards of a project, in both directions.
+  Future<List<CardStatsRow>> statsOfProject(String projectId) {
+    final query = select(cardStats).join([
+      innerJoin(cards, cards.id.equalsExp(cardStats.cardId)),
+      innerJoin(decks, decks.id.equalsExp(cards.deckId)),
+    ])..where(decks.projectId.equals(projectId));
+    return query.map((row) => row.readTable(cardStats)).get();
+  }
+
+  Future<String?> readSetting(String key) async {
+    final row = await (select(
+      settings,
+    )..where((s) => s.key.equals(key))).getSingleOrNull();
+    return row?.value;
+  }
+
+  /// Saves [value] under [key], replacing what was there.
+  Future<void> writeSetting(String key, String value) => into(settings)
+      .insertOnConflictUpdate(
+        SettingsCompanion.insert(key: key, value: Value(value)),
+      );
 
   /// Records that the project and these decks were studied now (R 7.7).
   Future<void> markUsed(

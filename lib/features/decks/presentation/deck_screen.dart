@@ -31,9 +31,9 @@ import 'package:go_router/go_router.dart';
 /// `escritorio-claro/baraja.png`): a list on mobile and a table on desktop,
 /// with search and sorting (US-12).
 ///
-/// Hidden until their phases (SPEC §13.2, assumption 16): "Estudiar"
-/// (phase 3), "Repasar errores" (phase 4), and "Importar CSV", "Plantilla",
-/// "Prompt para IA" and "Compartir" (phase 5).
+/// Hidden until their phases (SPEC §13.2, assumption 16): "Repasar errores"
+/// (phase 4), and "Importar CSV", "Plantilla", "Prompt para IA" and
+/// "Compartir" (phase 5).
 class DeckScreen extends ConsumerStatefulWidget {
   const new({required this.projectId, required this.deckId, super.key});
 
@@ -359,11 +359,19 @@ class _MobileDeck extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              FilledButton.icon(
-                key: const Key('deckScreen.addCard'),
-                onPressed: () => view.addCard(context),
-                icon: const Icon(Icons.add_rounded),
-                label: Text(l10n.addCard),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      key: const Key('deckScreen.addCard'),
+                      onPressed: () => view.addCard(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(l10n.addCard),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: _StudyButton(view: view)),
+                ],
               ),
               const SizedBox(height: AppSpacing.lg),
               if (view.allCards.isEmpty)
@@ -447,6 +455,10 @@ class _DesktopDeck extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 _DeckMenu(view: view),
+                // In the header rather than the toolbar, which is full
+                // with the search, the orders and "Añadir tarjeta".
+                const SizedBox(width: AppSpacing.sm),
+                _StudyButton(view: view),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -520,6 +532,25 @@ class _Toolbar extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Estudiar": opens the session setup (P08) with only this deck chosen.
+class _StudyButton extends StatelessWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      key: const Key('deckScreen.study'),
+      onPressed: () => context.go(
+        AppRoutes.sessionSetup(view.project.id, deckId: view.deck.id),
+      ),
+      icon: const Icon(Icons.play_arrow_rounded),
+      label: Text(AppLocalizations.of(context).study),
     );
   }
 }
