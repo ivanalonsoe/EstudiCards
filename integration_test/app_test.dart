@@ -15,6 +15,7 @@ import 'package:integration_test/integration_test.dart';
 
 import 'flows/cards_flow.dart';
 import 'flows/projects_flow.dart';
+import 'flows/study_flow.dart';
 
 void main() {
   // Connects flutter_test to the real app running on the device.
@@ -42,4 +43,5 @@ void main() {
 
   group('projects', projectsFlowTests);
   group('cards', cardsFlowTests);
+  group('study', studyFlowTests);
 }

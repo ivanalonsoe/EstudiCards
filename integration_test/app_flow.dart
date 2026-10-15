@@ -122,6 +122,114 @@ Future<void> createDeck(WidgetTester tester, String name) async {
   await tapKey(tester, 'deckForm.save');
 }
 
+/// Creates an English → Spanish language deck from the project screen.
+Future<void> createLanguageDeck(WidgetTester tester, String name) async {
+  await tapKey(tester, 'projectScreen.newDeck');
+  await enterTextInKey(tester, 'deckForm.name', name);
+  await tapKey(tester, 'deckForm.type.language');
+  await tapKey(tester, 'deckForm.sourceLang');
+  await tapText(tester, 'Inglés (R. U.)');
+  await tapKey(tester, 'deckForm.targetLang');
+  await tapText(tester, 'Español');
+  await tapKey(tester, 'deckForm.save');
+}
+
+/// Adds a simple card from the deck screen and waits to be back on it.
+Future<void> addSimpleCard(
+  WidgetTester tester,
+  String question,
+  String answer,
+) async {
+  await tapKey(tester, 'deckScreen.addCard');
+  await enterTextInKey(tester, 'cardEditor.question', question);
+  await enterTextInKey(tester, 'cardEditor.answer', answer);
+  await tapKey(tester, 'cardEditor.save');
+  await waitFor(tester, find.byKey(const Key('screen.deck')));
+}
+
+/// Adds a test card with two options, the second one correct, from the
+/// deck screen.
+Future<void> addTestCard(
+  WidgetTester tester,
+  String question, {
+  required String wrong,
+  required String correct,
+}) async {
+  await tapKey(tester, 'deckScreen.addCard');
+  await tapKey(tester, 'cardEditor.testType');
+  await enterTextInKey(tester, 'cardEditor.question', question);
+  await enterTextInKey(tester, 'cardEditor.option.0', wrong);
+  await enterTextInKey(tester, 'cardEditor.option.1', correct);
+  await tapKey(tester, 'cardEditor.option.1.correct');
+  await tapKey(tester, 'cardEditor.save');
+  await waitFor(tester, find.byKey(const Key('screen.deck')));
+}
+
+/// The timer of the session setup, with its value set by tapping − [steps]
+/// times from where it starts (30 s per question, 10 min in total).
+Future<void> chooseTimer(
+  WidgetTester tester,
+  String type, {
+  int steps = 0,
+}) async {
+  await tapKey(tester, 'sessionSetup.timer.$type');
+  for (var i = 0; i < steps; i++) {
+    await tapKey(tester, 'sessionSetup.timerValue.minus');
+  }
+}
+
+/// "Empezar" in the session setup; waits for the session screen.
+Future<void> startSession(WidgetTester tester) async {
+  await tapKey(tester, 'sessionSetup.start');
+  await waitFor(tester, find.byKey(const Key('screen.session')));
+}
+
+/// Answers the card on screen correctly: "Girar" and "Acerté" for a simple
+/// card, or ticking the option in [correctOptions] and "Comprobar" and
+/// "Siguiente" for a test card.
+Future<void> answerCorrectly(
+  WidgetTester tester, {
+  Set<String> correctOptions = const {},
+}) async {
+  await waitFor(
+    tester,
+    find.byWidgetPredicate(
+      (widget) =>
+          widget.key == const Key('session.flip') ||
+          widget.key == const Key('session.check'),
+    ),
+  );
+  if (find.byKey(const Key('session.flip')).evaluate().isNotEmpty) {
+    await tapKey(tester, 'session.flip');
+    await tapKey(tester, 'session.correct');
+    return;
+  }
+  final option = correctOptions.firstWhere(
+    (text) => find.text(text).evaluate().isNotEmpty,
+  );
+  await tapText(tester, option);
+  await tapKey(tester, 'session.check');
+  await tapKey(tester, 'session.next');
+}
+
+/// From the results back to the project: "Volver al proyecto" on desktop,
+/// the ✕ at the top on a phone.
+///
+/// A phone's results are a list that only builds what is on screen: after
+/// scrolling down, the ✕ is gone, so the list is scrolled back up to it.
+Future<void> backFromResults(WidgetTester tester) async {
+  await waitFor(tester, find.byKey(const Key('screen.results')));
+  final desktopBack = find.byKey(const Key('results.backToProject'));
+  final close = find.byKey(const Key('results.close'));
+  if (desktopBack.evaluate().isNotEmpty) {
+    await tapFinder(tester, desktopBack);
+  } else {
+    await tester.scrollUntilVisible(close, -300);
+    await tapFinder(tester, close);
+  }
+  await waitFor(tester, find.byKey(const Key('projectScreen.study')));
+}
+
 /// Chooses [item] in the ⋮ menu of the only project on the dashboard.
 Future<void> chooseInProjectCardMenu(WidgetTester tester, String item) async {
   await _tap(tester, find.byTooltip('Opciones del proyecto'));

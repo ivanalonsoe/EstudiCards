@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 8 / 10 |
+| 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -344,8 +344,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 swiping right records a correct answer and left a wrong one.
     - 🧩 the "n / total" progress and "+N repasos" update.
 
-- [ ] **T3.8 Pause and exit** · P10 · US-19 · Depends on: T3.7
-  - > **Note:** "Salir" and its test were done with T3.7 (assumption 41).
+- [x] **T3.8 Pause and exit** · P10 · US-19 · Depends on: T3.7
+  - > **Note:** "Salir" and its test were done with T3.7 (assumption 41). The session pauses when the app is hidden (`AppLifecycleListener.onHide`), not when the desktop window just loses focus, and stays paused until "Continuar". See SPEC §13.2 (assumption 42).
   - **Tests first:**
     - 🧩 while paused, the card is not visible.
     - 🧩 sending the app to the background pauses it.
@@ -358,7 +358,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 at ≥ 80% the celebration is shown; at 79% it is not.
     - 🧩 "Repasar falladas ahora" starts a session with only the missed cards.
 
-- [ ] **T3.10 Phase 3 wrap-up**
+- [x] **T3.10 Phase 3 wrap-up**
+  - > **Note:** the flow is `integration_test/flows/study_flow.dart` and the E2E tests are in `patrol_test/study_test.dart`; they passed on Windows and on an Android emulator. E2E-03 waits a real minute for the global timer, and Patrol attempts in CI get 15 minutes. See SPEC §13.2 (assumption 43).
   - 🔗 Full session with simple and test cards, with and without timers.
   - 🤖 E2E-01 and E2E-03.
 

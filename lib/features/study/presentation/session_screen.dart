@@ -51,8 +51,8 @@ class SessionScreen extends ConsumerWidget {
 }
 
 /// Runs the session with a [SessionRunner] and saves every step at once
-/// (T3.5). "Pausa" and the pause when the app goes to the background arrive
-/// with T3.8.
+/// (T3.5). It pauses with "Pausa" and when the app goes to the background
+/// (US-19).
 class _SessionView extends ConsumerStatefulWidget {
   const new({required this.sessionId, required this.launch});
 
@@ -65,6 +65,10 @@ class _SessionView extends ConsumerStatefulWidget {
 
 class _SessionViewState extends ConsumerState<_SessionView> {
   late final SessionRunner _runner;
+
+  /// Tells the screen when the app changes state, e.g. goes to the
+  /// background (see [initState]).
+  late final AppLifecycleListener _lifecycle;
 
   /// The saves, one after another, so the answers reach the database in
   /// the order they happened.
@@ -82,12 +86,26 @@ class _SessionViewState extends ConsumerState<_SessionView> {
       onStep: _onStep,
     );
     _started = true;
+    // Flutter reports the app's lifecycle: `resumed` (on screen and in
+    // use), `inactive` (on screen but not in use, e.g. during a phone
+    // call), `hidden` (not visible: in the background on a phone,
+    // minimised on desktop), `paused` and `detached`. The session pauses
+    // when the app is hidden (US-19 AC2), so the timers stop too (R 7.5).
+    // `inactive` is not enough: on desktop it also comes whenever the
+    // window loses focus. Coming back keeps the pause until "Continuar".
+    _lifecycle = AppLifecycleListener(onHide: _pause);
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _runner.dispose();
     super.dispose();
+  }
+
+  /// "Pausa" (US-19 AC1): hides the card and stops the timers.
+  void _pause() {
+    if (_runner.state is InProgress) _runner.send(const Pause());
   }
 
   void _onStep(SessionStep step) {
@@ -139,14 +157,19 @@ class _SessionViewState extends ConsumerState<_SessionView> {
 
   @override
   Widget build(BuildContext context) {
-    final state = _runner.state;
-    // Finished: the results open as soon as the end is saved.
-    if (state is! InProgress) return const Scaffold();
+    final (session, isPaused) = switch (_runner.state) {
+      final InProgress session => (session, false),
+      Paused(:final session) => (session, true),
+      // Finished: the results open as soon as the end is saved.
+      Finished() => (null, false),
+    };
+    if (session == null) return const Scaffold();
     final isDesktop =
         FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
         FormFactor.desktop;
-    final step = state.current.step;
-    final isTest = state.current.card.type == CardType.test;
+    final step = session.current.step;
+    final isTest = session.current.card.type == CardType.test;
+    final now = ref.read(clockProvider).now();
 
     // The system back button asks before leaving, like "Salir".
     return PopScope(
@@ -159,41 +182,51 @@ class _SessionViewState extends ConsumerState<_SessionView> {
           child: Column(
             children: [
               _TopBar(
-                session: state,
+                session: session,
                 projectId: widget.launch.projectId,
                 isDesktop: isDesktop,
-                now: ref.read(clockProvider).now(),
+                now: now,
                 onExit: () => unawaited(_confirmExit()),
+                onPause: isPaused ? null : _pause,
               ),
               Expanded(
-                child: _CardAndActions(
-                  isDesktop: isDesktop,
-                  card: _SwipeToGrade(
-                    // Swiping is for phones and tablets (US-15 AC2).
-                    enabled: !isDesktop && step is Flipped,
-                    onGrade: (correct) =>
-                        _grade(correct: correct, haptics: true),
-                    child: _SessionCard(
-                      current: state.current,
-                      projectId: widget.launch.projectId,
-                      onFlip: () => _send((turn) => Flip(turn: turn)),
-                      onOptionTap: (id) => _send(
-                        (turn) => ToggleOption(turn: turn, optionId: id),
+                child: isPaused
+                    ? _PausePanel(
+                        // The session clock is stopped while paused.
+                        studied: session.clock.elapsedAt(now),
+                        onResume: () => _runner.send(const Resume()),
+                        onExit: () => unawaited(_confirmExit()),
+                      )
+                    : _CardAndActions(
+                        isDesktop: isDesktop,
+                        card: _SwipeToGrade(
+                          // Swiping is for phones and tablets (US-15 AC2).
+                          enabled: !isDesktop && step is Flipped,
+                          onGrade: (correct) =>
+                              _grade(correct: correct, haptics: true),
+                          child: _SessionCard(
+                            current: session.current,
+                            projectId: widget.launch.projectId,
+                            onFlip: () => _send((turn) => Flip(turn: turn)),
+                            onOptionTap: (id) => _send(
+                              (turn) => ToggleOption(turn: turn, optionId: id),
+                            ),
+                          ),
+                        ),
+                        actions: _Actions(
+                          step: step,
+                          isTest: isTest,
+                          onFlip: () => _send((turn) => Flip(turn: turn)),
+                          onCheck: () => _send((turn) => Check(turn: turn)),
+                          onReveal: () =>
+                              _send((turn) => RevealAnswer(turn: turn)),
+                          onLeave: () =>
+                              _send((turn) => LeaveForLater(turn: turn)),
+                          onGrade: (correct) =>
+                              _grade(correct: correct, haptics: !isDesktop),
+                          onNext: () => _send((turn) => Next(turn: turn)),
+                        ),
                       ),
-                    ),
-                  ),
-                  actions: _Actions(
-                    step: step,
-                    isTest: isTest,
-                    onFlip: () => _send((turn) => Flip(turn: turn)),
-                    onCheck: () => _send((turn) => Check(turn: turn)),
-                    onReveal: () => _send((turn) => RevealAnswer(turn: turn)),
-                    onLeave: () => _send((turn) => LeaveForLater(turn: turn)),
-                    onGrade: (correct) =>
-                        _grade(correct: correct, haptics: !isDesktop),
-                    onNext: () => _send((turn) => Next(turn: turn)),
-                  ),
-                ),
               ),
             ],
           ),
@@ -288,6 +321,7 @@ class _TopBar extends ConsumerWidget {
     required this.isDesktop,
     required this.now,
     required this.onExit,
+    required this.onPause,
   });
 
   final InProgress session;
@@ -295,6 +329,9 @@ class _TopBar extends ConsumerWidget {
   final bool isDesktop;
   final DateTime now;
   final VoidCallback onExit;
+
+  /// "Pausa"; null while paused, which hides the button.
+  final VoidCallback? onPause;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -304,6 +341,28 @@ class _TopBar extends ConsumerWidget {
     final repeats = session.pendingRepeats;
     final total = session.totalCards;
     final projectName = ref.watch(projectProvider(projectId)).value?.name;
+    final timeLeft =
+        session.questionTimeLeft(now) ?? session.sessionTimeLeft(now);
+    // On a phone with a timer the row is full, so the counters go under
+    // the bar, as in `docs/design/movil-oscuro/estudio-test-fallado.png`.
+    final countersBelow = !isDesktop && timeLeft != null;
+    final counters = [
+      _Counter(
+        countKey: const Key('session.correctCount'),
+        count: session.correctCount,
+        icon: Icons.check_rounded,
+        color: colors.success,
+        label: l10n.correctCountLabel(session.correctCount),
+      ),
+      const SizedBox(width: AppSpacing.md),
+      _Counter(
+        countKey: const Key('session.wrongCount'),
+        count: session.wrongCount,
+        icon: Icons.close_rounded,
+        color: colors.error,
+        label: l10n.wrongCountLabel(session.wrongCount),
+      ),
+    ];
 
     final progress = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -327,28 +386,22 @@ class _TopBar extends ConsumerWidget {
             ),
             if (repeats > 0) ...[
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                l10n.pendingRepeats(repeats),
-                key: const Key('session.repeats'),
-                style: text.labelMedium?.copyWith(color: colors.primaryStrong),
+              // Gives way on a narrow phone rather than pushing the
+              // counters out.
+              Flexible(
+                child: Text(
+                  l10n.pendingRepeats(repeats),
+                  key: const Key('session.repeats'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.labelMedium?.copyWith(
+                    color: colors.primaryStrong,
+                  ),
+                ),
               ),
             ],
             const Spacer(),
-            _Counter(
-              countKey: const Key('session.correctCount'),
-              count: session.correctCount,
-              icon: Icons.check_rounded,
-              color: colors.success,
-              label: l10n.correctCountLabel(session.correctCount),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            _Counter(
-              countKey: const Key('session.wrongCount'),
-              count: session.wrongCount,
-              icon: Icons.close_rounded,
-              color: colors.error,
-              label: l10n.wrongCountLabel(session.wrongCount),
-            ),
+            if (!countersBelow) ...counters,
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -361,11 +414,13 @@ class _TopBar extends ConsumerWidget {
             backgroundColor: colors.surfaceVariant,
           ),
         ),
+        if (countersBelow) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Row(children: counters),
+        ],
       ],
     );
 
-    final timeLeft =
-        session.questionTimeLeft(now) ?? session.sessionTimeLeft(now);
     final exit = isDesktop
         ? TextButton.icon(
             key: const Key('session.exit'),
@@ -380,6 +435,23 @@ class _TopBar extends ConsumerWidget {
             onPressed: onExit,
             icon: const Icon(Icons.close_rounded),
           );
+    final onPause = this.onPause;
+    final pause = switch ((onPause, isDesktop)) {
+      // While paused there is no button; the space keeps the bar still.
+      (null, _) => SizedBox(width: isDesktop ? 0 : minTouchTarget),
+      (_, true) => OutlinedButton.icon(
+        key: const Key('session.pause'),
+        onPressed: onPause,
+        icon: const Icon(Icons.pause_rounded),
+        label: Text(l10n.pauseSession),
+      ),
+      (_, false) => IconButton(
+        key: const Key('session.pause'),
+        tooltip: l10n.pauseSession,
+        onPressed: onPause,
+        icon: const Icon(Icons.pause_rounded),
+      ),
+    };
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -413,7 +485,8 @@ class _TopBar extends ConsumerWidget {
                 warning: session.isTimeRunningOut(now),
               ),
             ],
-            const SizedBox(width: AppSpacing.md),
+            SizedBox(width: isDesktop ? AppSpacing.lg : AppSpacing.xs),
+            pause,
           ],
         ),
       ),
@@ -473,9 +546,9 @@ class _TimerChip extends StatelessWidget {
     final colors = AppColors.of(context);
     final color = warning ? colors.warning : colors.textMuted;
     // Whole seconds, rounded up: "0:01" until the time is really over.
-    final seconds = (timeLeft.inMilliseconds / 1000).ceil();
-    final time =
-        '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+    final time = _clockText(
+      Duration(seconds: (timeLeft.inMilliseconds / 1000).ceil()),
+    );
     return Semantics(
       label: AppLocalizations.of(context).timeLeftLabel(time),
       excludeSemantics: true,
@@ -502,6 +575,109 @@ class _TimerChip extends StatelessWidget {
                   ?.copyWith(color: color),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "3:42": minutes and seconds.
+String _clockText(Duration duration) {
+  final seconds = duration.inSeconds;
+  return '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+}
+
+/// P10, the pause (`docs/design/tarjetas/`, variant 10): a panel in place of
+/// the card and its buttons, so the card cannot be seen (US-19 AC1), with
+/// the time studied, "Continuar" and "Salir de la sesión".
+class _PausePanel extends StatelessWidget {
+  const new({
+    required this.studied,
+    required this.onResume,
+    required this.onExit,
+  });
+
+  final Duration studied;
+  final VoidCallback onResume;
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Container(
+            key: const Key('session.paused'),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.xxxl,
+            ),
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(AppRadii.studyCard),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: colors.primarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.pause_rounded,
+                      size: 32,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  l10n.sessionPaused,
+                  textAlign: TextAlign.center,
+                  style: text.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  l10n.sessionPausedBody(_clockText(studied)),
+                  textAlign: TextAlign.center,
+                  style: text.bodyMedium?.copyWith(color: colors.textMuted),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                FilledButton.icon(
+                  key: const Key('session.resume'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(
+                      minTouchTarget + AppSpacing.sm,
+                    ),
+                  ),
+                  onPressed: onResume,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(l10n.resumeSession),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton(
+                  key: const Key('session.pauseExit'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primaryStrong,
+                  ),
+                  onPressed: onExit,
+                  child: Text(l10n.exitFromPause),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
