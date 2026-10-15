@@ -382,6 +382,93 @@ void main() {
     });
   }
 
+  group('pause', () {
+    for (final (name, size) in [('mobile', mobile), ('desktop', desktop)]) {
+      testWidgets('while paused, the card is not visible ($name)', (
+        tester,
+      ) async {
+        await openSession(
+          tester,
+          size: size,
+          cards: [simple('to bring', 'traer')],
+        );
+
+        await tapKey(tester, 'session.pause');
+
+        expect(byKey('session.paused'), findsOneWidget);
+        expect(find.text('En pausa'), findsOneWidget);
+        expect(byKey('studyCard'), findsNothing);
+        expect(find.text('to bring'), findsNothing);
+        expect(byKey('session.flip'), findsNothing);
+        expect(byKey('session.pause'), findsNothing);
+
+        await tapKey(tester, 'session.resume');
+
+        expect(byKey('session.paused'), findsNothing);
+        expect(find.text('to bring'), findsOneWidget);
+      });
+    }
+
+    testWidgets('the pause shows the time studied so far', (tester) async {
+      await openSession(tester, cards: [simple('to bring', 'traer')]);
+
+      await tapKey(tester, 'session.pause');
+
+      expect(
+        find.text('La tarjeta está oculta.\nTiempo de sesión: 0:00'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sending the app to the background pauses it', (tester) async {
+      await openSession(tester, cards: [simple('to bring', 'traer')]);
+      // Registered after opening the session, so it runs before the app is
+      // removed (tear-downs run last-in, first-out): a hidden app draws no
+      // frames, and removing it would wait for ever.
+      addTearDown(
+        () => tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        ),
+      );
+
+      tester.binding
+        ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+        ..handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      await tester.pump();
+      // A hidden app draws nothing, so the pause shows on coming back,
+      // and it stays until "Continuar".
+      tester.binding
+        ..handleAppLifecycleStateChanged(AppLifecycleState.inactive)
+        ..handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(byKey('session.paused'), findsOneWidget);
+      expect(find.text('to bring'), findsNothing);
+    });
+
+    testWidgets('"Salir de la sesión" asks for confirmation and goes to the '
+        'results', (tester) async {
+      final session = await openSession(
+        tester,
+        cards: [simple('to bring', 'traer')],
+      );
+      await tapKey(tester, 'session.pause');
+
+      await tapKey(tester, 'session.pauseExit');
+      expect(find.text('Se guardarán tus respuestas.'), findsOneWidget);
+      await tapKey(tester, 'confirmDialog.confirm');
+
+      expect(
+        session.router.routerDelegate.currentConfiguration.uri.path,
+        AppRoutes.results(session.id),
+      );
+      final stored = await session.db
+          .select(session.db.studySessions)
+          .getSingle();
+      expect(stored.status, 'abandoned');
+    });
+  });
+
   testWidgets('a session that is not in memory any more says so', (
     tester,
   ) async {

@@ -21,7 +21,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 0. Foundation | T0.1 – T0.10 | ✅ 10 / 10 |
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
-| 3. Study session | T3.1 – T3.10 | ⏳ 8 / 10 |
+| 3. Study session | T3.1 – T3.10 | ⏳ 9 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ⏳ 0 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
@@ -344,8 +344,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧩 swiping right records a correct answer and left a wrong one.
     - 🧩 the "n / total" progress and "+N repasos" update.
 
-- [ ] **T3.8 Pause and exit** · P10 · US-19 · Depends on: T3.7
-  - > **Note:** "Salir" and its test were done with T3.7 (assumption 41).
+- [x] **T3.8 Pause and exit** · P10 · US-19 · Depends on: T3.7
+  - > **Note:** "Salir" and its test were done with T3.7 (assumption 41). The session pauses when the app is hidden (`AppLifecycleListener.onHide`), not when the desktop window just loses focus, and stays paused until "Continuar". See SPEC §13.2 (assumption 42).
   - **Tests first:**
     - 🧩 while paused, the card is not visible.
     - 🧩 sending the app to the background pauses it.

@@ -1249,6 +1249,19 @@
     "description": "What screen readers say for the ✗ counter of the session.",
     "placeholders": { "count": { "type": "int" } }
   },
+  "pauseSession": "Pausa",
+  "@pauseSession": { "description": "Study session button that pauses it (US-19)." },
+  "sessionPaused": "En pausa",
+  "@sessionPaused": { "description": "Title of the pause screen (P10)." },
+  "sessionPausedBody": "La tarjeta está oculta.\nTiempo de sesión: {time}",
+  "@sessionPausedBody": {
+    "description": "Pause screen text with the time studied so far, e.g. '3:42'.",
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "resumeSession": "Continuar",
+  "@resumeSession": { "description": "Pause screen button that goes back to the session." },
+  "exitFromPause": "Salir de la sesión",
+  "@exitFromPause": { "description": "Pause screen button that ends the session, after confirming." },
   "timeLeftLabel": "Tiempo restante: {time}",
   "@timeLeftLabel": {
     "description": "What screen readers say for the session timer.",
