@@ -41,8 +41,9 @@ class AppDatabase extends _$AppDatabase {
   /// 2. `projects.archived_at` (T1.9).
   /// 3. `type`, `source_lang` and `target_lang` move from `projects` to
   ///    `decks` (T2.10).
+  /// 4. `card_stats` is filled from the attempts saved in phase 3 (T4.1).
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// A migration tells Drift how to create the tables the first time and,
   /// later, how to upgrade an old database when `schemaVersion` grows.
@@ -61,6 +62,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(projects, projects.archivedAt);
       }
       if (from < 3) await _moveTypeToDecks(m);
+      // Phase 3 saved attempts without `card_stats` (T3.5). This runs last,
+      // once every table has its current columns, so it always uses the
+      // current recalculation. It is safe to repeat: it starts from scratch.
+      if (from < 4) await recomputeCardStats();
     },
     beforeOpen: (details) async {
       // SQLite ignores foreign keys unless they are switched on for every
@@ -98,6 +103,49 @@ class AppDatabase extends _$AppDatabase {
       }
     }
   }
+
+  /// Rebuilds every `card_stats` row from `attempts` (R 7.4). Saving an
+  /// answer updates its row as it goes (`StudyRepository.record`); this
+  /// gives the same result in one go, entirely in SQL.
+  ///
+  /// Only first attempts that were answered count. Per card and direction,
+  /// they are numbered in the order they were answered (`ROW_NUMBER`, with
+  /// SQLite's `rowid`, the insertion order, breaking ties). Then:
+  ///   - the correct answers in a row are the answers after the last miss,
+  ///     because every one of them is correct;
+  ///   - the card is in errors if it was ever missed and fewer than 2
+  ///     answers came after its last miss.
+  Future<void> recomputeCardStats() => transaction(() async {
+    await customStatement('DELETE FROM card_stats');
+    await customStatement('''
+      WITH answered AS (
+        SELECT card_id, direction, result, answered_at,
+          ROW_NUMBER() OVER (
+            PARTITION BY card_id, direction ORDER BY answered_at, rowid
+          ) AS n
+        FROM attempts
+        WHERE is_first_attempt = 1 AND result IN ('correct', 'wrong')
+      ),
+      summary AS (
+        SELECT card_id, direction,
+          SUM(result = 'correct') AS correct_count,
+          SUM(result = 'wrong') AS wrong_count,
+          MAX(CASE WHEN result = 'wrong' THEN n END) AS last_wrong,
+          MAX(n) AS last_n
+        FROM answered
+        GROUP BY card_id, direction
+      )
+      INSERT INTO card_stats (card_id, direction, correct_count, wrong_count,
+        consecutive_correct, in_error_list, last_result, last_attempt_at)
+      SELECT s.card_id, s.direction, s.correct_count, s.wrong_count,
+        s.last_n - COALESCE(s.last_wrong, 0),
+        s.last_wrong IS NOT NULL AND s.last_n - s.last_wrong < 2,
+        last.result, last.answered_at
+      FROM summary AS s
+      JOIN answered AS last ON last.card_id = s.card_id
+        AND last.direction = s.direction AND last.n = s.last_n
+    ''');
+  });
 
   /// Whether [table] already has [column] (SQLite's `table_info` lists the
   /// columns of a table).

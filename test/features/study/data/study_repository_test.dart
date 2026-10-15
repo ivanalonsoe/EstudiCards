@@ -408,6 +408,167 @@ void main() {
     });
   });
 
+  group('card statistics (R 7.4)', () {
+    late String sessionId;
+    late SessionState inProgress;
+
+    setUp(() async {
+      final config = SessionConfig(deckIds: [deck.id]);
+      sessionId = await repository.startSession(project.id, config);
+      inProgress = SessionEngine(random: createRandom(seed: 1))
+          .start(
+            cards: [
+              SelectedCard(card: cards[0], direction: StudyDirection.normal),
+            ],
+            settings: config.settings,
+            at: clock.now(),
+          )
+          .state;
+    });
+
+    AttemptRecord attempt(
+      Flashcard card,
+      AttemptResult result, {
+      StudyDirection direction = StudyDirection.normal,
+      bool isFirstAttempt = true,
+    }) => AttemptRecord(
+      cardId: card.id,
+      direction: direction,
+      result: result,
+      source: result == AttemptResult.unanswered
+          ? AttemptSource.sessionEnd
+          : AttemptSource.selfEval,
+      isFirstAttempt: isFirstAttempt,
+      answeredAt: clock.now(),
+    );
+
+    /// Saves [attempts] as one engine step, as the session screen does.
+    Future<void> record(List<AttemptRecord> attempts) =>
+        repository.record(sessionId, SessionStep(inProgress, attempts));
+
+    Future<List<CardStatsRow>> storedStats() =>
+        (db.select(db.cardStats)..orderBy([
+              (s) => OrderingTerm.asc(s.cardId),
+              (s) => OrderingTerm.asc(s.direction),
+            ]))
+            .get();
+
+    test('recording answers updates the card statistics', () async {
+      await record([attempt(cards[0], AttemptResult.wrong)]);
+      clock.advance(const Duration(minutes: 1));
+      await record([attempt(cards[0], AttemptResult.correct)]);
+
+      final stats = (await storedStats()).single;
+      expect(stats.cardId, cards[0].id);
+      expect(stats.direction, 'normal');
+      expect((stats.correctCount, stats.wrongCount), (1, 1));
+      expect(stats.consecutiveCorrect, 1);
+      expect(stats.inErrorList, isTrue);
+      expect(stats.lastResult, 'correct');
+      expect(stats.lastAttemptAt, clock.now());
+    });
+
+    test('the statistics are saved with their attempt or not at all', () async {
+      // The second attempt points at a card that does not exist, so the
+      // database rejects it and the whole step is rolled back.
+      final broken = AttemptRecord(
+        cardId: 'missing card',
+        direction: StudyDirection.normal,
+        result: AttemptResult.wrong,
+        source: AttemptSource.selfEval,
+        isFirstAttempt: true,
+        answeredAt: clock.now(),
+      );
+
+      await expectLater(
+        record([attempt(cards[0], AttemptResult.wrong), broken]),
+        throwsA(anything),
+      );
+
+      expect(await storedAttempts(), isEmpty);
+      expect(await storedStats(), isEmpty);
+    });
+
+    test('normal and reverse directions keep separate statistics', () async {
+      await record([
+        attempt(cards[0], AttemptResult.wrong),
+        attempt(
+          cards[0],
+          AttemptResult.correct,
+          direction: StudyDirection.reverse,
+        ),
+      ]);
+
+      final stats = await storedStats();
+      expect(stats.map((s) => (s.direction, s.correctCount, s.wrongCount)), [
+        ('normal', 0, 1),
+        ('reverse', 1, 0),
+      ]);
+      expect(stats.map((s) => s.inErrorList), [isTrue, isFalse]);
+    });
+
+    test('repeats and unanswered cards change nothing', () async {
+      await record([
+        attempt(cards[0], AttemptResult.wrong, isFirstAttempt: false),
+        attempt(cards[1], AttemptResult.correct, isFirstAttempt: false),
+        attempt(cards[2], AttemptResult.unanswered),
+      ]);
+
+      expect(await storedStats(), isEmpty);
+
+      await record([attempt(cards[0], AttemptResult.wrong)]);
+      final missed = await storedStats();
+      await record([
+        attempt(cards[0], AttemptResult.correct, isFirstAttempt: false),
+        attempt(cards[0], AttemptResult.correct, isFirstAttempt: false),
+        attempt(cards[0], AttemptResult.unanswered),
+      ]);
+
+      expect(await storedStats(), missed);
+    });
+
+    test('recalculating from attempts gives the same result as the '
+        'incremental update', () async {
+      // Hundreds of answers chosen at random (with a fixed seed): every
+      // card, both directions, repeats, unanswered cards and answers saved
+      // at the same instant.
+      final random = createRandom(seed: 4);
+      for (var i = 0; i < 300; i++) {
+        final step = [
+          for (var j = random.nextInt(3); j >= 0; j--)
+            attempt(
+              cards[random.nextInt(cards.length)],
+              AttemptResult.values[random.nextInt(3)],
+              direction: StudyDirection.values[random.nextInt(2)],
+              isFirstAttempt: random.nextInt(5) > 0,
+            ),
+        ];
+        await record(step);
+        clock.advance(Duration(seconds: random.nextInt(3)));
+      }
+      final incremental = await storedStats();
+      expect(incremental, hasLength(greaterThan(4)));
+      expect(incremental.where((s) => s.inErrorList), isNotEmpty);
+      expect(incremental.where((s) => !s.inErrorList), isNotEmpty);
+
+      await db.recomputeCardStats();
+
+      expect(await storedStats(), incremental);
+    });
+
+    test(
+      'recalculating replaces statistics that no attempt explains',
+      () async {
+        await addTestStats(db, cards[1].id, wrong: 3);
+        await record([attempt(cards[0], AttemptResult.correct)]);
+
+        await db.recomputeCardStats();
+
+        expect((await storedStats()).single.cardId, cards[0].id);
+      },
+    );
+  });
+
   test('a session that runs out of time is saved as time_up', () async {
     final session = await startPlaying(
       cards.take(2).toList(),

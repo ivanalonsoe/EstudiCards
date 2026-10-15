@@ -8,6 +8,7 @@ import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/ids.dart';
 import 'package:estudicards/features/cards/data/cards_repository.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
+import 'package:estudicards/features/stats/domain/card_direction_stats.dart';
 import 'package:estudicards/features/study/data/study_dao.dart';
 import 'package:estudicards/features/study/domain/attempt_record.dart';
 import 'package:estudicards/features/study/domain/card_selection.dart';
@@ -99,8 +100,9 @@ class StudyRepository {
       'last_session_config:$projectId';
 
   /// Saves what one engine [step] recorded in session [sessionId], at once
-  /// and in one transaction: its answers and, when the session finished,
-  /// its end. If the app closes later, what was answered is already saved.
+  /// and in one transaction: its answers, the statistics of their cards
+  /// (R 7.4) and, when the session finished, its end. If the app closes
+  /// later, what was answered is already saved.
   Future<void> record(String sessionId, SessionStep step) async {
     final state = step.state;
     // Most steps (flipping, ticking an option, ticks…) record nothing.
@@ -108,10 +110,45 @@ class StudyRepository {
     await _dao.transaction(() async {
       for (final attempt in step.attempts) {
         await _dao.insertAttempt(_attemptRow(sessionId, attempt));
+        await _updateStats(attempt);
       }
       if (state is Finished) await _finish(sessionId, state);
     });
   }
+
+  /// Applies [attempt] to its card's `card_stats` row in its direction.
+  /// Repeats and unanswered cards change nothing, so they write nothing.
+  Future<void> _updateStats(AttemptRecord attempt) async {
+    final direction = attempt.direction.name;
+    final row = await _dao.findStats(attempt.cardId, direction);
+    final before = row == null ? CardDirectionStats.empty : _stats(row);
+    final after = before.after(attempt);
+    if (identical(after, before)) return;
+    await _dao.saveStats(
+      CardStatsCompanion.insert(
+        cardId: attempt.cardId,
+        direction: direction,
+        correctCount: Value(after.correctCount),
+        wrongCount: Value(after.wrongCount),
+        consecutiveCorrect: Value(after.consecutiveCorrect),
+        inErrorList: Value(after.inErrorList),
+        lastResult: Value(after.lastResult?.name),
+        lastAttemptAt: Value(after.lastAttemptAt),
+      ),
+    );
+  }
+
+  static CardDirectionStats _stats(CardStatsRow row) => CardDirectionStats(
+    correctCount: row.correctCount,
+    wrongCount: row.wrongCount,
+    consecutiveCorrect: row.consecutiveCorrect,
+    inErrorList: row.inErrorList,
+    lastResult: switch (row.lastResult) {
+      final stored? => AttemptResult.fromStored(stored),
+      null => null,
+    },
+    lastAttemptAt: row.lastAttemptAt,
+  );
 
   /// What the results screen shows about session [sessionId] (P11); null
   /// if there is no such session.

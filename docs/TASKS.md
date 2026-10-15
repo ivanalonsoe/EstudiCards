@@ -367,7 +367,8 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 4 — Statistics and errors
 
-- [ ] **T4.1 Per-card statistics and error list** · R 7.4 · US-21 · Depends on: T3.5
+- [x] **T4.1 Per-card statistics and error list** · R 7.4 · US-21 · Depends on: T3.5
+  - > **Note:** `card_stats` is updated in the transaction that saves each attempt; the recalculation is one SQL statement (`AppDatabase.recomputeCardStats`). Schema version 4 runs it once to fill the attempts saved in phase 3 (decided with the owner). See SPEC §13.2 (assumption 44).
   - Update `card_stats` when attempts are recorded, plus a full recalculation from `attempts`.
   - **Tests first:**
     - 🧪 a wrong answer puts the card in errors; two correct in a row take it out; correct-wrong-correct does not.
