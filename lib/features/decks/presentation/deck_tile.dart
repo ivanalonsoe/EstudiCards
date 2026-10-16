@@ -12,17 +12,16 @@ import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
+import 'package:estudicards/features/stats/presentation/stats_texts.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// A deck in the project screen (DESIGN_BRIEF.md §6.3): a band in its
-/// colour, the name, "84 tarjetas · 81% aciertos" and, for a language deck,
-/// its language pair. Tapping it opens the deck.
-///
-/// % correct and errors come from the statistics of phase 4; until then the
-/// row shows "— aciertos" and no errors chip.
+/// colour, the name, "84 tarjetas · 81% aciertos · EN → ES" (the pair only
+/// for a language deck) and a chip with its pending errors. Tapping it
+/// opens the deck.
 class DeckTile extends ConsumerWidget {
   const new({required this.summary, required this.project, super.key});
 
@@ -39,6 +38,7 @@ class DeckTile extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final deckColor = ProjectColor.fromKey(deck.color)
         .resolve(Theme.of(context).brightness);
+    final details = text.bodyMedium?.copyWith(color: colors.textMuted);
 
     return Card(
       key: Key('deckTile.${deck.id}'),
@@ -67,31 +67,46 @@ class DeckTile extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        l10n.deckContents(
-                          l10n.cardCount(summary.cardCount),
-                          l10n.correctRate('—'),
+                      // One text, so a narrow row breaks it between words
+                      // (at most two lines).
+                      Text.rich(
+                        key: Key('deckTile.${deck.id}.details'),
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: l10n.deckContents(
+                                l10n.cardCount(summary.cardCount),
+                                l10n.correctRate(
+                                  rateText(l10n, summary.answers.rate),
+                                ),
+                              ),
+                            ),
+                            // The pair goes on the details line, so the
+                            // errors chip keeps the design's place
+                            // (decided with the owner).
+                            if (deck case Deck(
+                              isLanguage: true,
+                              :final sourceLang?,
+                              :final targetLang?,
+                            )) ...[
+                              TextSpan(text: l10n.detailsSeparator),
+                              _languagePair(l10n, sourceLang, targetLang),
+                            ],
+                          ],
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: text.bodyMedium?.copyWith(
-                          color: colors.textMuted,
-                        ),
+                        style: details,
                       ),
                     ],
                   ),
                 ),
               ),
-              if (deck case Deck(
-                isLanguage: true,
-                :final sourceLang?,
-                :final targetLang?,
-              ))
+              if (summary.errorCount > 0)
                 Center(
-                  child: _LanguagePair(
-                    key: Key('deckTile.${deck.id}.languages'),
-                    source: sourceLang,
-                    target: targetLang,
+                  child: _ErrorsChip(
+                    key: Key('deckTile.${deck.id}.errors'),
+                    count: summary.errorCount,
                   ),
                 ),
               Center(
@@ -114,41 +129,42 @@ class DeckTile extends ConsumerWidget {
   }
 }
 
-/// The chip of a language deck: "EN → ES". Screen readers hear the full
-/// names ("Inglés (R. U.) → Español").
-class _LanguagePair extends StatelessWidget {
-  const new({required this.source, required this.target, super.key});
-
-  final String source;
-  final String target;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    return Semantics(
-      label: l10n.languagePair(
+/// The language pair of a language deck: "EN → ES". Screen readers hear
+/// the full names ("Inglés (R. U.) → Español").
+TextSpan _languagePair(AppLocalizations l10n, String source, String target) =>
+    TextSpan(
+      text: l10n.languagePair(
+        shortLanguageCode(source),
+        shortLanguageCode(target),
+      ),
+      semanticsLabel: l10n.languagePair(
         languageName(l10n, source),
         languageName(l10n, target),
       ),
-      excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surfaceVariant,
-          borderRadius: BorderRadius.circular(AppRadii.chip),
-        ),
-        child: Text(
-          l10n.languagePair(
-            shortLanguageCode(source),
-            shortLanguageCode(target),
-          ),
-          style: Theme.of(context).textTheme.labelMedium
-              ?.copyWith(color: colors.textMuted),
-        ),
+    );
+
+/// The red "5 errores" chip of a deck with pending errors.
+class _ErrorsChip extends StatelessWidget {
+  const new({required this.count, super.key});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: colors.error.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadii.chip),
+      ),
+      child: Text(
+        AppLocalizations.of(context).errorsChip(count),
+        style: Theme.of(context).textTheme.labelMedium
+            ?.copyWith(color: colors.error, fontWeight: FontWeight.w700),
       ),
     );
   }

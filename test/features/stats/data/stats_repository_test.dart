@@ -180,6 +180,34 @@ void main() {
     expect(await stats.answeredToday(), 0);
   });
 
+  test('counts the cards answered in the last 7 days, today '
+      'included', () async {
+    await answerAt(DateTime.utc(2026, 10, 8, 10)); // 7 days ago: left out
+    await answerAt(DateTime.utc(2026, 10, 9, 10)); // 6 days ago
+    await answerAt(DateTime.utc(2026, 10, 15, 7), result: AttemptResult.wrong);
+    await answerAt(
+      DateTime.utc(2026, 10, 15, 7),
+      result: AttemptResult.unanswered,
+    );
+    clock.set(DateTime.utc(2026, 10, 15, 8));
+
+    expect(await stats.answeredInLastDays(7), 2);
+    expect(await stats.answeredInLastDays(1), 1);
+  });
+
+  test('the overview gathers the streak and the last 7 days', () async {
+    await answerAt(DateTime.utc(2026, 10, 14, 10));
+    await answerAt(DateTime.utc(2026, 10, 15, 7));
+    clock.set(DateTime.utc(2026, 10, 15, 8));
+
+    final overview = await stats.watchOverview().first;
+
+    expect((overview.streak.current, overview.streak.best), (2, 2));
+    expect(overview.answeredToday, 1);
+    expect(overview.answeredLast7Days, 2);
+    expect(overview.dailyGoal, isNull);
+  });
+
   group('daily goal', () {
     test('is off until the user sets one', () async {
       expect(await stats.dailyGoal(), isNull);

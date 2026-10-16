@@ -89,8 +89,29 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
         ..where(decks.deletedAt.isNull()),
     );
 
+    // The same, over the `card_stats` rows of those cards (R 7.6). SQLite
+    // adds them up; no statistics row is read into Dart.
+    final stats = attachedDatabase.cardStats;
+    Expression<T> overStats<T extends Object>(
+      Expression<T> column, {
+      Expression<bool>? filter,
+    }) => subqueryExpression<T>(
+      selectOnly(stats).join([
+          innerJoin(cards, cards.id.equalsExp(stats.cardId), useColumns: false),
+          innerJoin(decks, decks.id.equalsExp(cards.deckId), useColumns: false),
+        ])
+        ..addColumns([column])
+        ..where(decks.projectId.equalsExp(projects.id))
+        ..where(decks.deletedAt.isNull())
+        ..where(filter ?? const Constant(true)),
+    );
+    final correct = overStats(stats.correctCount.sum());
+    final wrong = overStats(stats.wrongCount.sum());
+    final errors = overStats(countAll(), filter: stats.inErrorList);
+    final lastStudied = overStats(stats.lastAttemptAt.max());
+
     final query = select(projects).join([])
-      ..addColumns([deckCount, cardCount])
+      ..addColumns([deckCount, cardCount, correct, wrong, errors, lastStudied])
       ..where(where)
       ..orderBy(orderBy);
     return query.watch().map(
@@ -100,15 +121,25 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
             project: row.readTable(projects),
             deckCount: row.read(deckCount)!,
             cardCount: row.read(cardCount)!,
+            // `sum` is null when there are no statistics yet.
+            correctCount: row.read(correct) ?? 0,
+            wrongCount: row.read(wrong) ?? 0,
+            errorCount: row.read(errors)!,
+            lastStudiedAt: row.read(lastStudied),
           ),
       ],
     );
   }
 }
 
-/// A project row with how many decks and cards it has.
+/// A project row with how many decks and cards it has, and the totals of
+/// their statistics.
 typedef ProjectWithCounts = ({
   ProjectRow project,
   int deckCount,
   int cardCount,
+  int correctCount,
+  int wrongCount,
+  int errorCount,
+  DateTime? lastStudiedAt,
 });

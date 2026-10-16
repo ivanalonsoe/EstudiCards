@@ -4,21 +4,22 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
+import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/stats/presentation/stats_texts.dart';
+import 'package:estudicards/features/study/presentation/review_errors_button.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A project on the dashboard (DESIGN_BRIEF.md §6.1): icon, name, counts,
-/// % correct and pending errors. Tapping it opens the project.
-///
-/// % correct and errors come from the statistics of phase 4; until then
-/// they show "—" and "Sin errores pendientes".
+/// % correct, "Repasar errores (N)" or "Sin errores pendientes", and when it
+/// was last studied. Tapping it opens the project.
 class ProjectCard extends ConsumerWidget {
   const new({required this.summary, super.key});
 
@@ -94,7 +95,8 @@ class ProjectCard extends ConsumerWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadii.chip),
                       child: LinearProgressIndicator(
-                        value: 0,
+                        // Empty with no answers yet.
+                        value: summary.answers.rate ?? 0,
                         minHeight: 6,
                         color: projectColor,
                         backgroundColor: colors.surfaceVariant,
@@ -102,25 +104,69 @@ class ProjectCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
-                  Text(l10n.correctRate('—'), style: text.titleSmall),
+                  Text(
+                    l10n.correctRate(rateText(l10n, summary.answers.rate)),
+                    style: text.titleSmall,
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Icon(Icons.check_rounded, color: colors.success, size: 18),
-                  const SizedBox(width: AppSpacing.xs),
-                  Flexible(
-                    child: Text(
-                      l10n.noPendingErrors,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: text.labelMedium?.copyWith(
-                        color: colors.textMuted,
-                      ),
+              // At least as tall as the button, so cards with and without
+              // errors line up in the desktop grid.
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: minTouchTarget),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // `Flexible`: on a narrow card the button or the text
+                    // shrinks (and ends in "…") so the date still fits.
+                    Flexible(
+                      child: summary.errorCount > 0
+                          ? ReviewErrorsButton(
+                              key: Key(
+                                'projectCard.${project.id}.reviewErrors',
+                              ),
+                              projectId: project.id,
+                              count: summary.errorCount,
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_rounded,
+                                  color: colors.success,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Flexible(
+                                  child: Text(
+                                    l10n.noPendingErrors,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.labelMedium?.copyWith(
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
-                  ),
-                ],
+                    // When it was last studied: "Hoy", "Ayer", "Hace 2 días".
+                    if (summary.lastStudiedAt case final studied?) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        reviewedText(
+                          l10n,
+                          studied,
+                          ref.watch(clockProvider).now(),
+                        ),
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),

@@ -162,6 +162,25 @@ class SetupForm {
     direction: direction,
   ).length;
 
+  /// The form opened from "Repasar errores (N)" (US-21): "Solo errores" in
+  /// the direction whose session would have more cards, the rest as it was
+  /// (decided with the owner). Each direction is counted as its session
+  /// would study it, so test cards and general decks count in the normal
+  /// direction even in reverse (R 7.3). A tie keeps the current direction.
+  SetupForm forErrorReview(List<StudyCandidate> candidates) {
+    final errors = copyWith(mode: StudyMode.errors);
+    int available(StudyDirection direction) =>
+        errors.copyWith(direction: direction).availableCount(candidates);
+    final normal = available(StudyDirection.normal);
+    final reverse = available(StudyDirection.reverse);
+    if (normal == reverse) return errors;
+    return errors.copyWith(
+      direction: reverse > normal
+          ? StudyDirection.reverse
+          : StudyDirection.normal,
+    );
+  }
+
   /// The configuration to save and start. The decks keep the project's
   /// order, and without a language deck the direction is normal.
   SessionConfig toConfig(List<Deck> decks) => SessionConfig(

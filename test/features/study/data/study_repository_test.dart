@@ -370,6 +370,43 @@ void main() {
       expect(await repository.candidates(project.id), isEmpty);
     });
 
+    test("a project's error session never includes cards from another "
+        'project (US-21 AC1)', () async {
+      final other = await ProjectsRepository(ProjectsDao(db), clock).create(
+        const ProjectInput(name: 'Biología', color: 'green', icon: 'flask'),
+      );
+      final otherDeck = await DecksRepository(
+        DecksDao(db),
+        clock,
+      ).create(other.id, const DeckInput(name: 'Célula'));
+      final otherCard = await addTestCard(db, otherDeck.id);
+      // Cards in errors in both projects.
+      for (final (projectId, cardId) in [
+        (project.id, cards[0].id),
+        (project.id, cards[2].id),
+        (other.id, otherCard),
+      ]) {
+        await addTestAnswers(
+          db,
+          projectId: projectId,
+          cardId: cardId,
+          results: ['wrong'],
+        );
+      }
+
+      final chosen = selectCards(
+        await repository.candidates(project.id),
+        mode: StudyMode.errors,
+        direction: StudyDirection.normal,
+        random: createRandom(seed: 3),
+      );
+
+      expect(
+        chosen.map((c) => c.card.id),
+        unorderedEquals([cards[0].id, cards[2].id]),
+      );
+    });
+
     test('starting a session remembers its configuration for the '
         'project', () async {
       expect(await repository.lastConfig(project.id), isNull);

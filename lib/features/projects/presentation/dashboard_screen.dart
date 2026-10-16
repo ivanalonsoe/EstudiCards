@@ -12,14 +12,14 @@ import 'package:estudicards/features/projects/presentation/project_card.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_search_field.dart';
+import 'package:estudicards/features/stats/presentation/stats_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// P01: the project list, the first screen of the app
 /// (`docs/design/movil-claro/dashboard.png`, `escritorio-claro/dashboard.png`).
 ///
-/// The streak stays at 0 and the daily goal is hidden until the statistics
-/// of phase 4 exist.
+/// The daily goal stays hidden until it can be set in Settings (T6.2).
 class DashboardScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -161,7 +161,15 @@ class _DesktopDashboard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(child: _GreetingText(large: true)),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _GreetingText(large: true),
+                        _PendingErrorsText(),
+                      ],
+                    ),
+                  ),
                   FilledButton.icon(
                     key: const Key('dashboard.newProject'),
                     onPressed: () => showProjectForm(context, ref),
@@ -171,7 +179,19 @@ class _DesktopDashboard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xl),
-              SizedBox(width: tileWidth, child: const _StreakCard()),
+              // The daily goal card joins these two with Settings (T6.2).
+              // `IntrinsicHeight` gives both cards the height of the
+              // taller one.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(width: tileWidth, child: const _StreakCard()),
+                    const SizedBox(width: _gap),
+                    SizedBox(width: tileWidth, child: const _LastWeekCard()),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.xxl),
               Row(
                 children: [
@@ -231,12 +251,45 @@ class _GreetingText extends ConsumerWidget {
   }
 }
 
-/// The streak in the mobile app bar: a flame and "0 días".
-class _StreakChip extends StatelessWidget {
+/// "Tienes 13 errores pendientes en 2 proyectos.", under the desktop
+/// greeting; nothing when there are none. It counts the projects on the
+/// dashboard, so archived projects are left out (assumption 2).
+class _PendingErrorsText extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaries =
+        ref.watch(projectSummariesProvider).value ?? const <ProjectSummary>[];
+    var errors = 0;
+    var projects = 0;
+    for (final summary in summaries) {
+      if (summary.errorCount == 0) continue;
+      errors += summary.errorCount;
+      projects++;
+    }
+    if (errors == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Text(
+        AppLocalizations.of(context).pendingErrorsInProjects(errors, projects),
+        style: Theme.of(context).textTheme.bodyLarge
+            ?.copyWith(color: AppColors.of(context).textMuted),
+      ),
+    );
+  }
+}
+
+/// The current streak; 0 while it loads.
+int _currentStreak(WidgetRef ref) =>
+    ref.watch(statsOverviewProvider).value?.streak.current ?? 0;
+
+/// The streak in the mobile app bar: a flame and "12 días".
+class _StreakChip extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -257,8 +310,7 @@ class _StreakChip extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.xs),
           Text(
-            // The real streak arrives with the statistics (phase 4).
-            AppLocalizations.of(context).streakDays(0),
+            AppLocalizations.of(context).streakDays(_currentStreak(ref)),
             style: Theme.of(context).textTheme.labelLarge
                 ?.copyWith(color: colors.primaryStrong),
           ),
@@ -268,16 +320,20 @@ class _StreakChip extends StatelessWidget {
   }
 }
 
-/// The streak card on the desktop dashboard.
-class _StreakCard extends StatelessWidget {
+/// The streak card on the desktop dashboard: "12 días" and "Racha actual ·
+/// récord 21".
+class _StreakCard extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final best = ref.watch(statsOverviewProvider).value?.streak.best ?? 0;
     return Card(
+      key: const Key('dashboard.streak'),
+      margin: EdgeInsets.zero,
       color: colors.primarySoft,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.listCard),
@@ -292,18 +348,73 @@ class _StreakCard extends StatelessWidget {
               size: 28,
             ),
             const SizedBox(width: AppSpacing.lg),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // The real streak arrives with the statistics (phase 4).
-                Text(l10n.streakDays(0), style: text.titleLarge),
-                Text(
-                  l10n.currentStreak,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.primaryStrong,
+            // `Expanded` lets long texts wrap instead of overflowing.
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.streakDays(_currentStreak(ref)),
+                    style: text.titleLarge,
                   ),
-                ),
-              ],
+                  Text(
+                    l10n.currentStreakWithRecord(best),
+                    style: text.labelMedium?.copyWith(
+                      color: colors.primaryStrong,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The cards answered in the last 7 days, today included (decided with the
+/// owner: the design's "esta semana" reads "en 7 días").
+class _LastWeekCard extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final count =
+        ref.watch(statsOverviewProvider).value?.answeredLast7Days ?? 0;
+    return Card(
+      key: const Key('dashboard.lastWeek'),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.listCard),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.success.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadii.control),
+              ),
+              child: Icon(Icons.check_rounded, color: colors.success),
+            ),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$count', style: text.titleLarge),
+                  Text(
+                    AppLocalizations.of(context).cardsLast7Days(count),
+                    style: text.labelMedium?.copyWith(color: colors.textMuted),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

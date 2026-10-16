@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/test_app.dart';
+import '../../../helpers/test_data.dart';
 
 void main() {
   late AppDatabase db;
@@ -44,6 +45,29 @@ void main() {
 
   Finder projectCard(Project project) =>
       find.byKey(Key('projectCard.${project.id}'));
+
+  /// Adds a deck with [count] cards to [project] and returns their IDs.
+  Future<List<String>> addCards(Project project, int count) async {
+    final deck = await DecksRepository(
+      DecksDao(db),
+      clock,
+    ).create(project.id, const DeckInput(name: 'Verbos'));
+    return [for (var i = 0; i < count; i++) await addTestCard(db, deck.id)];
+  }
+
+  /// Answers [cardId] with [results], by default this morning.
+  Future<void> answer(
+    Project project,
+    String cardId,
+    List<String> results, {
+    DateTime? at,
+  }) => addTestAnswers(
+    db,
+    projectId: project.id,
+    cardId: cardId,
+    results: results,
+    at: at ?? DateTime.utc(2026, 10, 6, 9),
+  );
 
   // A phone tall enough to show three project cards without scrolling.
   const tallMobile = Size(390, 1400);
@@ -132,13 +156,67 @@ void main() {
       );
     });
 
-    testWidgets('the header shows the streak, at 0 until phase 4', (
+    testWidgets('the header shows the streak: 0 days with no answers', (
       tester,
     ) async {
       await createSampleProjects();
       await pumpTestApp(tester, size: mobile, db: db, clock: clock);
 
       expect(find.text('0 días'), findsOneWidget);
+    });
+
+    testWidgets('the header shows the days in a row with answers', (
+      tester,
+    ) async {
+      final project = await createProject('Inglés B2');
+      final [card] = await addCards(project, 1);
+      await answer(project, card, ['correct'], at: DateTime.utc(2026, 10, 5));
+      await answer(project, card, ['correct'], at: DateTime.utc(2026, 10, 6));
+
+      await pumpTestApp(tester, size: mobile, db: db, clock: clock);
+
+      expect(find.text('2 días'), findsOneWidget);
+    });
+
+    testWidgets('a card shows its % correct, when it was last studied and '
+        '"Repasar errores (3)"', (tester) async {
+      final project = await createProject('Inglés B2');
+      final [a, b, c] = await addCards(project, 3);
+      final yesterday = DateTime.utc(2026, 10, 5, 18);
+      await answer(project, a, ['correct', 'wrong'], at: yesterday);
+      await answer(project, b, ['wrong'], at: yesterday);
+      await answer(project, c, ['wrong'], at: yesterday);
+
+      await pumpTestApp(tester, size: mobile, db: db, clock: clock);
+
+      Finder inCard(Finder finder) =>
+          find.descendant(of: projectCard(project), matching: finder);
+      expect(inCard(find.text('25% aciertos')), findsOneWidget);
+      expect(inCard(find.text('Ayer')), findsOneWidget);
+      expect(
+        inCard(find.byKey(Key('projectCard.${project.id}.reviewErrors'))),
+        findsOneWidget,
+      );
+      expect(inCard(find.text('Repasar errores (3)')), findsOneWidget);
+      expect(inCard(find.text('Sin errores pendientes')), findsNothing);
+    });
+
+    testWidgets('with no errors, "Repasar errores" is not shown', (
+      tester,
+    ) async {
+      final project = await createProject('Inglés B2');
+      final [card] = await addCards(project, 1);
+      await answer(project, card, ['correct']);
+
+      await pumpTestApp(tester, size: mobile, db: db, clock: clock);
+
+      expect(
+        find.byKey(Key('projectCard.${project.id}.reviewErrors')),
+        findsNothing,
+      );
+      expect(find.text('Sin errores pendientes'), findsOneWidget);
+      expect(find.text('100% aciertos'), findsOneWidget);
+      expect(find.text('Hoy'), findsOneWidget);
     });
 
     testWidgets('tapping a card opens the project and marks it as used', (
@@ -200,6 +278,81 @@ void main() {
       final english = tester.getTopLeft(sidebarProject(sample.first)).dy;
       expect(english, greaterThan(favouritesHeading));
       expect(english, lessThan(projectsHeading));
+    });
+
+    testWidgets('the header shows the streak with its record, the cards of '
+        'the last 7 days and the pending errors', (tester) async {
+      final english = await createProject('Inglés B2');
+      final law = await createProject('Oposiciones · Tema 3');
+      await createProject('Biología 2º Bach.');
+      final [a, b, c] = await addCards(english, 3);
+      final [d] = await addCards(law, 1);
+      // A 3-day run a week ago (the record), then yesterday and today.
+      for (final day in [27, 28, 29]) {
+        await answer(english, a, ['correct'], at: DateTime.utc(2026, 9, day));
+      }
+      await answer(english, a, ['wrong'], at: DateTime.utc(2026, 10, 5));
+      await answer(english, b, ['wrong'], at: DateTime.utc(2026, 10, 6));
+      await answer(english, c, ['wrong', 'correct']);
+      await answer(law, d, ['wrong']);
+
+      await pumpTestApp(tester, size: desktop, db: db, clock: clock);
+
+      final streak = find.byKey(const Key('dashboard.streak'));
+      expect(
+        find.descendant(of: streak, matching: find.text('2 días')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: streak,
+          matching: find.text('Racha actual · récord 3'),
+        ),
+        findsOneWidget,
+      );
+      final week = find.byKey(const Key('dashboard.lastWeek'));
+      expect(
+        find.descendant(of: week, matching: find.text('5')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: week, matching: find.text('tarjetas en 7 días')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Tienes 4 errores pendientes en 2 proyectos.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with no errors, the header does not mention them', (
+      tester,
+    ) async {
+      await createSampleProjects();
+      await pumpTestApp(tester, size: desktop, db: db, clock: clock);
+
+      expect(find.textContaining('errores pendientes en'), findsNothing);
+    });
+
+    testWidgets('the sidebar shows the pending errors of each project', (
+      tester,
+    ) async {
+      final english = await createProject('Inglés B2');
+      final law = await createProject('Oposiciones · Tema 3');
+      final [a, b] = await addCards(english, 2);
+      await answer(english, a, ['wrong']);
+      await answer(english, b, ['wrong']);
+
+      await pumpTestApp(tester, size: desktop, db: db, clock: clock);
+
+      expect(
+        find.descendant(
+          of: find.byKey(Key('sidebar.project.${english.id}.errors')),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(Key('sidebar.project.${law.id}.errors')), findsNothing);
     });
 
     testWidgets('the sidebar search filters the projects', (tester) async {

@@ -20,7 +20,15 @@ class StatsRepository {
   ], today: _today);
 
   /// Cards answered today: first attempts, correct or wrong.
-  Future<int> answeredToday() => _dao.answeredOn(dayKey(_today));
+  Future<int> answeredToday() => answeredInLastDays(1);
+
+  /// Cards answered in the last [days] local days, today included (e.g. 7
+  /// = today and the 6 days before).
+  Future<int> answeredInLastDays(int days) {
+    final today = _today;
+    final first = today.subtract(Duration(days: days - 1));
+    return _dao.answeredBetween(dayKey(first), dayKey(today));
+  }
 
   /// Today's progress towards the daily goal, or null while there is none
   /// (`daily_goal` in `settings`, set from Settings in T6.2).
@@ -29,6 +37,25 @@ class StatsRepository {
     if (goal == null) return null;
     return dailyGoalProgress(goal: goal, answeredToday: await answeredToday());
   }
+
+  /// What the dashboard header shows, read again whenever an answer is
+  /// saved or a deck or project goes to or leaves the trash.
+  ///
+  /// `async*` makes a stream: each `yield` emits one value. The first is
+  /// emitted at once, the next ones after each change.
+  Stream<StatsOverview> watchOverview() async* {
+    yield await _overview();
+    await for (final _ in _dao.watchChanges()) {
+      yield await _overview();
+    }
+  }
+
+  Future<StatsOverview> _overview() async => StatsOverview(
+    streak: await streak(),
+    answeredToday: await answeredToday(),
+    answeredLast7Days: await answeredInLastDays(7),
+    dailyGoal: await dailyGoal(),
+  );
 
   static const _dailyGoalKey = 'daily_goal';
 }

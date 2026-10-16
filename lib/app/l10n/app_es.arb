@@ -124,6 +124,42 @@
   "@currentStreak": {
     "description": "Label under the streak on the desktop dashboard."
   },
+  "currentStreakWithRecord": "Racha actual · récord {best}",
+  "@currentStreakWithRecord": {
+    "description": "Label under the streak on the desktop dashboard, with the best streak ever in days.",
+    "placeholders": {
+      "best": { "type": "int" }
+    }
+  },
+  "cardsLast7Days": "{count, plural, =1{tarjeta en 7 días} other{tarjetas en 7 días}}",
+  "@cardsLast7Days": {
+    "description": "Label under the number of cards answered in the last 7 days (today included), desktop dashboard.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pendingErrorsInProjects": "{errors, plural, =1{Tienes 1 error pendiente} other{Tienes {errors} errores pendientes}} en {projects, plural, =1{1 proyecto} other{{projects} proyectos}}.",
+  "@pendingErrorsInProjects": {
+    "description": "Desktop dashboard, under the greeting: pending errors across the projects on the dashboard.",
+    "placeholders": {
+      "errors": { "type": "int" },
+      "projects": { "type": "int" }
+    }
+  },
+  "errorsChip": "{count, plural, =1{1 error} other{{count} errores}}",
+  "@errorsChip": {
+    "description": "Red chip of a deck row with its pending errors.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pendingErrors": "{count, plural, =1{1 error pendiente} other{{count} errores pendientes}}",
+  "@pendingErrors": {
+    "description": "Pending errors, e.g. '5 errores pendientes': in the deck header on desktop, and what screen readers hear for the red badge of a project in the sidebar.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "newProject": "Nuevo proyecto",
   "@newProject": {
     "description": "Button that opens the project form to create one; also the form title."

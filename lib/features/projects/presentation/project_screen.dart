@@ -6,6 +6,7 @@ import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/dashed_border.dart';
+import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/decks/presentation/deck_tile.dart';
@@ -14,6 +15,9 @@ import 'package:estudicards/features/projects/presentation/archive_project.dart'
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/stats/domain/metrics.dart';
+import 'package:estudicards/features/stats/presentation/stats_texts.dart';
+import 'package:estudicards/features/study/presentation/review_errors_button.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,9 +27,8 @@ import 'package:go_router/go_router.dart';
 /// P03: a project with its decks (`docs/design/movil-claro/proyecto.png`,
 /// `escritorio-claro/proyecto.png`).
 ///
-/// Until the statistics of phase 4, % correct shows "—", errors 0, and the
-/// statistics tab and the desktop summary show an empty state.
-/// "Repasar errores", "Compartir" and "Importar" arrive with their phases.
+/// The statistics tab and the desktop summary show an empty state until
+/// T4.5. "Compartir" and "Importar" arrive in phase 5.
 class ProjectScreen extends ConsumerWidget {
   const new({required this.projectId, super.key});
 
@@ -106,6 +109,7 @@ class _MobileProjectState extends State<_MobileProject>
               _Metrics(projectId: project.id),
               const SizedBox(height: AppSpacing.lg),
               _StudyButton(project: project, expanded: true),
+              _ReviewErrors(project: project, expanded: true),
               const SizedBox(height: AppSpacing.xl),
               TabBar(
                 controller: _tabs,
@@ -160,10 +164,16 @@ class _DesktopProject extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
-                Expanded(child: _ProjectHeader(project: project, large: true)),
+                // The header and "Repasar errores" share the width 3:2 (see
+                // the deck screen).
+                Expanded(
+                  flex: 3,
+                  child: _ProjectHeader(project: project, large: true),
+                ),
                 const SizedBox(width: AppSpacing.lg),
                 _ProjectMenu(project: project),
                 const SizedBox(width: AppSpacing.sm),
+                _ReviewErrors(project: project, expanded: false),
                 _StudyButton(project: project, expanded: false),
               ],
             ),
@@ -258,12 +268,12 @@ class _ProjectHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
-    final cardCount = large ? ref.watch(_cardCountProvider(project.id)) : null;
+    final totals = large ? ref.watch(_totalsProvider(project.id)) : null;
     final details = [
       ?project.description,
-      if (cardCount != null) ...[
-        l10n.cardCount(cardCount),
-        l10n.correctRate('—'),
+      if (totals != null) ...[
+        l10n.cardCount(totals.cards),
+        l10n.correctRate(rateText(l10n, totals.answers.rate)),
       ],
     ].join(l10n.detailsSeparator);
 
@@ -323,15 +333,67 @@ class _StudyButton extends StatelessWidget {
   }
 }
 
-/// The total number of cards in a project's decks; 0 while loading.
-final ProviderFamily<int, String> _cardCountProvider = Provider.family(
-  (ref, projectId) =>
-      ref
-          .watch(deckSummariesProvider(projectId))
-          .value
-          ?.fold<int>(0, (total, s) => total + s.cardCount) ??
-      0,
-);
+/// "Repasar errores (N)", only when the project has pending errors (US-21):
+/// under "Estudiar" on mobile, before it on desktop.
+class _ReviewErrors extends ConsumerWidget {
+  const new({required this.project, required this.expanded});
+
+  final Project project;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final errors = ref.watch(_totalsProvider(project.id)).errors;
+    if (errors == 0) return const SizedBox.shrink();
+    final button = ReviewErrorsButton(
+      key: const Key('projectScreen.reviewErrors'),
+      projectId: project.id,
+      count: errors,
+      expanded: expanded,
+    );
+    return expanded
+        ? Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: button,
+          )
+        // A `Flexible` can be returned here because this widget sits
+        // directly in the header `Row`.
+        : Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: button,
+            ),
+          );
+  }
+}
+
+/// The totals of a project: its decks' cards, answers and pending errors
+/// added up (each deck's were counted in SQL). Zero while loading.
+typedef _Totals = ({int cards, AnswerCounts answers, int errors});
+
+final ProviderFamily<_Totals, String> _totalsProvider = Provider.family((
+  ref,
+  projectId,
+) {
+  var cards = 0;
+  var correct = 0;
+  var wrong = 0;
+  var errors = 0;
+  for (final summary
+      in ref.watch(deckSummariesProvider(projectId)).value ??
+          const <DeckSummary>[]) {
+    cards += summary.cardCount;
+    correct += summary.answers.correct;
+    wrong += summary.answers.wrong;
+    errors += summary.errorCount;
+  }
+  return (
+    cards: cards,
+    answers: AnswerCounts(correct: correct, wrong: wrong),
+    errors: errors,
+  );
+});
 
 /// The three boxes under the mobile header: cards, % correct and errors.
 class _Metrics extends ConsumerWidget {
@@ -342,9 +404,9 @@ class _Metrics extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final cards = ref.watch(_cardCountProvider(projectId));
-    // % correct and errors arrive with the statistics (phase 4).
-    const errors = 0;
+    final totals = ref.watch(_totalsProvider(projectId));
+    final cards = totals.cards;
+    final errors = totals.errors;
     return Row(
       children: [
         Expanded(
@@ -358,7 +420,7 @@ class _Metrics extends ConsumerWidget {
         Expanded(
           child: _Metric(
             key: const Key('projectScreen.metric.correct'),
-            value: '—',
+            value: rateText(l10n, totals.answers.rate),
             label: l10n.metricCorrect,
           ),
         ),
@@ -368,6 +430,8 @@ class _Metrics extends ConsumerWidget {
             key: const Key('projectScreen.metric.errors'),
             value: '$errors',
             label: l10n.metricErrors(errors),
+            // Red when there are errors to review, as in the design.
+            valueColor: errors > 0 ? AppColors.of(context).error : null,
           ),
         ),
       ],
@@ -376,10 +440,16 @@ class _Metrics extends ConsumerWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const new({required this.value, required this.label, super.key});
+  const new({
+    required this.value,
+    required this.label,
+    this.valueColor,
+    super.key,
+  });
 
   final String value;
   final String label;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +460,7 @@ class _Metric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: text.headlineSmall),
+            Text(value, style: text.headlineSmall?.copyWith(color: valueColor)),
             Text(
               label,
               maxLines: 1,
@@ -603,7 +673,7 @@ class _ProjectMenu extends ConsumerWidget {
               deckCount:
                   ref.read(deckSummariesProvider(project.id)).value?.length ??
                   0,
-              cardCount: ref.read(_cardCountProvider(project.id)),
+              cardCount: ref.read(_totalsProvider(project.id)).cards,
               // The project is gone: back to the dashboard, where
               // "Deshacer" is shown (decided with the owner).
               afterMove: () {

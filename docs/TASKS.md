@@ -384,11 +384,13 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a day with only unanswered cards does not count towards the streak.
     - 🧪 daily goal progress.
 
-- [ ] **T4.3 Real data on the dashboard, project and deck** · Depends on: T4.2, T1.2, T1.5, T2.8
+- [x] **T4.3 Real data on the dashboard, project and deck** · Depends on: T4.2, T1.2, T1.5, T2.8
+  - > **Note:** the numbers come from SQL subqueries over `card_stats`. Decided with the owner: the deck rows show the language pair on the details line so the errors chip keeps the design's place, and the desktop dashboard shows "tarjetas en 7 días" (the last 7 days). The daily goal waits for T6.2. See SPEC §13.2 (assumption 46).
   - Replace the placeholder values; "Repasar errores (N)" button only if N > 0 and never mixing projects.
   - **Tests first:** 🧩 with no errors, "Repasar errores" is not shown; 🧩 with 3 errors, it shows "(3)".
 
-- [ ] **T4.4 "Errors only" mode and review** · US-21 · Depends on: T4.1, T3.6
+- [x] **T4.4 "Errors only" mode and review** · US-21 · Depends on: T4.1, T3.6
+  - > **Note:** "Repasar errores (N)" opens the setup with "Solo errores" in the direction whose session would have more cards (decided with the owner); from a deck, only that deck. See SPEC §13.2 (assumption 47).
   - **Tests first:** 🧪 a project's error session never includes cards from another project.
 
 - [ ] **T4.5 Project statistics** · P12 · Depends on: T4.2

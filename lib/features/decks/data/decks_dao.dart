@@ -8,8 +8,15 @@ part 'decks_dao.g.dart';
 /// colour of its own inherits.
 typedef DeckWithProjectColor = ({DeckRow deck, String projectColor});
 
-/// A deck with its project's colour and its number of cards.
-typedef DeckWithCardCount = ({DeckWithProjectColor deck, int cardCount});
+/// A deck with its project's colour, its number of cards and the totals of
+/// their statistics.
+typedef DeckWithCardCount = ({
+  DeckWithProjectColor deck,
+  int cardCount,
+  int correctCount,
+  int wrongCount,
+  int errorCount,
+});
 
 @DriftAccessor(tables: [Decks, Projects])
 class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
@@ -39,8 +46,25 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
         ..addColumns([countAll()])
         ..where(cards.deckId.equalsExp(decks.id)),
     );
+    // The same over the `card_stats` rows of its cards (R 7.6).
+    final stats = attachedDatabase.cardStats;
+    Expression<T> overStats<T extends Object>(
+      Expression<T> column, {
+      Expression<bool>? filter,
+    }) => subqueryExpression<T>(
+      selectOnly(stats).join([
+          innerJoin(cards, cards.id.equalsExp(stats.cardId), useColumns: false),
+        ])
+        ..addColumns([column])
+        ..where(cards.deckId.equalsExp(decks.id))
+        ..where(filter ?? const Constant(true)),
+    );
+    final correct = overStats(stats.correctCount.sum());
+    final wrong = overStats(stats.wrongCount.sum());
+    final errors = overStats(countAll(), filter: stats.inErrorList);
+
     final query = _withProjectColor()
-      ..addColumns([cardCount])
+      ..addColumns([cardCount, correct, wrong, errors])
       ..where(decks.projectId.equals(projectId) & decks.deletedAt.isNull())
       ..orderBy([
         OrderingTerm.asc(decks.createdAt),
@@ -49,7 +73,14 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
     return query.watch().map(
       (rows) => [
         for (final row in rows)
-          (deck: _read(row), cardCount: row.read(cardCount)!),
+          (
+            deck: _read(row),
+            cardCount: row.read(cardCount)!,
+            // `sum` is null when there are no statistics yet.
+            correctCount: row.read(correct) ?? 0,
+            wrongCount: row.read(wrong) ?? 0,
+            errorCount: row.read(errors)!,
+          ),
       ],
     );
   }

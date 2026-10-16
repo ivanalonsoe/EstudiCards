@@ -19,16 +19,22 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
     return query.map((row) => row.read(attempts.localDay)!).get();
   }
 
-  /// How many counted answers were given on the local day [day]
-  /// (`YYYY-MM-DD`).
-  Future<int> answeredOn(String day) {
+  /// How many counted answers were given from the local day [from] to
+  /// [to], both included (`YYYY-MM-DD`; this text sorts like the dates).
+  Future<int> answeredBetween(String from, String to) {
     final count = attempts.id.count();
     final query = selectOnly(attempts)
       ..addColumns([count])
       ..join(_cardDeckProject)
-      ..where(_counted & attempts.localDay.equals(day));
+      ..where(_counted & attempts.localDay.isBetweenValues(from, to));
     return query.map((row) => row.read(count)!).getSingle();
   }
+
+  /// Emits every time something the statistics count changes: an answer is
+  /// saved, or a deck or project goes to or leaves the trash.
+  Stream<void> watchChanges() => attachedDatabase.tableUpdates(
+    TableUpdateQuery.onAllTables([attempts, decks, projects]),
+  );
 
   Future<String?> readSetting(String key) async {
     final row = await (select(

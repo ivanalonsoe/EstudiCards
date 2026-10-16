@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
@@ -24,6 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
 import '../../../helpers/test_app.dart';
+import '../../../helpers/test_data.dart';
 
 final _clock = FakeClock(DateTime.utc(2026, 10, 14, 9));
 
@@ -69,6 +71,30 @@ Future<SetupProject> seedProject(AppDatabase db) async {
     travel: await deck('Vocabulario viajes', 1, language: false),
   );
 }
+
+/// The IDs of [deck]'s cards, by question ("… 1", "… 2"…).
+Future<List<String>> cardIdsOf(AppDatabase db, Deck deck) async => [
+  for (final card
+      in await (db.select(db.cards)
+            ..where((c) => c.deckId.equals(deck.id))
+            ..orderBy([(c) => OrderingTerm.asc(c.question)]))
+          .get())
+    card.id,
+];
+
+/// Records a miss of [cardId] in [direction], which puts it in errors.
+Future<void> miss(
+  AppDatabase db,
+  SetupProject project,
+  String cardId,
+  String direction,
+) => addTestAnswers(
+  db,
+  projectId: project.projectId,
+  cardId: cardId,
+  direction: direction,
+  results: ['wrong'],
+);
 
 FilterChip deckChip(WidgetTester tester, Deck deck) =>
     tester.widget(find.byKey(Key('sessionSetup.deck.${deck.id}')));
@@ -171,7 +197,7 @@ void main() {
       await tapVisible(tester, find.text('Todo el proyecto'));
       expect(availableText(tester), '6 tarjetas disponibles · se usarán todas');
 
-      // "Solo errores": nothing is in errors until phase 4 fills card_stats.
+      // "Solo errores": no card has been missed yet.
       await tapVisible(
         tester,
         find.byKey(const Key('sessionSetup.mode.errors')),
@@ -426,7 +452,95 @@ void main() {
         expect(deckChip(tester, project.travel).selected, isFalse);
         expect(segmentOf<String>(tester, 'sessionSetup.count'), {'10'});
       });
+
+      testWidgets('"Repasar errores" on the project opens it with "Solo '
+          'errores" in the direction with more errors ($name)', (tester) async {
+        final db = createTestDatabase();
+        final project = await seedProject(db);
+        // One verb missed in the normal direction, two in reverse.
+        final [first, second, third] = await cardIdsOf(db, project.verbs);
+        await miss(db, project, first, 'normal');
+        await miss(db, project, second, 'reverse');
+        await miss(db, project, third, 'reverse');
+        final router = await pumpTestApp(
+          tester,
+          size: size,
+          db: db,
+          location: AppRoutes.project(project.projectId),
+        );
+
+        await tapVisible(
+          tester,
+          find.byKey(const Key('projectScreen.reviewErrors')),
+        );
+
+        expect(
+          router.routerDelegate.currentConfiguration.uri.toString(),
+          AppRoutes.sessionSetup(project.projectId, reviewErrors: true),
+        );
+        expect(segmentOf<StudyMode>(tester, 'sessionSetup.mode'), {
+          StudyMode.errors,
+        });
+        expect(segmentOf<StudyDirection>(tester, 'sessionSetup.direction'), {
+          StudyDirection.reverse,
+        });
+        for (final deck in [project.verbs, project.phrasal, project.travel]) {
+          expect(deckChip(tester, deck).selected, isTrue);
+        }
+        expect(
+          availableText(tester),
+          '2 tarjetas disponibles · se usarán todas',
+        );
+        expect(startEnabled(tester), isTrue);
+      });
+
+      testWidgets('"Repasar errores" on a deck opens it with only that deck '
+          'and "Solo errores" ($name)', (tester) async {
+        final db = createTestDatabase();
+        final project = await seedProject(db);
+        final [phrasal, _] = await cardIdsOf(db, project.phrasal);
+        final [verb, _, _] = await cardIdsOf(db, project.verbs);
+        await miss(db, project, phrasal, 'normal');
+        await miss(db, project, verb, 'normal');
+        await pumpTestApp(
+          tester,
+          size: size,
+          db: db,
+          location: AppRoutes.deck(project.projectId, project.phrasal.id),
+        );
+
+        await tapVisible(
+          tester,
+          find.byKey(const Key('deckScreen.reviewErrors')),
+        );
+
+        expect(deckChip(tester, project.phrasal).selected, isTrue);
+        expect(deckChip(tester, project.verbs).selected, isFalse);
+        expect(segmentOf<StudyMode>(tester, 'sessionSetup.mode'), {
+          StudyMode.errors,
+        });
+        expect(availableText(tester), '1 tarjeta disponible · se usarán todas');
+      });
     }
+
+    testWidgets('"Repasar errores" on a dashboard card opens it with "Solo '
+        'errores"', (tester) async {
+      final db = createTestDatabase();
+      final project = await seedProject(db);
+      final [verb, _, _] = await cardIdsOf(db, project.verbs);
+      await miss(db, project, verb, 'normal');
+      await pumpTestApp(tester, size: mobile, db: db);
+
+      await tapVisible(
+        tester,
+        find.byKey(Key('projectCard.${project.projectId}.reviewErrors')),
+      );
+
+      expect(segmentOf<StudyMode>(tester, 'sessionSetup.mode'), {
+        StudyMode.errors,
+      });
+      expect(availableText(tester), '1 tarjeta disponible · se usarán todas');
+    });
   });
 
   testWidgets('desktop shows a summary and that the configuration is '
@@ -463,6 +577,17 @@ void main() {
     expect(
       AppRoutes.sessionSetup('p1', deckId: 'd1'),
       '/project/p1/study?deck=d1',
+    );
+  });
+
+  test('the router builds the setup path of an error review', () {
+    expect(
+      AppRoutes.sessionSetup('p1', reviewErrors: true),
+      '/project/p1/study?errors=1',
+    );
+    expect(
+      AppRoutes.sessionSetup('p1', deckId: 'd1', reviewErrors: true),
+      '/project/p1/study?deck=d1&errors=1',
     );
   });
 }

@@ -36,9 +36,21 @@ abstract final class AppRoutes {
   static String project(String projectId) => '/project/$projectId';
 
   /// The session setup; opened from a deck ([deckId]), only that deck is
-  /// chosen.
-  static String sessionSetup(String projectId, {String? deckId}) =>
-      '/project/$projectId/study${deckId == null ? '' : '?deck=$deckId'}';
+  /// chosen. From "Repasar errores" ([reviewErrors]) it starts in "Solo
+  /// errores".
+  static String sessionSetup(
+    String projectId, {
+    String? deckId,
+    bool reviewErrors = false,
+  }) {
+    final query = [
+      if (deckId != null) 'deck=$deckId',
+      if (reviewErrors) 'errors=1',
+    ];
+    return '/project/$projectId/study'
+        '${query.isEmpty ? '' : '?${query.join('&')}'}';
+  }
+
   static String deck(String projectId, String deckId) =>
       '/project/$projectId/deck/$deckId';
   static String newCard(String projectId, String deckId) =>
@@ -104,6 +116,8 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                       projectId: state.pathParameters['projectId']!,
                       // `?deck=` when opened from a deck.
                       deckId: state.uri.queryParameters['deck'],
+                      // `?errors=1` when opened from "Repasar errores".
+                      reviewErrors: state.uri.queryParameters['errors'] == '1',
                     ),
                   ),
                   GoRoute(
