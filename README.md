@@ -192,7 +192,7 @@ Each feature is split into `data/` (database), `domain/` (business rules, no Flu
 - **TDD:** every feature starts with a failing test; then the code is written to make it pass and refactored (see [`docs/SPEC.md` §10](docs/SPEC.md#10-quality-tdd-tests-and-cicd)).
 - **Four test levels:** unit, widget, integration and E2E.
 - **Git hooks (Lefthook):** formatting and analysis are checked before each commit; tests before each push.
-- **CI (GitHub Actions):** every PR runs all tests on Linux, Windows and an Android emulator. Creating a `v*` tag builds the Android, Windows and macOS installers.
+- **CI (GitHub Actions):** every PR runs the analysis and the unit and widget tests on Linux, and the tests on Windows and an Android emulator when the change can affect how the app runs. Documentation-only changes run nothing. `bash tool/ci_changes.sh pull_request origin/main HEAD` shows what a branch would run, and the "Run workflow" button in the Actions tab runs everything. Creating a `v*` tag builds the Android, Windows and macOS installers.
 - **Branches:** one per task in [`docs/TASKS.md`](docs/TASKS.md), with a PR to `main`.
 
 ## Creating cards with AI

@@ -2,17 +2,29 @@
 #
 # GitHub runs this workflow on clean machines for every pull request and
 # every push to main. If any step fails, the run turns red and the PR shows
-# it. Three jobs:
+# it. Jobs:
+#   - changes: looks at the changed files and decides which jobs are needed.
 #   - quality: format, analysis, unit and widget tests, coverage (Linux).
 #   - integration-windows: integration tests in a real Windows window.
 #   - e2e-android: integration and Patrol E2E tests on an Android emulator.
-# The last two only start when quality passes, to save CI minutes.
+#
+# To save CI minutes, a job that is not needed is skipped (a skipped job
+# still counts as passed for a required check):
+#   - Only documentation changed (`docs/`, `*.md`): nothing runs.
+#   - Pull requests: quality always; integration-windows and e2e-android only
+#     when something that can change how the app runs changed (see `app`
+#     below), and only after quality passes.
+#   - Push to main (a merged PR): quality only, as a safety net. The heavy
+#     jobs already ran on the PR.
+#   - "Run workflow" button in the Actions tab (workflow_dispatch): every
+#     job, to force a full run on any branch.
 name: CI
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 # A new push to the same PR cancels the run that is still in progress.
 concurrency:
@@ -20,8 +32,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      windows: ${{ steps.filter.outputs.windows }}
+      android: ${{ steps.filter.outputs.android }}
+    steps:
+      # The whole history, so the change can be compared with its base.
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Decide which jobs this change needs
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          # A PR is compared with the commit it branches from; a push with
+          # the commit main was on before.
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: bash tool/ci_changes.sh "$EVENT" "$BASE" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
   quality:
     name: quality
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -71,7 +109,8 @@ jobs:
 
   integration-windows:
     name: integration-windows
-    needs: quality
+    needs: [changes, quality]
+    if: needs.changes.outputs.windows == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -96,7 +135,8 @@ jobs:
 
   e2e-android:
     name: e2e-android
-    needs: quality
+    needs: [changes, quality]
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:

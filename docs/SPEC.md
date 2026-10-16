@@ -852,6 +852,8 @@ Workflow: each task, or group of related tasks, on its own branch (`feature/T2.3
 | `integration-windows` | Windows | `flutter test integration_test -d windows`. |
 | `e2e-android` | Ubuntu with Android emulator | Integration tests and Patrol E2E tests on an emulator. |
 
+A first `changes` job (`tool/ci_changes.sh`) decides which jobs a change needs, to save CI minutes. Documentation only (`docs/`, `*.md`): nothing runs. Pull requests: `quality` always; `integration-windows` and `e2e-android` only when something that can change how the app runs changed (`lib/`, `integration_test/`, `assets/`, `pubspec`, code generation and l10n settings, the workflow; plus `windows/` for the first and `android/` and `patrol_test/` for the second). Push to `main`: `quality` only, since the merged PR already ran the rest. The "Run workflow" button (`workflow_dispatch`) runs every job. A skipped job counts as passed for a required check.
+
 **`release.yml`** — when a `v*` tag is created (e.g. `v1.0.0`):
 
 | Job | Runner | Output |
@@ -974,6 +976,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - `patrol_cli` is installed per machine (`dart pub global activate patrol_cli`), not as a project dependency. CI pins its version.
     - On the CI emulator, Patrol sometimes ran the first E2E test and stopped before the next one, ending with "Gradle test execution failed" and no error (in the PRs of T3.1 and T3.9; the same commit passed when run again). Since T3.9 CI runs Patrol with `--verbose`, tries a failed run once more, and keeps the Android test reports as an artifact when the job fails. Two failures in a row still fail the job.
     - CI runs `integration-windows` (Windows runner) and `e2e-android` (Android emulator, API 34) only after `quality` passes. On a private repository, Windows minutes count double against the free quota, and these two jobs take most of each run's minutes. This is one more reason to make the repository public later (§13.1).
+    - In phase 4 the free quota ran out (the push to `main` after PR #30 did not start). Since then (decided with the owner) the two jobs run only on pull requests whose changes can affect how the app runs, pushes to `main` run `quality` only, and documentation-only changes run nothing (§10.5).
 14. **App icons (T0.10):**
     - Generated with `flutter_launcher_icons` (dev dependency) from `flutter_launcher_icons.yaml`. Run `dart run flutter_launcher_icons` again after changing the images. The generated platform files are committed.
     - Android: adaptive icon with the `#C2410C` background, the `android-primer-plano.png` foreground with the default 16% inset (so the mark fills about half the shape, as in the brand sheet), and the monochrome layer for themed icons. iOS: `icono-cuadrado-sin-esquinas.png` without alpha.
