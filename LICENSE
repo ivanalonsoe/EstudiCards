@@ -1,0 +1,18 @@
+Copyright (c) 2026 ivanalonsoe (https://github.com/ivanalonsoe)
+All rights reserved.
+
+This repository is public so that its source code can be read. It is not
+open source: no licence is granted to use, copy, modify, merge, publish,
+distribute, sublicense or sell this software, its documentation, its
+designs (docs/design/) or its branding (assets/branding/), in whole or in
+part, without the prior written permission of the copyright holder.
+
+Viewing the code and forking it on GitHub are allowed only as far as the
+GitHub Terms of Service require for public repositories.
+
+Third-party material keeps its own licence. In particular, the Plus Jakarta
+Sans font files in assets/fonts/ are licensed under the SIL Open Font
+License 1.1 (see assets/fonts/OFL.txt), and the Dart and Flutter packages
+the app depends on are licensed by their authors.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
