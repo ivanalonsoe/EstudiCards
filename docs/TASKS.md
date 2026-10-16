@@ -389,7 +389,8 @@ Goal: a project that starts, with automated quality from day one.
   - Replace the placeholder values; "Repasar errores (N)" button only if N > 0 and never mixing projects.
   - **Tests first:** 🧩 with no errors, "Repasar errores" is not shown; 🧩 with 3 errors, it shows "(3)".
 
-- [ ] **T4.4 "Errors only" mode and review** · US-21 · Depends on: T4.1, T3.6
+- [x] **T4.4 "Errors only" mode and review** · US-21 · Depends on: T4.1, T3.6
+  - > **Note:** "Repasar errores (N)" opens the setup with "Solo errores" in the direction whose session would have more cards (decided with the owner); from a deck, only that deck. See SPEC §13.2 (assumption 47).
   - **Tests first:** 🧪 a project's error session never includes cards from another project.
 
 - [ ] **T4.5 Project statistics** · P12 · Depends on: T4.2

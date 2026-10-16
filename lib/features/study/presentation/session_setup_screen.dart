@@ -23,12 +23,19 @@ import 'package:go_router/go_router.dart';
 /// P08: the session setup (`docs/design/movil-claro/configurar.png`,
 /// `escritorio-claro/configurar.png`, US-14). It opens with the project's
 /// last configuration; opened from a deck ([deckId]), only that deck is
-/// chosen.
+/// chosen, and from "Repasar errores" ([reviewErrors]) it starts in "Solo
+/// errores" (US-21).
 class SessionSetupScreen extends ConsumerWidget {
-  const new({required this.projectId, this.deckId, super.key});
+  const new({
+    required this.projectId,
+    this.deckId,
+    this.reviewErrors = false,
+    super.key,
+  });
 
   final String projectId;
   final String? deckId;
+  final bool reviewErrors;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,6 +64,7 @@ class SessionSetupScreen extends ConsumerWidget {
       candidates: loadedData.candidates,
       lastConfig: loadedData.lastConfig,
       deckId: deckId,
+      reviewErrors: reviewErrors,
     );
   }
 }
@@ -70,6 +78,7 @@ class _SetupForm extends ConsumerStatefulWidget {
     required this.candidates,
     required this.lastConfig,
     required this.deckId,
+    required this.reviewErrors,
   });
 
   final Project project;
@@ -77,17 +86,24 @@ class _SetupForm extends ConsumerStatefulWidget {
   final List<StudyCandidate> candidates;
   final SessionConfig? lastConfig;
   final String? deckId;
+  final bool reviewErrors;
 
   @override
   ConsumerState<_SetupForm> createState() => _SetupFormState();
 }
 
 class _SetupFormState extends ConsumerState<_SetupForm> {
-  late SetupForm _form = SetupForm.initial(
-    decks: _decks,
-    last: widget.lastConfig,
-    deckId: widget.deckId,
-  );
+  late SetupForm _form = _initialForm();
+
+  SetupForm _initialForm() {
+    final form = SetupForm.initial(
+      decks: _decks,
+      last: widget.lastConfig,
+      deckId: widget.deckId,
+    );
+    return widget.reviewErrors ? form.forErrorReview(widget.candidates) : form;
+  }
+
   bool _starting = false;
 
   List<Deck> get _decks => [for (final summary in widget.decks) summary.deck];

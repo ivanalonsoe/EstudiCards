@@ -5,8 +5,9 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// "Repasar errores (N)" (US-21): opens the session setup of one project,
-/// never mixing projects. From a deck ([deckId]) only that deck is chosen.
+/// "Repasar errores (N)" (US-21): opens the session setup of one project in
+/// "Solo errores", never mixing projects. From a deck ([deckId]) only that
+/// deck is chosen.
 /// The screens show it only when [count] > 0.
 class ReviewErrorsButton extends StatelessWidget {
   const new({
@@ -37,8 +38,9 @@ class ReviewErrorsButton extends StatelessWidget {
             ? const Size.fromHeight(minTouchTarget + AppSpacing.sm)
             : null,
       ),
-      onPressed: () =>
-          context.go(AppRoutes.sessionSetup(projectId, deckId: deckId)),
+      onPressed: () => context.go(
+        AppRoutes.sessionSetup(projectId, deckId: deckId, reviewErrors: true),
+      ),
       icon: const Icon(Icons.refresh_rounded),
       // In a narrow place the label ends in "…" instead of overflowing.
       label: Text(

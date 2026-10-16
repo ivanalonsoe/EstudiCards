@@ -281,6 +281,122 @@ void main() {
     });
   });
 
+  group('review errors (US-21)', () {
+    /// A card of [deckId] in errors in the given directions.
+    StudyCandidate inErrors(
+      String id,
+      String deckId, {
+      bool language = true,
+      bool test = false,
+      bool normal = false,
+      bool reverse = false,
+    }) => StudyCandidate(
+      card: Flashcard(
+        id: id,
+        deckId: deckId,
+        type: test ? CardType.test : CardType.simple,
+        question: 'Question $id',
+        answer: test ? null : 'Answer $id',
+        allowMultiple: false,
+        createdAt: _start,
+        updatedAt: _start,
+      ),
+      isLanguageDeck: language,
+      normalStats: DirectionStats(inErrorList: normal, studied: true),
+      reverseStats: DirectionStats(inErrorList: reverse, studied: true),
+    );
+
+    test('chooses "Solo errores" and keeps the rest of the '
+        'configuration', () {
+      final form = SetupForm.initial(
+        decks: decks,
+        last: const SessionConfig(
+          deckIds: ['c'],
+          requestedCount: 10,
+          timerType: TimerType.perCard,
+          timerSeconds: 15,
+        ),
+      );
+
+      final review = form.forErrorReview([inErrors('1', 'c', normal: true)]);
+
+      expect(review.mode, StudyMode.errors);
+      expect(review.deckIds, ['c']);
+      expect(review.count, 10);
+      expect(review.timerType, TimerType.perCard);
+      expect(review.questionSeconds, 15);
+    });
+
+    test('chooses the direction with more cards in errors', () {
+      final form = SetupForm.initial(decks: decks);
+
+      final review = form.forErrorReview([
+        inErrors('1', 'c', normal: true),
+        inErrors('2', 'c', reverse: true),
+        inErrors('3', 'c', reverse: true),
+      ]);
+
+      expect(review.direction, StudyDirection.reverse);
+      expect(
+        review.availableCount([
+          inErrors('1', 'c', normal: true),
+          inErrors('2', 'c', reverse: true),
+          inErrors('3', 'c', reverse: true),
+        ]),
+        2,
+      );
+    });
+
+    test('counts the cards each direction would study: test cards and '
+        'general decks go in the normal direction (R 7.3)', () {
+      // Pairs in errors: 2 normal and 2 reverse. But a reverse session
+      // would also study the test card, recorded in the normal direction:
+      // 3 cards against 2.
+      final candidates = [
+        inErrors('1', 'c', normal: true),
+        inErrors('2', 'c', reverse: true),
+        inErrors('3', 'c', reverse: true),
+        inErrors('4', 'c', test: true, normal: true),
+      ];
+
+      final review = SetupForm.initial(decks: decks).forErrorReview(candidates);
+
+      expect(review.direction, StudyDirection.reverse);
+      expect(review.availableCount(candidates), 3);
+    });
+
+    test('a tie keeps the direction of the last configuration', () {
+      final form = SetupForm.initial(
+        decks: decks,
+        last: const SessionConfig(
+          deckIds: ['c'],
+          direction: StudyDirection.reverse,
+        ),
+      );
+
+      final review = form.forErrorReview([
+        inErrors('1', 'c', normal: true),
+        inErrors('2', 'c', reverse: true),
+      ]);
+
+      expect(review.direction, StudyDirection.reverse);
+    });
+
+    test('only the chosen decks count', () {
+      final form = SetupForm.initial(decks: decks).copyWith(deckIds: ['c']);
+
+      final review = form.forErrorReview([
+        inErrors('1', 'c', normal: true),
+        inErrors('2', 'a', language: false, normal: true),
+        inErrors('3', 'a', language: false, normal: true),
+        inErrors('4', 'c', reverse: true),
+        inErrors('5', 'c', reverse: true),
+      ]);
+
+      expect(review.direction, StudyDirection.reverse);
+    });
+  });
+
   group('timer values', () {
     test('per question: 5 to 120 seconds in steps of 5', () {
       expect(nextQuestionSeconds(30), 35);

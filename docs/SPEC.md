@@ -1209,3 +1209,8 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The deck header on desktop adds "5 errores pendientes" when there are any.
     - In narrow desktop windows, the title and "Repasar errores" share the header width 3:2, and the button's label ends in "…" if it does not fit. Widget tests showed these overflows with the test font, where every letter is as wide as the font size.
     - `rateText` and `reviewedText` (`lib/features/stats/presentation/stats_texts.dart`) are shared by the screens that show % correct and review dates.
+47. **"Solo errores" and review (T4.4):**
+    - "Repasar errores (N)" opens the session setup (§5.1) at `/project/:projectId/study?errors=1` (plus `deck=` from a deck), with "Solo errores" chosen and the rest from the last configuration (decided with the owner). From the dashboard or the project every deck of the project is chosen; from a deck only that deck.
+    - A session goes in one direction, while N counts (card, direction) pairs (R 7.6), so the setup picks the direction whose session would have more cards (`SetupForm.forErrorReview`, decided with the owner). Each direction is counted as its session studies it: test cards and cards of general decks count in the normal direction even in a reverse session (R 7.3). A tie keeps the direction of the last configuration. The session may therefore offer fewer cards than N; the setup shows how many.
+    - Candidates are always read for one project (`StudyRepository.candidates`, since T3.6), so an error session never mixes projects (US-21 AC1); a test checks it with errors in two projects.
+    - Since T4.1 fills `card_stats`, "Solo errores" also works when chosen by hand in the setup (assumption 34).
