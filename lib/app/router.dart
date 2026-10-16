@@ -16,6 +16,7 @@ import 'package:estudicards/features/decks/presentation/deck_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
+import 'package:estudicards/features/stats/presentation/project_statistics_screen.dart';
 import 'package:estudicards/features/study/presentation/results_screen.dart';
 import 'package:estudicards/features/study/presentation/session_screen.dart';
 import 'package:estudicards/features/study/presentation/session_setup_screen.dart';
@@ -34,6 +35,10 @@ abstract final class AppRoutes {
   static const settings = '/settings';
 
   static String project(String projectId) => '/project/$projectId';
+
+  /// A project's statistics on their own page (desktop, P12).
+  static String projectStatistics(String projectId) =>
+      '/project/$projectId/statistics';
 
   /// The session setup; opened from a deck ([deckId]), only that deck is
   /// chosen. From "Repasar errores" ([reviewErrors]) it starts in "Solo
@@ -118,6 +123,13 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                       deckId: state.uri.queryParameters['deck'],
                       // `?errors=1` when opened from "Repasar errores".
                       reviewErrors: state.uri.queryParameters['errors'] == '1',
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'statistics',
+                    builder: (context, state) => ProjectStatisticsScreen(
+                      key: const Key('screen.projectStatistics'),
+                      projectId: state.pathParameters['projectId']!,
                     ),
                   ),
                   GoRoute(

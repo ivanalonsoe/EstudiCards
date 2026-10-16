@@ -95,6 +95,54 @@ class DailyGoalProgress {
   bool get isReached => done >= goal;
 }
 
+/// The answers of one local day, a bar of the 30-day chart.
+class DayAnswers {
+  const new({required this.day, required this.answers});
+
+  /// Midnight UTC of the local date (see `Clock.localDay`).
+  final DateTime day;
+  final AnswerCounts answers;
+}
+
+/// The answers per day over the last days, oldest first and ending today
+/// (P12, P13).
+class DailySeries {
+  const new(this.days);
+
+  final List<DayAnswers> days;
+
+  /// The totals of the legend.
+  AnswerCounts get totals => AnswerCounts(
+    correct: days.fold(0, (sum, day) => sum + day.answers.correct),
+    wrong: days.fold(0, (sum, day) => sum + day.answers.wrong),
+  );
+
+  /// The most cards answered in one day, which sets the chart's height.
+  int get busiestDay => days.fold(
+    0,
+    (most, day) => day.answers.total > most ? day.answers.total : most,
+  );
+}
+
+/// One point per day for the [days] days ending on [today], with zeros on
+/// the days missing from [byDay] (keyed by local day, as `Clock.localDay`).
+DailySeries dailySeries(
+  Map<DateTime, AnswerCounts> byDay, {
+  required DateTime today,
+  int days = 30,
+}) {
+  final points = <DayAnswers>[];
+  for (var ago = days - 1; ago >= 0; ago--) {
+    // Local days are midnight UTC, so subtracting whole days is safe even
+    // across a summer time change.
+    final day = today.subtract(Duration(days: ago));
+    points.add(
+      DayAnswers(day: day, answers: byDay[day] ?? const AnswerCounts()),
+    );
+  }
+  return DailySeries(points);
+}
+
 /// The progress towards [goal], or null when there is no goal (it is
 /// optional and off by default, SPEC §4.2).
 DailyGoalProgress? dailyGoalProgress({

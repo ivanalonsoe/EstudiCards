@@ -105,6 +105,53 @@ Future<void> addTestAnswers(
   await db.recomputeCardStats();
 }
 
+/// Inserts a study session of [projectId] over [deckIds] with these totals,
+/// as the study screen leaves it when it ends ([status] `in_progress` while
+/// it is still open). No attempts are saved.
+Future<String> addTestSession(
+  AppDatabase db, {
+  required String projectId,
+  required List<String> deckIds,
+  required DateTime startedAt,
+  String status = 'completed',
+  int correct = 0,
+  int wrong = 0,
+  int unanswered = 0,
+  Duration activeDuration = const Duration(minutes: 5),
+}) async {
+  final sessionId = newId();
+  await db
+      .into(db.studySessions)
+      .insert(
+        StudySessionsCompanion.insert(
+          id: sessionId,
+          projectId: projectId,
+          mode: 'normal',
+          direction: 'normal',
+          prioritizeFailed: false,
+          repeatFailed: false,
+          timerType: 'none',
+          status: status,
+          startedAt: startedAt,
+          endedAt: Value(
+            status == 'in_progress' ? null : startedAt.add(activeDuration),
+          ),
+          activeDurationMs: Value(activeDuration.inMilliseconds),
+          correctTotal: Value(correct),
+          wrongTotal: Value(wrong),
+          unansweredTotal: Value(unanswered),
+        ),
+      );
+  for (final deckId in deckIds) {
+    await db
+        .into(db.sessionDecks)
+        .insert(
+          SessionDecksCompanion.insert(sessionId: sessionId, deckId: deckId),
+        );
+  }
+  return sessionId;
+}
+
 /// Inserts a finished study session of [projectId] with one correct answer
 /// to [cardId]. Sessions arrive in phase 3.
 Future<void> addTestAttempt(

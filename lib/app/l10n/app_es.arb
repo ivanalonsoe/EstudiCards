@@ -1302,5 +1302,68 @@
   "@timeLeftLabel": {
     "description": "What screen readers say for the session timer.",
     "placeholders": { "time": { "type": "String" } }
-  }
+  },
+  "cardsPerDay": "tarjetas por día",
+  "@cardsPerDay": { "description": "Caption at the right of the 30-day chart heading." },
+  "chartLegendCorrect": "Aciertos · {count}",
+  "@chartLegendCorrect": {
+    "description": "Chart legend: correct answers and their total, after a ✓.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "chartLegendWrong": "Fallos · {count}",
+  "@chartLegendWrong": {
+    "description": "Chart legend: wrong answers and their total, after a ✗.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "correctAnswers": "{count, plural, =1{1 acierto} other{{count} aciertos}}",
+  "@correctAnswers": {
+    "description": "A number of correct answers, for screen readers.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "wrongAnswers": "{count, plural, =1{1 fallo} other{{count} fallos}}",
+  "@wrongAnswers": {
+    "description": "A number of wrong answers: the most missed cards, and screen readers.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "chartSummary": "{title}: {correct} y {wrong}.",
+  "@chartSummary": {
+    "description": "What screen readers say for a 30-day chart, before the days, e.g. 'Últimos 30 días: 421 aciertos y 114 fallos.'.",
+    "placeholders": {
+      "title": { "type": "String" },
+      "correct": { "type": "String" },
+      "wrong": { "type": "String" }
+    }
+  },
+  "chartDay": "{date}: {correct}, {wrong}",
+  "@chartDay": {
+    "description": "One day of a chart, for screen readers and the tooltip, e.g. '14 sept: 12 aciertos, 3 fallos'.",
+    "placeholders": {
+      "date": { "type": "String" },
+      "correct": { "type": "String" },
+      "wrong": { "type": "String" }
+    }
+  },
+  "correctByDeck": "Aciertos por baraja",
+  "@correctByDeck": { "description": "Heading of the % correct of each deck in the project statistics." },
+  "mostMissed": "Más falladas",
+  "@mostMissed": { "description": "Heading of the cards with the most wrong answers." },
+  "noMissedCards": "Ninguna tarjeta fallada todavía.",
+  "@noMissedCards": { "description": "Most missed cards of a project where no card has been missed." },
+  "seeTop10": "Ver 10",
+  "@seeTop10": { "description": "Link that shows the 10 most missed cards instead of 3." },
+  "sessionsTitle": "Sesiones",
+  "@sessionsTitle": { "description": "Heading of the session history of a project." },
+  "seeMore": "Ver más",
+  "@seeMore": { "description": "Button under a list that shows older items." },
+  "seeStatistics": "Ver estadísticas",
+  "@seeStatistics": { "description": "Link of the desktop project summary to the project statistics." },  "sessionDetails": "{date} · {duration}",
+  "@sessionDetails": {
+    "description": "Second line of a session in the history: when and how long, e.g. '12 sept · 6 min'.",
+    "placeholders": {
+      "date": { "type": "String" },
+      "duration": { "type": "String" }
+    }
+  },
+  "noSessions": "Aún no hay sesiones terminadas.",
+  "@noSessions": { "description": "Session history of a project with no finished session." }
 }
