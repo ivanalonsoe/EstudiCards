@@ -111,55 +111,62 @@ class ProjectCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // `Flexible`: on a narrow card the button or the text
-                  // shrinks (and ends in "…") so the date still fits.
-                  Flexible(
-                    child: summary.errorCount > 0
-                        ? ReviewErrorsButton(
-                            key: Key('projectCard.${project.id}.reviewErrors'),
-                            projectId: project.id,
-                            count: summary.errorCount,
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_rounded,
-                                color: colors.success,
-                                size: 18,
+              // At least as tall as the button, so cards with and without
+              // errors line up in the desktop grid.
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: minTouchTarget),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // `Flexible`: on a narrow card the button or the text
+                    // shrinks (and ends in "…") so the date still fits.
+                    Flexible(
+                      child: summary.errorCount > 0
+                          ? ReviewErrorsButton(
+                              key: Key(
+                                'projectCard.${project.id}.reviewErrors',
                               ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Flexible(
-                                child: Text(
-                                  l10n.noPendingErrors,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: text.labelMedium?.copyWith(
-                                    color: colors.textMuted,
+                              projectId: project.id,
+                              count: summary.errorCount,
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_rounded,
+                                  color: colors.success,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Flexible(
+                                  child: Text(
+                                    l10n.noPendingErrors,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.labelMedium?.copyWith(
+                                      color: colors.textMuted,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                  ),
-                  // When it was last studied: "Hoy", "Ayer", "Hace 2 días".
-                  if (summary.lastStudiedAt case final studied?) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      reviewedText(
-                        l10n,
-                        studied,
-                        ref.watch(clockProvider).now(),
-                      ),
-                      style: text.labelMedium?.copyWith(
-                        color: colors.textMuted,
-                      ),
+                              ],
+                            ),
                     ),
+                    // When it was last studied: "Hoy", "Ayer", "Hace 2 días".
+                    if (summary.lastStudiedAt case final studied?) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        reviewedText(
+                          l10n,
+                          studied,
+                          ref.watch(clockProvider).now(),
+                        ),
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),

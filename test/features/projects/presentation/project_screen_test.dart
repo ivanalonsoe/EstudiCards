@@ -125,23 +125,14 @@ void main() {
 
       await openProject(tester, project);
 
-      Finder pairOf(Deck deck) =>
-          find.byKey(Key('deckTile.${deck.id}.languages'));
-      expect(
-        find.descendant(
-          of: pairOf(translation),
-          matching: find.text('EN → ES'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: pairOf(definitions),
-          matching: find.text('EN → EN'),
-        ),
-        findsOneWidget,
-      );
-      expect(pairOf(general), findsNothing);
+      // The pair ends the details line (decided with the owner in T4.3).
+      String detailsOf(Deck deck) => tester
+          .widget<Text>(find.byKey(Key('deckTile.${deck.id}.details')))
+          .textSpan!
+          .toPlainText(includeSemanticsLabels: false);
+      expect(detailsOf(translation), '0 tarjetas · — aciertos · EN → ES');
+      expect(detailsOf(definitions), '0 tarjetas · — aciertos · EN → EN');
+      expect(detailsOf(general), '0 tarjetas · — aciertos');
       // Screen readers hear the full names, as part of the deck's row.
       expect(
         tester.getSemantics(deckTile(translation)).label,
@@ -236,20 +227,12 @@ void main() {
       expect(errorsOf(travel), findsNothing);
       // The language pair moved to the details line (decided with the
       // owner), so the errors chip takes the design's place.
-      expect(
-        find.descendant(
-          of: deckTile(verbs),
-          matching: find.text('2 tarjetas · 33% aciertos'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: deckTile(travel),
-          matching: find.text('1 tarjeta · 100% aciertos'),
-        ),
-        findsOneWidget,
-      );
+      String detailsOf(Deck deck) => tester
+          .widget<Text>(find.byKey(Key('deckTile.${deck.id}.details')))
+          .textSpan!
+          .toPlainText(includeSemanticsLabels: false);
+      expect(detailsOf(verbs), '2 tarjetas · 33% aciertos · EN → ES');
+      expect(detailsOf(travel), '1 tarjeta · 100% aciertos');
     });
 
     testWidgets('with no errors, "Repasar errores" is not shown', (

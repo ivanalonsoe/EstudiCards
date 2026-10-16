@@ -67,36 +67,36 @@ class DeckTile extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      // A `Wrap` puts the pair on a second line when the
-                      // row is too narrow for both.
-                      Wrap(
-                        children: [
-                          Text(
-                            l10n.deckContents(
-                              l10n.cardCount(summary.cardCount),
-                              l10n.correctRate(
-                                rateText(l10n, summary.answers.rate),
+                      // One text, so a narrow row breaks it between words
+                      // (at most two lines).
+                      Text.rich(
+                        key: Key('deckTile.${deck.id}.details'),
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: l10n.deckContents(
+                                l10n.cardCount(summary.cardCount),
+                                l10n.correctRate(
+                                  rateText(l10n, summary.answers.rate),
+                                ),
                               ),
                             ),
-                            style: details,
-                          ),
-                          // The pair goes on the details line, so the
-                          // errors chip keeps the design's place (decided
-                          // with the owner).
-                          if (deck case Deck(
-                            isLanguage: true,
-                            :final sourceLang?,
-                            :final targetLang?,
-                          )) ...[
-                            Text(l10n.detailsSeparator, style: details),
-                            _LanguagePair(
-                              key: Key('deckTile.${deck.id}.languages'),
-                              source: sourceLang,
-                              target: targetLang,
-                              style: details,
-                            ),
+                            // The pair goes on the details line, so the
+                            // errors chip keeps the design's place
+                            // (decided with the owner).
+                            if (deck case Deck(
+                              isLanguage: true,
+                              :final sourceLang?,
+                              :final targetLang?,
+                            )) ...[
+                              TextSpan(text: l10n.detailsSeparator),
+                              _languagePair(l10n, sourceLang, targetLang),
+                            ],
                           ],
-                        ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: details,
                       ),
                     ],
                   ),
@@ -131,34 +131,17 @@ class DeckTile extends ConsumerWidget {
 
 /// The language pair of a language deck: "EN → ES". Screen readers hear
 /// the full names ("Inglés (R. U.) → Español").
-class _LanguagePair extends StatelessWidget {
-  const new({
-    required this.source,
-    required this.target,
-    required this.style,
-    super.key,
-  });
-
-  final String source;
-  final String target;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Semantics(
-      label: l10n.languagePair(
+TextSpan _languagePair(AppLocalizations l10n, String source, String target) =>
+    TextSpan(
+      text: l10n.languagePair(
+        shortLanguageCode(source),
+        shortLanguageCode(target),
+      ),
+      semanticsLabel: l10n.languagePair(
         languageName(l10n, source),
         languageName(l10n, target),
       ),
-      excludeSemantics: true,
-      child: Text(
-        l10n.languagePair(shortLanguageCode(source), shortLanguageCode(target)),
-        style: style,
-      ),
     );
-  }
-}
 
 /// The red "5 errores" chip of a deck with pending errors.
 class _ErrorsChip extends StatelessWidget {
