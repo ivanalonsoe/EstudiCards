@@ -26,6 +26,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# The token every job gets can only read the repository: CI never needs to
+# push, comment or change settings, so even a malicious change in a PR
+# could not use it to modify the repository.
+permissions:
+  contents: read
+
 # A new push to the same PR cancels the run that is still in progress.
 concurrency:
   group: ci-${{ github.ref }}
