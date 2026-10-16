@@ -235,4 +235,4 @@ EstudiCards uses no accounts, analytics or internet connection. Your data only l
 
 ## License
 
-To be decided.
+All rights reserved: the code can be read, but not reused without permission. See [`LICENSE`](LICENSE). The Plus Jakarta Sans font keeps its own SIL Open Font License (`assets/fonts/OFL.txt`).
