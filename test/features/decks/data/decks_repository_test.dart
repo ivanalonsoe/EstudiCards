@@ -321,6 +321,51 @@ void main() {
 
       expect(counts, {verbs.id: 2, empty.id: 0});
     });
+
+    test('returns each deck with its answers and pending errors, both '
+        'directions added up (R 7.6)', () async {
+      final verbs = await repository.create(
+        project.id,
+        const DeckInput(name: 'Verbos'),
+      );
+      final empty = await repository.create(
+        project.id,
+        const DeckInput(name: 'Vacía'),
+      );
+      final bring = await addTestCard(db, verbs.id);
+      final seek = await addTestCard(db, verbs.id);
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: bring,
+        results: ['correct', 'wrong'],
+      );
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: bring,
+        direction: 'reverse',
+        results: ['wrong'],
+      );
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: seek,
+        results: ['correct', 'correct'],
+      );
+
+      final summaries = {
+        for (final s in await repository.watchDecks(project.id).first)
+          s.deck.id: s,
+      };
+
+      final listed = summaries[verbs.id]!;
+      expect((listed.answers.correct, listed.answers.wrong), (3, 2));
+      // `to bring` is in errors in both directions: two pairs.
+      expect(listed.errorCount, 2);
+      expect(summaries[empty.id]!.answers.total, 0);
+      expect(summaries[empty.id]!.errorCount, 0);
+    });
   });
 
   test('markUsed stores the clock time as the last use', () async {

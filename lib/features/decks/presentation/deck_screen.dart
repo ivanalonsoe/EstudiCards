@@ -22,6 +22,8 @@ import 'package:estudicards/features/decks/presentation/deck_picker.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/stats/presentation/stats_texts.dart';
+import 'package:estudicards/features/study/presentation/review_errors_button.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,9 +33,9 @@ import 'package:go_router/go_router.dart';
 /// `escritorio-claro/baraja.png`): a list on mobile and a table on desktop,
 /// with search and sorting (US-12).
 ///
-/// Hidden until their phases (SPEC §13.2, assumption 16): "Repasar errores"
-/// (phase 4), and "Importar CSV", "Plantilla", "Prompt para IA" and
-/// "Compartir" (phase 5).
+/// "Repasar errores (N)" only shows with pending errors. Hidden until phase
+/// 5 (SPEC §13.2, assumption 16): "Importar CSV", "Plantilla", "Prompt
+/// para IA" and "Compartir".
 class DeckScreen extends ConsumerStatefulWidget {
   const new({required this.projectId, required this.deckId, super.key});
 
@@ -148,11 +150,12 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
       return const Scaffold();
     }
     final loadedProject = project.value;
-    final deck = [
+    final deckSummary = [
       for (final summary in decks.value!)
-        if (summary.deck.id == widget.deckId) summary.deck,
+        if (summary.deck.id == widget.deckId) summary,
     ].firstOrNull;
-    if (loadedProject == null || deck == null) {
+    final deck = deckSummary?.deck;
+    if (loadedProject == null || deckSummary == null || deck == null) {
       return const _Message(null);
     }
 
@@ -169,6 +172,7 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final view = _DeckView(
       project: loadedProject,
       deck: deck,
+      errorCount: deckSummary.errorCount,
       allCards: all,
       shownCards: shown,
       query: _query,
@@ -198,6 +202,7 @@ class _DeckView {
   const new({
     required this.project,
     required this.deck,
+    required this.errorCount,
     required this.allCards,
     required this.shownCards,
     required this.query,
@@ -215,6 +220,9 @@ class _DeckView {
 
   final Project project;
   final Deck deck;
+
+  /// Pending errors of the deck: (card, direction) pairs (R 7.6).
+  final int errorCount;
 
   /// Every card of the deck, for the counts in the header.
   final List<CardSummary> allCards;
@@ -289,19 +297,6 @@ String _warningText(AppLocalizations l10n, TransferWarning warning) {
   };
 }
 
-/// "92%", or "—" with no answers.
-String rateText(AppLocalizations l10n, double? rate) =>
-    rate == null ? '—' : l10n.percent((rate * 100).round());
-
-/// "Hoy", "Ayer", "Hace 3 días" or "Nunca".
-String _reviewText(AppLocalizations l10n, DateTime? reviewedAt, DateTime now) =>
-    switch (daysSinceReview(reviewedAt, now)) {
-      null => l10n.reviewedNever,
-      <= 0 => l10n.reviewedToday,
-      1 => l10n.reviewedYesterday,
-      final days => l10n.reviewedDaysAgo(days),
-    };
-
 /// Mobile and tablet: the deck's details, "Añadir tarjeta", the search and
 /// the list.
 class _MobileDeck extends StatelessWidget {
@@ -373,6 +368,10 @@ class _MobileDeck extends StatelessWidget {
                   Expanded(child: _StudyButton(view: view)),
                 ],
               ),
+              if (view.errorCount > 0) ...[
+                const SizedBox(height: AppSpacing.md),
+                _ReviewErrors(view: view, expanded: true),
+              ],
               const SizedBox(height: AppSpacing.lg),
               if (view.allCards.isEmpty)
                 const _EmptyDeck()
@@ -417,6 +416,7 @@ class _DesktopDeck extends StatelessWidget {
     final details = [
       ?view.languagePair(l10n),
       ...view.counts(l10n),
+      if (view.errorCount > 0) l10n.pendingErrors(view.errorCount),
     ].join(l10n.detailsSeparator);
 
     return Scaffold(
@@ -438,7 +438,11 @@ class _DesktopDeck extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
+                // With errors, the title and "Repasar errores" share the
+                // width 3:2, so in a narrow window the button shrinks and
+                // its label ends in "…" instead of overflowing.
                 Expanded(
+                  flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -458,6 +462,10 @@ class _DesktopDeck extends StatelessWidget {
                 // In the header rather than the toolbar, which is full
                 // with the search, the orders and "Añadir tarjeta".
                 const SizedBox(width: AppSpacing.sm),
+                if (view.errorCount > 0) ...[
+                  Flexible(flex: 2, child: _ReviewErrors(view: view)),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
                 _StudyButton(view: view),
               ],
             ),
@@ -553,6 +561,24 @@ class _StudyButton extends StatelessWidget {
       label: Text(AppLocalizations.of(context).study),
     );
   }
+}
+
+/// "Repasar errores (N)" for this deck only (US-21); shown only with
+/// errors.
+class _ReviewErrors extends StatelessWidget {
+  const new({required this.view, this.expanded = false});
+
+  final _DeckView view;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context) => ReviewErrorsButton(
+    key: const Key('deckScreen.reviewErrors'),
+    projectId: view.project.id,
+    deckId: view.deck.id,
+    count: view.errorCount,
+    expanded: expanded,
+  );
 }
 
 /// "Inicio › Inglés B2 › Verbos irregulares" above the desktop header.
@@ -1076,7 +1102,7 @@ class _CardTableRow extends StatelessWidget {
             ],
           ),
           review: Text(
-            _reviewText(l10n, summary.lastReviewedAt, now),
+            reviewedText(l10n, summary.lastReviewedAt, now),
             style: text.bodyMedium?.copyWith(color: colors.textMuted),
           ),
           menu: _CardMenu(view: view, card: card),

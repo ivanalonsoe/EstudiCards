@@ -4,7 +4,6 @@ import 'package:estudicards/app/shell/brand_logo.dart';
 import 'package:estudicards/app/shell/nav_destinations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
-import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
@@ -16,7 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The fixed left sidebar on desktop (`docs/design/escritorio-claro/`):
 /// logo, project search, "Inicio", the projects (favourites on top) and the
-/// menu at the bottom. The daily goal card arrives with phase 4.
+/// menu at the bottom. Each project shows its pending errors. The daily
+/// goal card arrives with Settings (T6.2), when a goal can be set.
 class AppSidebar extends ConsumerWidget {
   const new({required this.location, super.key});
 
@@ -30,18 +30,15 @@ class AppSidebar extends ConsumerWidget {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
-    final summaries = ref.watch(visibleProjectsProvider).value;
-    final projects = <Project>[
-      for (final summary in summaries ?? const <ProjectSummary>[])
-        summary.project,
-    ];
+    final summaries =
+        ref.watch(visibleProjectsProvider).value ?? const <ProjectSummary>[];
     final favorites = [
-      for (final p in projects)
-        if (p.isFavorite) p,
+      for (final s in summaries)
+        if (s.project.isFavorite) s,
     ];
     final others = [
-      for (final p in projects)
-        if (!p.isFavorite) p,
+      for (final s in summaries)
+        if (!s.project.isFavorite) s,
     ];
 
     return Material(
@@ -80,8 +77,8 @@ class AppSidebar extends ConsumerWidget {
                 children: [
                   if (favorites.isNotEmpty) ...[
                     _SidebarHeading(l10n.favorites),
-                    for (final project in favorites)
-                      _SidebarProjectTile(project: project, location: location),
+                    for (final summary in favorites)
+                      _SidebarProjectTile(summary: summary, location: location),
                   ],
                   _SidebarHeading(
                     l10n.projects,
@@ -97,8 +94,8 @@ class AppSidebar extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  for (final project in others)
-                    _SidebarProjectTile(project: project, location: location),
+                  for (final summary in others)
+                    _SidebarProjectTile(summary: summary, location: location),
                 ],
               ),
             ),
@@ -147,18 +144,20 @@ class _SidebarHeading extends StatelessWidget {
   );
 }
 
-/// A project in the sidebar; highlighted while its screen (or one of its
-/// decks) is open.
+/// A project in the sidebar, with a red badge for its pending errors;
+/// highlighted while its screen (or one of its decks) is open.
 class _SidebarProjectTile extends ConsumerWidget {
-  const new({required this.project, required this.location});
+  const new({required this.summary, required this.location});
 
-  final Project project;
+  final ProjectSummary summary;
   final String location;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final project = summary.project;
     final path = AppRoutes.project(project.id);
+    final errors = summary.errorCount;
     return ListTile(
       key: Key('sidebar.project.${project.id}'),
       selected: location == path || location.startsWith('$path/'),
@@ -169,6 +168,32 @@ class _SidebarProjectTile extends ConsumerWidget {
         size: 28,
       ),
       title: Text(project.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: errors == 0
+          ? null
+          : Semantics(
+              label: AppLocalizations.of(context).pendingErrors(errors),
+              excludeSemantics: true,
+              child: Container(
+                key: Key('sidebar.project.${project.id}.errors'),
+                constraints: const BoxConstraints(minWidth: 22),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs + 2,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.error.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadii.chip),
+                ),
+                child: Text(
+                  '$errors',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
       textColor: colors.text,
       selectedColor: colors.primaryStrong,
       selectedTileColor: colors.primarySoft,

@@ -248,6 +248,60 @@ void main() {
     },
   );
 
+  test("the dashboard list brings each project's answers, pending errors "
+      'and last answer, leaving out decks in the trash', () async {
+    final english = await repository.create(general('Inglés B2'));
+    final empty = await repository.create(general('Vacío'));
+    final decks = DecksRepository(DecksDao(db), clock);
+    final verbs = await decks.create(
+      english.id,
+      const DeckInput(name: 'Verbos'),
+    );
+    final deleted = await decks.create(
+      english.id,
+      const DeckInput(name: 'Borrada'),
+    );
+    final bring = await addTestCard(db, verbs.id);
+    final old = await addTestCard(db, deleted.id);
+    await addTestAnswers(
+      db,
+      projectId: english.id,
+      cardId: bring,
+      results: ['wrong', 'correct', 'correct', 'wrong'],
+      at: DateTime.utc(2026, 10, 4, 18),
+    );
+    await addTestAnswers(
+      db,
+      projectId: english.id,
+      cardId: bring,
+      direction: 'reverse',
+      results: ['correct'],
+      at: DateTime.utc(2026, 10, 5, 8),
+    );
+    await addTestAnswers(
+      db,
+      projectId: english.id,
+      cardId: old,
+      results: ['wrong', 'wrong'],
+      at: DateTime.utc(2026, 10, 6, 8),
+    );
+    await (db.update(db.decks)..where((d) => d.id.equals(deleted.id))).write(
+      DecksCompanion(deletedAt: Value(start)),
+    );
+
+    final summaries = {
+      for (final s in await repository.watchProjects().first) s.project.id: s,
+    };
+
+    final listed = summaries[english.id]!;
+    expect((listed.answers.correct, listed.answers.wrong), (3, 2));
+    expect(listed.errorCount, 1);
+    expect(listed.lastStudiedAt, DateTime.utc(2026, 10, 5, 8));
+    expect(summaries[empty.id]!.answers.rate, isNull);
+    expect(summaries[empty.id]!.errorCount, 0);
+    expect(summaries[empty.id]!.lastStudiedAt, isNull);
+  });
+
   test('markUsed stores the clock time as the last use', () async {
     final project = await repository.create(general('Química'));
     expect(project.lastUsedAt, isNull);

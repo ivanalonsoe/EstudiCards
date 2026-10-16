@@ -8,6 +8,7 @@ import 'package:estudicards/features/decks/data/decks_dao.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
+import 'package:estudicards/features/stats/domain/metrics.dart';
 
 class DecksRepository {
   new(this._dao, this._clock);
@@ -78,7 +79,15 @@ class DecksRepository {
       .map(
         (rows) => [
           for (final row in rows)
-            DeckSummary(deck: _toDeck(row.deck), cardCount: row.cardCount),
+            DeckSummary(
+              deck: _toDeck(row.deck),
+              cardCount: row.cardCount,
+              answers: AnswerCounts(
+                correct: row.correctCount,
+                wrong: row.wrongCount,
+              ),
+              errorCount: row.errorCount,
+            ),
         ],
       );
 

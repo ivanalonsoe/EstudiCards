@@ -57,6 +57,26 @@ Streak streakFrom(Iterable<DateTime> activeDays, {required DateTime today}) {
   return Streak(current: isCurrent ? run : 0, best: best);
 }
 
+/// The activity numbers of the dashboard header (P01) and of the global
+/// statistics (P13).
+class StatsOverview {
+  const new({
+    required this.streak,
+    required this.answeredToday,
+    required this.answeredLast7Days,
+    this.dailyGoal,
+  });
+
+  final Streak streak;
+
+  /// Cards answered today and in the last 7 days (today included).
+  final int answeredToday;
+  final int answeredLast7Days;
+
+  /// Null while there is no daily goal.
+  final DailyGoalProgress? dailyGoal;
+}
+
 /// How far today's answers are from the daily goal (US-23 AC2).
 class DailyGoalProgress {
   const new({required this.goal, required this.done});

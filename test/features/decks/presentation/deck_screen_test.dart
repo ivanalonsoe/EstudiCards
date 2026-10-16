@@ -183,6 +183,34 @@ void main() {
       );
     });
 
+    testWidgets('with 2 errors, "Repasar errores (2)" is shown', (
+      tester,
+    ) async {
+      await addSimple('to bring', 'traer', correct: 1, wrong: 1);
+      await addSimple('to seek', 'buscar', wrong: 2);
+      await addSimple('to bind', 'atar', correct: 3);
+
+      await openDeck(tester);
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('deckScreen.reviewErrors')),
+          matching: find.text('Repasar errores (2)'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with no errors, "Repasar errores" is not shown', (
+      tester,
+    ) async {
+      await addSimple('to bind', 'atar', correct: 3);
+
+      await openDeck(tester);
+
+      expect(find.byKey(const Key('deckScreen.reviewErrors')), findsNothing);
+    });
+
     testWidgets('search filters as you type', (tester) async {
       final bring = await addSimple('to bring', 'traer');
       final irregular = await addTest();
@@ -342,7 +370,18 @@ void main() {
       expect(inRow(bring, 'Hoy'), findsOneWidget);
       expect(inRow(irregular, 'Ayer'), findsOneWidget);
       expect(inRow(bind, 'Nunca'), findsOneWidget);
-      expect(find.text('EN → ES · 3 tarjetas · 74% aciertos'), findsOneWidget);
+      // `to bring` and the test card are in errors.
+      expect(
+        find.text('EN → ES · 3 tarjetas · 74% aciertos · 2 errores pendientes'),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('deckScreen.reviewErrors')),
+          matching: find.text('Repasar errores (2)'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('the segmented control changes the order', (tester) async {

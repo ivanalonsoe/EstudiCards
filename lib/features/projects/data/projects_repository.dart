@@ -10,6 +10,7 @@ import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
+import 'package:estudicards/features/stats/domain/metrics.dart';
 
 class ProjectsRepository {
   new(this._dao, this._clock);
@@ -113,6 +114,9 @@ class ProjectsRepository {
         project: _toProject(row.project),
         deckCount: row.deckCount,
         cardCount: row.cardCount,
+        answers: AnswerCounts(correct: row.correctCount, wrong: row.wrongCount),
+        errorCount: row.errorCount,
+        lastStudiedAt: row.lastStudiedAt,
       ),
   ];
 

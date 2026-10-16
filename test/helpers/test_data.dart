@@ -54,6 +54,57 @@ Future<void> addTestStats(
       ),
     );
 
+/// Saves first-attempt answers to [cardId] in [direction], one per result
+/// (`correct` or `wrong`), one minute apart from [at], in a finished session
+/// of [projectId]. Then rebuilds `card_stats` from the attempts, so the
+/// statistics are what studying would leave (R 7.4). Local days are UTC
+/// days, like a `FakeClock` without a time zone.
+Future<void> addTestAnswers(
+  AppDatabase db, {
+  required String projectId,
+  required String cardId,
+  required List<String> results,
+  String direction = 'normal',
+  DateTime? at,
+}) async {
+  final start = at ?? _now;
+  final sessionId = newId();
+  await db
+      .into(db.studySessions)
+      .insert(
+        StudySessionsCompanion.insert(
+          id: sessionId,
+          projectId: projectId,
+          mode: 'normal',
+          direction: direction,
+          prioritizeFailed: false,
+          repeatFailed: false,
+          timerType: 'none',
+          status: 'completed',
+          startedAt: start,
+        ),
+      );
+  for (final (i, result) in results.indexed) {
+    final answeredAt = start.add(Duration(minutes: i));
+    await db
+        .into(db.attempts)
+        .insert(
+          AttemptsCompanion.insert(
+            id: newId(),
+            sessionId: sessionId,
+            cardId: cardId,
+            direction: direction,
+            result: result,
+            source: 'self_eval',
+            isFirstAttempt: true,
+            answeredAt: answeredAt,
+            localDay: Value(answeredAt.toIso8601String().substring(0, 10)),
+          ),
+        );
+  }
+  await db.recomputeCardStats();
+}
+
 /// Inserts a finished study session of [projectId] with one correct answer
 /// to [cardId]. Sessions arrive in phase 3.
 Future<void> addTestAttempt(

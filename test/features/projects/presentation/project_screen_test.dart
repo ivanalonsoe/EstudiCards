@@ -171,7 +171,7 @@ void main() {
       expect(find.text('Inglés B2'), findsOneWidget);
       // The languages belong to each deck, not to the project header.
       expect(find.text('Nivel intermedio alto'), findsOneWidget);
-      // Real card count; % correct and errors arrive in phase 4.
+      // With no answers yet, % correct is "—" and there are no errors.
       Finder metric(String key, String value) => find.descendant(
         of: find.byKey(Key('projectScreen.metric.$key')),
         matching: find.text(value),
@@ -179,6 +179,95 @@ void main() {
       expect(metric('cards', '3'), findsOneWidget);
       expect(metric('correct', '—'), findsOneWidget);
       expect(metric('errors', '0'), findsOneWidget);
+    });
+
+    testWidgets('with 3 errors, "Repasar errores (3)" is shown, the metrics '
+        'show % correct and errors, and each deck its errors', (tester) async {
+      final project = await createEnglish();
+      final verbs = await createDeck(
+        project,
+        'Verbos',
+        sourceLang: 'en-GB',
+        targetLang: 'es-ES',
+      );
+      final phrasal = await createDeck(project, 'Phrasal verbs');
+      final travel = await createDeck(project, 'Viajes');
+      final a = await addTestCard(db, verbs.id);
+      final b = await addTestCard(db, verbs.id);
+      final c = await addTestCard(db, phrasal.id);
+      final d = await addTestCard(db, travel.id);
+      Future<void> answer(String card, List<String> results) => addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: card,
+        results: results,
+      );
+      await answer(a, ['correct', 'wrong']);
+      await answer(b, ['wrong']);
+      await answer(c, ['wrong']);
+      await answer(d, ['correct', 'correct', 'correct']);
+
+      // A tall phone, so every deck is on screen.
+      await openProject(tester, project, size: const Size(390, 1400));
+
+      Finder metric(String key, String value) => find.descendant(
+        of: find.byKey(Key('projectScreen.metric.$key')),
+        matching: find.text(value),
+      );
+      expect(metric('correct', '57%'), findsOneWidget);
+      expect(metric('errors', '3'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('projectScreen.reviewErrors')),
+          matching: find.text('Repasar errores (3)'),
+        ),
+        findsOneWidget,
+      );
+      Finder errorsOf(Deck deck) =>
+          find.byKey(Key('deckTile.${deck.id}.errors'));
+      expect(
+        find.descendant(of: errorsOf(verbs), matching: find.text('2 errores')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: errorsOf(phrasal), matching: find.text('1 error')),
+        findsOneWidget,
+      );
+      expect(errorsOf(travel), findsNothing);
+      // The language pair moved to the details line (decided with the
+      // owner), so the errors chip takes the design's place.
+      expect(
+        find.descendant(
+          of: deckTile(verbs),
+          matching: find.text('2 tarjetas · 33% aciertos'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: deckTile(travel),
+          matching: find.text('1 tarjeta · 100% aciertos'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with no errors, "Repasar errores" is not shown', (
+      tester,
+    ) async {
+      final project = await createEnglish();
+      final deck = await createDeck(project, 'Verbos');
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: await addTestCard(db, deck.id),
+        results: ['correct'],
+      );
+
+      await openProject(tester, project);
+
+      expect(find.byKey(const Key('projectScreen.reviewErrors')), findsNothing);
+      expect(find.byKey(Key('deckTile.${deck.id}.errors')), findsNothing);
     });
 
     testWidgets('the statistics tab shows that there is no data yet', (
@@ -266,6 +355,33 @@ void main() {
       expect(
         find.byKey(const Key('projectScreen.tab.statistics')),
         findsNothing,
+      );
+    });
+
+    testWidgets('the header shows % correct and "Repasar errores (1)"', (
+      tester,
+    ) async {
+      final project = await createEnglish();
+      final deck = await createDeck(project, 'Verbos');
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: await addTestCard(db, deck.id),
+        results: ['correct', 'wrong'],
+      );
+
+      await openProject(tester, project, size: desktop);
+
+      expect(
+        find.text('Nivel intermedio alto · 1 tarjeta · 50% aciertos'),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('projectScreen.reviewErrors')),
+          matching: find.text('Repasar errores (1)'),
+        ),
+        findsOneWidget,
       );
     });
 
