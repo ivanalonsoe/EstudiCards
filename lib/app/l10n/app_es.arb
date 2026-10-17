@@ -26,10 +26,6 @@
   "@editCard": {
     "description": "Title of the card editor when editing a card (P06)."
   },
-  "importTitle": "Importar",
-  "@importTitle": {
-    "description": "Title of the import wizard (P07)."
-  },
   "pageNotFound": "No se ha encontrado la página",
   "@pageNotFound": {
     "description": "Shown when the app is asked for a route that does not exist."
@@ -1410,5 +1406,187 @@
   "statisticsReset": "Estadísticas reiniciadas",
   "@statisticsReset": { "description": "Snackbar after resetting statistics." },
   "noSessions": "Aún no hay sesiones terminadas.",
-  "@noSessions": { "description": "Session history of a project with no finished session." }
+  "@noSessions": { "description": "Session history of a project with no finished session." },
+
+  "importButton": "Importar",
+  "@importButton": { "description": "Dashboard header button (desktop) and menu entry that open the import wizard (P07) as a new project." },
+  "importProject": "Importar un proyecto",
+  "@importProject": { "description": "Button of the empty dashboard that opens the import wizard." },
+  "importDeck": "Importar baraja",
+  "@importDeck": { "description": "Project action that imports a file as a new deck of the project." },
+  "importCsv": "Importar CSV",
+  "@importCsv": { "description": "Deck action that adds the cards of a file to the deck." },
+  "emptyCardsImport": "o importa desde CSV",
+  "@emptyCardsImport": { "description": "Link under the empty state of a deck (SPEC §5.3)." },
+  "importDefaultDeck": "Importadas",
+  "@importDefaultDeck": { "description": "Deck of the CSV rows without a «deck» column when a CSV becomes a new project (SPEC §8.3)." },
+  "importCardsTitle": "Importar tarjetas",
+  "@importCardsTitle": { "description": "Title of the import wizard (P07)." },
+  "importStepFile": "Fichero",
+  "@importStepFile": { "description": "Step 1 of the import wizard." },
+  "importStepDestination": "Destino",
+  "@importStepDestination": { "description": "Step 2 of the import wizard." },
+  "importStepReview": "Revisar",
+  "@importStepReview": { "description": "Step 3 of the import wizard." },
+  "importChooseTitle": "Elige un fichero",
+  "@importChooseTitle": { "description": "Heading of step 1 of the import wizard." },
+  "importChooseBody": "Un CSV de Excel o Google Sheets, o un fichero de EstudiCards (.json).",
+  "@importChooseBody": { "description": "Explanation of step 1 of the import wizard." },
+  "importChooseFile": "Elegir fichero",
+  "@importChooseFile": { "description": "Button that opens the system file dialog." },
+  "importReading": "Leyendo el fichero…",
+  "@importReading": { "description": "Shown while a picked file is read." },
+  "importRows": "{count, plural, =1{1 fila} other{{count} filas}}",
+  "@importRows": {
+    "description": "Card rows of a CSV file.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importAddTo": "añadir a",
+  "@importAddTo": { "description": "Destination of an import into an existing deck: «46 filas → añadir a Verbos irregulares»." },
+  "importNewProjectTarget": "nuevo proyecto",
+  "@importNewProjectTarget": { "description": "Destination of an import as a new project: «46 filas → nuevo proyecto Vocabulario»." },
+  "importNewDeckTarget": "nueva baraja",
+  "@importNewDeckTarget": { "description": "Destination of an import as a new deck: «46 filas → nueva baraja Verbos»." },
+  "importProjectName": "Nombre del proyecto",
+  "@importProjectName": { "description": "Field of step 2 when importing as a new project." },
+  "importDeckName": "Nombre de la baraja",
+  "@importDeckName": { "description": "Field of step 2 when importing as a new deck." },
+  "importDecksType": "Tipo de las barajas",
+  "@importDecksType": { "description": "Label of the type asked once when a CSV becomes a new project (SPEC §8.4 rule 6)." },
+  "importDecksTypeHint": "Se aplica a todas las barajas que cree el fichero.",
+  "@importDecksTypeHint": { "description": "Explanation under the type asked once for a CSV imported as a new project." },
+  "importKeepsType": "Cada baraja conserva el tipo y los idiomas del fichero.",
+  "@importKeepsType": { "description": "Step 2 note for a JSON file: its decks keep their type." },
+  "importContinue": "Continuar",
+  "@importContinue": { "description": "Button that goes from step 2 to the review." },
+  "importNew": "nuevas",
+  "@importNew": { "description": "Caption of the number of new cards in the import review." },
+  "importDuplicates": "duplicadas",
+  "@importDuplicates": { "description": "Caption of the number of duplicate cards in the import review." },
+  "importWithErrors": "con errores",
+  "@importWithErrors": { "description": "Caption of the number of rows with errors in the import review." },
+  "importWarnings": "Avisos",
+  "@importWarnings": { "description": "Heading of the list of errors and duplicates in the import review." },
+  "importRow": "Fila {row}:",
+  "@importRow": {
+    "description": "Bold start of a warning about a CSV row.",
+    "placeholders": { "row": { "type": "int" } }
+  },
+  "importErrorWarning": "{problem}. Se omitirá.",
+  "@importErrorWarning": {
+    "description": "A card with an error in the import review, after «Fila 7:» or the question.",
+    "placeholders": { "problem": { "type": "String" } }
+  },
+  "importDuplicateWarning": "«{question}» ya existe en la baraja.",
+  "@importDuplicateWarning": {
+    "description": "A duplicate card in the import review.",
+    "placeholders": { "question": { "type": "String" } }
+  },
+  "importQuoted": "«{question}»:",
+  "@importQuoted": {
+    "description": "Bold start of a warning about a card of a JSON file, which has no rows.",
+    "placeholders": { "question": { "type": "String" } }
+  },
+  "importMoreWarnings": "{count, plural, =1{y 1 aviso más} other{y {count} avisos más}}",
+  "@importMoreWarnings": {
+    "description": "End of a long list of warnings in the import review.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "problemQuestionMissing": "falta la pregunta",
+  "@problemQuestionMissing": { "description": "Why a card is not imported." },
+  "problemAnswerMissing": "falta la respuesta",
+  "@problemAnswerMissing": { "description": "Why a card is not imported." },
+  "problemTooFewOptions": "necesita al menos 2 opciones",
+  "@problemTooFewOptions": { "description": "Why a test card is not imported." },
+  "problemTooManyOptions": "tiene más de 6 opciones",
+  "@problemTooManyOptions": { "description": "Why a test card is not imported." },
+  "problemNoCorrectOption": "no marca ninguna opción correcta",
+  "@problemNoCorrectOption": { "description": "Why a test card is not imported." },
+  "problemTooManyCorrectOptions": "tiene varias correctas sin «Permitir varias correctas»",
+  "@problemTooManyCorrectOptions": { "description": "Why a test card is not imported." },
+  "problemInvalidCorrect": "«correct» no indica opciones con texto",
+  "@problemInvalidCorrect": { "description": "Why a CSV test row is not imported: the correct column is wrong." },
+  "importFirstNewCards": "Primeras tarjetas nuevas",
+  "@importFirstNewCards": { "description": "Heading of the first cards to import in the review." },
+  "importNewBadge": "Nueva",
+  "@importNewBadge": { "description": "Label of a card to import in the review." },
+  "importConfirm": "{count, plural, =1{Importar 1 tarjeta} other{Importar {count} tarjetas}}",
+  "@importConfirm": {
+    "description": "Button that imports the new cards.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importSkippedNote": "Las duplicadas y las filas con errores no se importan",
+  "@importSkippedNote": { "description": "Note under the import button." },
+  "importNothingNew": "No hay tarjetas nuevas que importar.",
+  "@importNothingNew": { "description": "Import review with nothing to import." },
+  "importAdded": "{count, plural, =1{1 añadida} other{{count} añadidas}}",
+  "@importAdded": {
+    "description": "Part of the summary after importing (SPEC §8.4 rule 5).",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importSkippedDuplicates": "{count, plural, =1{1 omitida por duplicada} other{{count} omitidas por duplicadas}}",
+  "@importSkippedDuplicates": {
+    "description": "Part of the summary after importing.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importSkippedErrors": "{count} con errores",
+  "@importSkippedErrors": {
+    "description": "Part of the summary after importing.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importSkippedImages": "{count, plural, =1{1 imagen no se pudo importar} other{{count} imágenes no se pudieron importar}}",
+  "@importSkippedImages": {
+    "description": "Part of the summary after importing: images that could not be stored.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importFailed": "No se ha podido importar. No se ha guardado nada.",
+  "@importFailed": { "description": "The import transaction failed." },
+  "importErrorUnsupported": "Solo se pueden importar ficheros .csv o .json.",
+  "@importErrorUnsupported": { "description": "A picked file of another type." },
+  "importErrorTooLarge": "El fichero es demasiado grande (máximo {size}).",
+  "@importErrorTooLarge": {
+    "description": "A picked file over the limit of its type.",
+    "placeholders": { "size": { "type": "String" } }
+  },
+  "importErrorRead": "No se ha podido leer el fichero.",
+  "@importErrorRead": { "description": "The system could not read the picked file." },
+  "importErrorBackup": "Es una copia de seguridad: restáurala desde Ajustes.",
+  "@importErrorBackup": { "description": "A backup was picked in the import wizard." },
+  "importErrorProjectHere": "Este fichero es un proyecto entero: impórtalo desde el inicio.",
+  "@importErrorProjectHere": { "description": "A shared project was picked to import as a deck." },
+  "importErrorNotJson": "El fichero no es un JSON válido.",
+  "@importErrorNotJson": { "description": "A .json file that is not JSON." },
+  "importErrorNotEstudiCards": "Este JSON no es un fichero de EstudiCards.",
+  "@importErrorNotEstudiCards": { "description": "A JSON file without format «estudicards» or with an unknown kind." },
+  "importErrorVersion": "Este fichero es de una versión más nueva de EstudiCards. Actualiza la app para importarlo.",
+  "@importErrorVersion": { "description": "A JSON file with a format version this app does not know." },
+  "importErrorInvalidData": "El fichero está dañado o incompleto (en «{path}»).",
+  "@importErrorInvalidData": {
+    "description": "A JSON file with a wrong field; the path is the field in the file.",
+    "placeholders": { "path": { "type": "String" } }
+  },
+  "importErrorInvalidImage": "Una imagen del fichero está dañada (en «{path}»).",
+  "@importErrorInvalidImage": {
+    "description": "A JSON file with an image that is not a JPEG.",
+    "placeholders": { "path": { "type": "String" } }
+  },
+  "importErrorImageTooLarge": "Una imagen del fichero pasa de {size}.",
+  "@importErrorImageTooLarge": {
+    "description": "A JSON file with an image over the limit.",
+    "placeholders": { "size": { "type": "String" } }
+  },
+  "importErrorCsvEmpty": "El fichero está vacío.",
+  "@importErrorCsvEmpty": { "description": "A CSV file with no rows." },
+  "importErrorCsvNoQuestion": "La primera fila debe tener una columna «question».",
+  "@importErrorCsvNoQuestion": { "description": "A CSV file whose header has no question column." },
+  "importErrorCsvDuplicateColumn": "La columna «{column}» aparece dos veces.",
+  "@importErrorCsvDuplicateColumn": {
+    "description": "A CSV file whose header repeats a column.",
+    "placeholders": { "column": { "type": "String" } }
+  },
+  "importErrorCsvTooManyRows": "El fichero tiene más de {count} filas de tarjetas.",
+  "@importErrorCsvTooManyRows": {
+    "description": "A CSV file over the row limit.",
+    "placeholders": { "count": { "type": "String" } }
+  }
 }

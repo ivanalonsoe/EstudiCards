@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
+| 5. Import and export | T5.1 – T5.9 | ⏳ 4 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -440,7 +440,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the summary counts added, duplicates and errors.
     - 🧪 a CSV imported as a new project gives every deck it creates the type and languages chosen once; adding to an existing deck keeps the deck's type.
 
-- [ ] **T5.4 Import screen** · P07 · US-27 · Depends on: T5.3
+- [x] **T5.4 Import screen** · P07 · US-27 · Depends on: T5.3
   - 3-step wizard. A CSV imported as a new project or a new deck asks for the type and, for "Idioma", the languages (SPEC §8.4 rule 6).
   - **Tests first:** 🧩 the preview shows "42 nuevas · 3 duplicadas · 1 con errores" for the matching fixture; 🧩 a CSV as a new project asks for the type once.
 

@@ -1,5 +1,6 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/layout/breakpoints.dart';
+import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/shell/app_menu_drawer.dart';
 import 'package:estudicards/app/shell/brand_logo.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
@@ -15,6 +16,7 @@ import 'package:estudicards/features/projects/presentation/project_search_field.
 import 'package:estudicards/features/stats/presentation/stats_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// P01: the project list, the first screen of the app
 /// (`docs/design/movil-claro/dashboard.png`, `escritorio-claro/dashboard.png`).
@@ -170,6 +172,13 @@ class _DesktopDashboard extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  OutlinedButton.icon(
+                    key: const Key('dashboard.import'),
+                    onPressed: () => context.go(AppRoutes.importCards()),
+                    icon: const Icon(Icons.upload_rounded),
+                    label: Text(l10n.importButton),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
                   FilledButton.icon(
                     key: const Key('dashboard.newProject'),
                     onPressed: () => showProjectForm(context, ref),
@@ -507,6 +516,16 @@ class _EmptyDashboard extends ConsumerWidget {
                   onPressed: () => showProjectForm(context, ref),
                   icon: const Icon(Icons.add_rounded),
                   label: Text(l10n.newProject),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('dashboard.importEmpty'),
+                  onPressed: () => context.go(AppRoutes.importCards()),
+                  icon: const Icon(Icons.upload_rounded),
+                  label: Text(l10n.importProject),
                 ),
               ),
             ],

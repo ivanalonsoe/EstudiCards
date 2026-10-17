@@ -120,7 +120,7 @@ void main() {
 
       final routes = {
         AppRoutes.home: 'EstudiCards',
-        AppRoutes.import: 'Importar',
+        AppRoutes.import: 'Importar tarjetas',
         AppRoutes.statistics: 'Estadísticas',
         AppRoutes.archived: 'Archivados',
         AppRoutes.trash: 'Papelera',

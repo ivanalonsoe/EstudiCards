@@ -5,11 +5,14 @@
 // build these objects themselves, so tests can swap them: the test helper
 // overrides `databaseProvider` with an in-memory database and
 // `clockProvider` with a `FakeClock`.
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/document_picker.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/random.dart';
@@ -50,6 +53,21 @@ final imageFilesProvider = Provider<ImageFiles>(
 /// Where the user picks images from (see `core/files/image_source.dart`).
 final imageSourceProvider = Provider<ImageSource>(
   (ref) => const DeviceImageSource(),
+);
+
+/// Where the user picks a file to import (see `core/files/document_picker.dart`).
+final documentPickerProvider = Provider<DocumentPicker>(
+  (ref) => const DeviceDocumentPicker(),
+);
+
+/// Runs [work] somewhere that does not freeze the screen.
+typedef BackgroundRunner = Future<T> Function<T>(FutureOr<T> Function() work);
+
+/// Heavy work, such as reading a large file to import, runs in a background
+/// isolate (`Isolate.run`, see `encodeExchangeInBackground`). Widget tests
+/// run it at once instead: under their fake time an isolate never finishes.
+final backgroundRunnerProvider = Provider<BackgroundRunner>(
+  (ref) => Isolate.run,
 );
 
 /// Reads cards aloud with the system voices (see `core/voice/voice.dart`).
