@@ -170,6 +170,14 @@ class _DesktopProject extends StatelessWidget {
                   child: _ProjectHeader(project: project, large: true),
                 ),
                 const SizedBox(width: AppSpacing.lg),
+                // An icon next to the ⋮ menu, as in the design.
+                IconButton(
+                  key: const Key('projectScreen.importDeck'),
+                  tooltip: l10n.importDeck,
+                  onPressed: () =>
+                      context.go(AppRoutes.importCards(projectId: project.id)),
+                  icon: const Icon(Icons.upload_rounded),
+                ),
                 _ProjectMenu(project: project),
                 const SizedBox(width: AppSpacing.sm),
                 _ReviewErrors(project: project, expanded: false),
@@ -608,7 +616,8 @@ class _Summary extends ConsumerWidget {
   }
 }
 
-/// The ⋮ menu of the project. "Compartir" arrives in phase 5.
+/// The ⋮ menu of the project. On mobile it also has "Importar baraja",
+/// which desktop shows as an icon. "Compartir" arrives with T5.5.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.project});
 
@@ -617,6 +626,9 @@ class _ProjectMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final isDesktop =
+        FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
+        FormFactor.desktop;
     return PopupMenuButton<VoidCallback>(
       key: const Key('projectScreen.menu'),
       tooltip: l10n.projectOptions,
@@ -629,6 +641,13 @@ class _ProjectMenu extends ConsumerWidget {
               unawaited(showProjectForm(context, ref, project: project)),
           child: Text(l10n.editProject),
         ),
+        if (!isDesktop)
+          PopupMenuItem(
+            key: const Key('projectScreen.importDeck'),
+            value: () =>
+                context.go(AppRoutes.importCards(projectId: project.id)),
+            child: Text(l10n.importDeck),
+          ),
         PopupMenuItem(
           value: () => unawaited(
             ref

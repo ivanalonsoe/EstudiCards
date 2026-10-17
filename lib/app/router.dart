@@ -13,6 +13,7 @@ import 'package:estudicards/app/shell/not_found_screen.dart';
 import 'package:estudicards/app/shell/placeholder_screen.dart';
 import 'package:estudicards/features/cards/presentation/card_editor_screen.dart';
 import 'package:estudicards/features/decks/presentation/deck_screen.dart';
+import 'package:estudicards/features/import_export/presentation/import_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
@@ -34,6 +35,16 @@ abstract final class AppRoutes {
   static const archived = '/archived';
   static const trash = '/trash';
   static const settings = '/settings';
+
+  /// The import wizard (P07): as a new project; with [projectId], as a new
+  /// deck of it; with [deckId] too, into that deck (US-27).
+  static String importCards({String? projectId, String? deckId}) {
+    final query = [
+      if (projectId != null) 'project=$projectId',
+      if (deckId != null) 'deck=$deckId',
+    ];
+    return query.isEmpty ? import : '$import?${query.join('&')}';
+  }
 
   static String project(String projectId) => '/project/$projectId';
 
@@ -180,7 +191,16 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                   sessionId: state.pathParameters['sessionId']!,
                 ),
               ),
-              screen('import', 'import', (l10n) => l10n.importTitle),
+              GoRoute(
+                path: 'import',
+                builder: (context, state) => ImportScreen(
+                  key: const Key('screen.import'),
+                  // `?project=` imports as a new deck of that project, and
+                  // `?project=&deck=` adds to that deck (US-27).
+                  projectId: state.uri.queryParameters['project'],
+                  deckId: state.uri.queryParameters['deck'],
+                ),
+              ),
               GoRoute(
                 path: 'statistics',
                 builder: (context, state) =>

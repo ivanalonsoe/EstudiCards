@@ -275,8 +275,8 @@ void main() {
 
       expect(find.byKey(const Key('deckScreen.empty')), findsOneWidget);
       expect(find.text('Añade tu primera tarjeta'), findsOneWidget);
-      // Importing arrives in phase 5 (decided with the owner).
-      expect(find.textContaining('CSV'), findsNothing);
+      // SPEC §5.3; "Descargar plantilla" arrives with T5.6.
+      expect(find.text('o importa desde CSV'), findsOneWidget);
       expect(find.textContaining('plantilla'), findsNothing);
       expect(search, findsNothing);
     });

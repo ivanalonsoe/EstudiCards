@@ -28,6 +28,16 @@ final homeDestination = NavDestination(
   label: (l10n) => l10n.home,
 );
 
+/// "Importar" (P07, as a new project). On desktop it is a button of the
+/// dashboard header, as in the design; on mobile it is in the drawer
+/// (SPEC §5.1, general menu).
+final importDestination = NavDestination(
+  id: 'import',
+  path: AppRoutes.importCards(),
+  icon: Icons.upload_rounded,
+  label: (l10n) => l10n.importButton,
+);
+
 /// The links at the bottom of the sidebar, in the design's order.
 final menuDestinations = [
   NavDestination(

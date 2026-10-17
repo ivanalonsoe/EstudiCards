@@ -1,13 +1,11 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
-import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
-import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
+import 'package:estudicards/features/decks/presentation/deck_type_fields.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/form_parts.dart';
-import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,129 +154,21 @@ class _DeckFormState extends ConsumerState<DeckForm> {
         ),
         const SizedBox(height: AppSpacing.xl),
         FormLabel(l10n.typeLabel),
-        _TypeSelector(selected: _type, onChanged: _changeType),
+        DeckTypeSelector(
+          keyPrefix: 'deckForm',
+          selected: _type,
+          onChanged: _changeType,
+        ),
         if (_type == DeckType.language) ...[
           const SizedBox(height: AppSpacing.xl),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _LanguageField(
-                  key: const Key('deckForm.sourceLang'),
-                  label: l10n.sourceLanguageLabel,
-                  value: _sourceLang,
-                  onChanged: (code) => setState(() => _sourceLang = code),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: _LanguageField(
-                  key: const Key('deckForm.targetLang'),
-                  label: l10n.targetLanguageLabel,
-                  value: _targetLang,
-                  onChanged: (code) => setState(() => _targetLang = code),
-                ),
-              ),
-            ],
+          LanguagePairFields(
+            keyPrefix: 'deckForm',
+            sourceLang: _sourceLang,
+            targetLang: _targetLang,
+            onSourceChanged: (code) => setState(() => _sourceLang = code),
+            onTargetChanged: (code) => setState(() => _targetLang = code),
           ),
         ],
-      ],
-    );
-  }
-}
-
-/// "General / Idioma": a grey track with the chosen option in white, as in
-/// the design.
-class _TypeSelector extends StatelessWidget {
-  const new({required this.selected, required this.onChanged});
-
-  final DeckType selected;
-  final ValueChanged<DeckType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    return SegmentedButton<DeckType>(
-      segments: [
-        ButtonSegment(
-          value: DeckType.general,
-          label: Text(
-            l10n.typeGeneral,
-            key: const Key('deckForm.type.general'),
-          ),
-        ),
-        ButtonSegment(
-          value: DeckType.language,
-          label: Text(
-            l10n.typeLanguage,
-            key: const Key('deckForm.type.language'),
-          ),
-        ),
-      ],
-      selected: {selected},
-      showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(
-        backgroundColor: colors.surfaceVariant,
-        foregroundColor: colors.textMuted,
-        selectedBackgroundColor: colors.surface,
-        selectedForegroundColor: colors.text,
-        side: BorderSide(color: colors.border),
-        textStyle: Theme.of(context).textTheme.labelLarge,
-      ),
-      onSelectionChanged: (selection) => onChanged(selection.single),
-    );
-  }
-}
-
-/// A language selector with its label above.
-class _LanguageField extends StatelessWidget {
-  const new({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    super.key,
-  });
-
-  final String label;
-  final String? value;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final bodyStyle = Theme.of(context).textTheme.bodyLarge;
-    // A stored code outside the list (e.g. from an import) is still offered,
-    // so the selector can show it.
-    final codes = [
-      ...supportedLanguages,
-      if (value != null && !supportedLanguages.contains(value)) value!,
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FormLabel(label),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          style: bodyStyle,
-          hint: Text(
-            l10n.chooseLanguage,
-            overflow: TextOverflow.ellipsis,
-            style: bodyStyle?.copyWith(color: AppColors.of(context).textMuted),
-          ),
-          items: [
-            for (final code in codes)
-              DropdownMenuItem(
-                value: code,
-                child: Text(
-                  languageName(l10n, code),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: onChanged,
-        ),
       ],
     );
   }
