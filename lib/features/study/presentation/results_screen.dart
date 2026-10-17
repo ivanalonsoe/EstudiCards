@@ -5,6 +5,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
+import 'package:estudicards/features/stats/presentation/stats_texts.dart';
 import 'package:estudicards/features/study/domain/card_selection.dart';
 import 'package:estudicards/features/study/domain/session_results.dart';
 import 'package:estudicards/features/study/domain/study_options.dart';
@@ -171,7 +172,7 @@ class _DesktopResults extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final subtitle = [
       results.projectName,
-      if (results.deckNames.isNotEmpty) _joinNames(l10n, results.deckNames),
+      if (results.deckNames.isNotEmpty) joinNames(l10n, results.deckNames),
       l10n.cardCount(results.totalCards),
     ].join(' · ');
 
@@ -718,15 +719,6 @@ String _headline(AppLocalizations l10n, ResultsHeadline headline) =>
   return selected.direction == StudyDirection.reverse
       ? (answer, card.question)
       : (card.question, answer);
-}
-
-/// "Verbos irregulares y Phrasal verbs".
-String _joinNames(AppLocalizations l10n, List<String> names) {
-  if (names.length == 1) return names.single;
-  return l10n.listAnd(
-    names.sublist(0, names.length - 1).join(', '),
-    names.last,
-  );
 }
 
 /// "6:12", or "1:02:03" past an hour.

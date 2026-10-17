@@ -370,6 +370,39 @@ void main() {
     });
   });
 
+  test('the statistics list has every project not in the trash, archived '
+      'ones last, with their answers', () async {
+    final english = await repository.create(general('Inglés'));
+    clock.advance(const Duration(minutes: 1));
+    final biology = await repository.create(general('Biología'));
+    final archived = await repository.create(general('Alemán'));
+    final deleted = await repository.create(general('Borrado'));
+    await repository.setArchived(archived.id, isArchived: true);
+    await (db.update(db.projects)..where((p) => p.id.equals(deleted.id))).write(
+      ProjectsCompanion(deletedAt: Value(clock.now())),
+    );
+    final deck = await DecksRepository(
+      DecksDao(db),
+      clock,
+    ).create(archived.id, const DeckInput(name: 'Saludos'));
+    await addTestAnswers(
+      db,
+      projectId: archived.id,
+      cardId: await addTestCard(db, deck.id),
+      results: ['correct', 'wrong'],
+    );
+
+    final listed = await repository.watchForStatistics().first;
+
+    expect(listed.map((s) => s.project.name), [
+      biology.name,
+      english.name,
+      'Alemán',
+    ]);
+    expect(listed.last.answers.correct, 1);
+    expect(listed.last.errorCount, 1);
+  });
+
   group('watchProject', () {
     test('emits the project again after it is edited', () async {
       final project = await repository.create(general('Química'));

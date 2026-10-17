@@ -96,6 +96,11 @@ class ProjectsRepository {
   Stream<List<ProjectSummary>> watchArchived() =>
       _dao.watchArchived().map(_toSummaries);
 
+  /// P13 "Por proyecto": every project not in the trash, archived ones
+  /// last, with their counts and answers.
+  Stream<List<ProjectSummary>> watchForStatistics() =>
+      _dao.watchNotDeleted().map(_toSummaries);
+
   /// Records that the project was opened or studied (R 7.7). It does not
   /// change `updatedAt`, which only tracks edits.
   Future<void> markUsed(String id) => _dao.updateProject(

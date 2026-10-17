@@ -106,4 +106,57 @@ void main() {
       expect(dailyGoalProgress(goal: 0, answeredToday: 5), isNull);
     });
   });
+
+  group('30-day series (P12, P13)', () {
+    final today = DateTime.utc(2026, 10, 15);
+
+    test('has 30 points, with zeros on days with no activity', () {
+      final series = dailySeries({
+        DateTime.utc(2026, 10, 15): const AnswerCounts(correct: 4, wrong: 1),
+        DateTime.utc(2026, 9, 16): const AnswerCounts(correct: 2),
+      }, today: today);
+
+      expect(series.days, hasLength(30));
+      expect(series.days.first.day, DateTime.utc(2026, 9, 16));
+      expect(series.days.last.day, today);
+      expect(series.days.first.answers.correct, 2);
+      expect(
+        (series.days.last.answers.correct, series.days.last.answers.wrong),
+        (4, 1),
+      );
+      expect(series.days.where((day) => day.answers.total == 0), hasLength(28));
+    });
+
+    test('leaves out days before the 30', () {
+      final series = dailySeries({
+        DateTime.utc(2026, 9, 15): const AnswerCounts(correct: 9),
+      }, today: today);
+
+      expect(series.totals.total, 0);
+    });
+
+    test('adds up the totals of the legend', () {
+      final series = dailySeries({
+        DateTime.utc(2026, 10, 15): const AnswerCounts(correct: 4, wrong: 1),
+        DateTime.utc(2026, 10, 2): const AnswerCounts(correct: 3, wrong: 2),
+      }, today: today);
+
+      expect((series.totals.correct, series.totals.wrong), (7, 3));
+      expect(series.busiestDay, 5);
+    });
+
+    test('one point per calendar day across a summer time change', () {
+      // Local days are midnight UTC (see `Clock.localDay`), so the 25-hour
+      // day when clocks go back is still one point.
+      final series = dailySeries(
+        const <DateTime, AnswerCounts>{},
+        today: DateTime.utc(2026, 11, 10),
+      );
+
+      expect(series.days.map((point) => point.day.day), [
+        for (var day = 12; day <= 31; day++) day,
+        for (var day = 1; day <= 10; day++) day,
+      ]);
+    });
+  });
 }

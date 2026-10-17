@@ -64,6 +64,19 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase>
     ],
   );
 
+  /// The "Por proyecto" list of the global statistics (P13): every project
+  /// not in the trash, in dashboard order, archived ones last (they count in
+  /// the global statistics, R 7.6 and assumption 45).
+  Stream<List<ProjectWithCounts>> watchNotDeleted() => _watchWithCounts(
+    where: projects.deletedAt.isNull(),
+    orderBy: [
+      OrderingTerm.asc(projects.isArchived),
+      OrderingTerm.desc(projects.isFavorite),
+      OrderingTerm.desc(coalesce([projects.lastUsedAt, projects.createdAt])),
+      OrderingTerm.asc(projects.name),
+    ],
+  );
+
   /// The projects that match [where], in [orderBy] order, each with its
   /// number of decks and cards, leaving out decks in the trash.
   Stream<List<ProjectWithCounts>> _watchWithCounts({

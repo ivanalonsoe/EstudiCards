@@ -16,6 +16,8 @@ import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/stats/domain/metrics.dart';
+import 'package:estudicards/features/stats/presentation/project_statistics_view.dart';
+import 'package:estudicards/features/stats/presentation/stats_card.dart';
 import 'package:estudicards/features/stats/presentation/stats_texts.dart';
 import 'package:estudicards/features/study/presentation/review_errors_button.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
@@ -27,8 +29,8 @@ import 'package:go_router/go_router.dart';
 /// P03: a project with its decks (`docs/design/movil-claro/proyecto.png`,
 /// `escritorio-claro/proyecto.png`).
 ///
-/// The statistics tab and the desktop summary show an empty state until
-/// T4.5. "Compartir" and "Importar" arrive in phase 5.
+/// The statistics (P12) are a tab on mobile; on desktop a summary sits next
+/// to the decks. "Compartir" and "Importar" arrive in phase 5.
 class ProjectScreen extends ConsumerWidget {
   const new({required this.projectId, super.key});
 
@@ -129,10 +131,7 @@ class _MobileProjectState extends State<_MobileProject>
                 _DeckList(project: project),
                 _NewDeckButton(project: project),
               ] else
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                  child: _NoStatistics(),
-                ),
+                ProjectStatisticsView(projectId: project.id),
             ],
           ),
         ),
@@ -206,7 +205,7 @@ class _DesktopProject extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xl),
-                const Expanded(flex: 2, child: _SummaryCard()),
+                Expanded(flex: 2, child: _Summary(projectId: project.id)),
               ],
             ),
           ],
@@ -561,59 +560,49 @@ class _EmptyDecks extends StatelessWidget {
   }
 }
 
-/// The desktop summary next to the decks. The 30-day chart and the most
-/// missed cards arrive with the statistics (phase 4).
-class _SummaryCard extends StatelessWidget {
-  const new();
+/// The desktop summary next to the decks: the 30-day chart with "Ver
+/// estadísticas", and the 3 most missed cards. With nothing studied yet,
+/// the empty state.
+class _Summary extends ConsumerWidget {
+  const new({required this.projectId});
+
+  final String projectId;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      key: const Key('projectScreen.summary'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              AppLocalizations.of(context).last30Days,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const _NoStatistics(),
-            const SizedBox(height: AppSpacing.lg),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Nothing studied yet (SPEC §5.3, "statistics with no data").
-class _NoStatistics extends StatelessWidget {
-  const new();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final hasStatistics = projectHasStatistics(ref, projectId);
+    if (hasStatistics == null) return const SizedBox.shrink();
+    if (!hasStatistics) {
+      return StatsCard(
+        key: const Key('projectScreen.summary'),
+        title: l10n.last30Days,
+        child: const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+          child: NoStatistics(key: Key('projectScreen.noStatistics')),
+        ),
+      );
+    }
     final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
     return Column(
-      key: const Key('projectScreen.noStatistics'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(Icons.bar_chart_rounded, size: 40, color: colors.textMuted),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          l10n.noStatisticsTitle,
-          textAlign: TextAlign.center,
-          style: text.titleMedium,
+        ProjectChartCard(
+          key: const Key('projectScreen.summary'),
+          projectId: projectId,
+          trailing: TextButton(
+            key: const Key('projectScreen.seeStatistics'),
+            style: TextButton.styleFrom(
+              foregroundColor: colors.primaryStrong,
+              textStyle: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(decoration: TextDecoration.underline),
+            ),
+            onPressed: () => context.go(AppRoutes.projectStatistics(projectId)),
+            child: Text(l10n.seeStatistics),
+          ),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          l10n.noStatisticsBody,
-          textAlign: TextAlign.center,
-          style: text.bodyMedium?.copyWith(color: colors.textMuted),
-        ),
+        const SizedBox(height: AppSpacing.lg),
+        MostMissedCard(projectId: projectId),
       ],
     );
   }

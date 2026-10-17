@@ -5,9 +5,123 @@ import 'package:estudicards/core/db/app_database.dart';
 
 part 'stats_dao.g.dart';
 
-@DriftAccessor(tables: [Attempts, Cards, Decks, Projects, Settings])
+@DriftAccessor(
+  tables: [
+    Attempts,
+    Cards,
+    CardStats,
+    Decks,
+    Projects,
+    SessionDecks,
+    Settings,
+    StudySessions,
+  ],
+)
 class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
   new(super.attachedDatabase);
+
+  /// Correct and wrong answers per local day from [from] to [to] (both
+  /// included), of [projectId] or of every project when null. Days without
+  /// answers are missing. SQLite groups and counts the attempts.
+  Future<List<({String day, int correct, int wrong})>> answersPerDay(
+    String from,
+    String to, {
+    String? projectId,
+  }) {
+    final correct = attempts.id.count(
+      filter: attempts.result.equals('correct'),
+    );
+    final wrong = attempts.id.count(filter: attempts.result.equals('wrong'));
+    final query = selectOnly(attempts)
+      ..addColumns([attempts.localDay, correct, wrong])
+      ..join(_cardDeckProject)
+      ..where(_counted & attempts.localDay.isBetweenValues(from, to))
+      ..groupBy([attempts.localDay]);
+    if (projectId != null) query.where(projects.id.equals(projectId));
+    return query
+        .map(
+          (row) => (
+            day: row.read(attempts.localDay)!,
+            correct: row.read(correct)!,
+            wrong: row.read(wrong)!,
+          ),
+        )
+        .get();
+  }
+
+  /// The [limit] cards of [projectId] with the most wrong answers, both
+  /// directions added up from `card_stats`; ties by question. Cards never
+  /// missed and decks in the trash are left out.
+  Future<List<({String cardId, String deckId, String question, int wrong})>>
+  mostMissed(String projectId, {required int limit}) {
+    final wrong = cardStats.wrongCount.sum();
+    final query =
+        selectOnly(cardStats).join([
+            innerJoin(
+              cards,
+              cards.id.equalsExp(cardStats.cardId),
+              useColumns: false,
+            ),
+            innerJoin(
+              decks,
+              decks.id.equalsExp(cards.deckId),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([cards.id, cards.deckId, cards.question, wrong])
+          ..where(decks.projectId.equals(projectId) & decks.deletedAt.isNull())
+          ..groupBy([cards.id], having: wrong.isBiggerThanValue(0))
+          ..orderBy([
+            OrderingTerm.desc(wrong),
+            OrderingTerm.asc(cards.question),
+          ])
+          ..limit(limit);
+    return query
+        .map(
+          (row) => (
+            cardId: row.read(cards.id)!,
+            deckId: row.read(cards.deckId)!,
+            question: row.read(cards.question)!,
+            wrong: row.read(wrong)!,
+          ),
+        )
+        .get();
+  }
+
+  /// The [limit] latest sessions of [projectId] that have ended, newest
+  /// first.
+  Future<List<StudySessionRow>> endedSessions(
+    String projectId, {
+    required int limit,
+  }) =>
+      (select(studySessions)
+            ..where(
+              (s) =>
+                  s.projectId.equals(projectId) &
+                  s.status.equals('in_progress').not(),
+            )
+            ..orderBy([(s) => OrderingTerm.desc(s.startedAt)])
+            ..limit(limit))
+          .get();
+
+  /// The decks studied in each of [sessionIds], as (session ID, deck name).
+  Future<List<({String sessionId, String deckName})>> deckNamesOf(
+    Iterable<String> sessionIds,
+  ) {
+    final query =
+        select(sessionDecks)
+            .join([innerJoin(decks, decks.id.equalsExp(sessionDecks.deckId))])
+          ..where(sessionDecks.sessionId.isIn(sessionIds))
+          ..orderBy([OrderingTerm.asc(decks.createdAt)]);
+    return query
+        .map(
+          (row) => (
+            sessionId: row.readTable(sessionDecks).sessionId,
+            deckName: row.readTable(decks).name,
+          ),
+        )
+        .get();
+  }
 
   /// The local days (`YYYY-MM-DD`) with at least one counted answer, in no
   /// particular order.
@@ -31,9 +145,17 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
   }
 
   /// Emits every time something the statistics count changes: an answer is
-  /// saved, or a deck or project goes to or leaves the trash.
+  /// saved, a session ends, cards are edited or deleted, or a deck or
+  /// project goes to or leaves the trash.
   Stream<void> watchChanges() => attachedDatabase.tableUpdates(
-    TableUpdateQuery.onAllTables([attempts, decks, projects]),
+    TableUpdateQuery.onAllTables([
+      attempts,
+      cardStats,
+      cards,
+      decks,
+      projects,
+      studySessions,
+    ]),
   );
 
   Future<String?> readSetting(String key) async {
