@@ -111,6 +111,18 @@ class StatsRepository {
     );
   }
 
+  /// "Reiniciar estadísticas" (R 7.4): deletes the attempts and statistics
+  /// of one card, every card of a deck, or every card of a project (its
+  /// decks in the trash too). Past sessions keep their totals.
+  Future<void> resetCard(String cardId) =>
+      _dao.deleteStatistics(_dao.cards.id.equals(cardId));
+
+  Future<void> resetDeck(String deckId) =>
+      _dao.deleteStatistics(_dao.cards.deckId.equals(deckId));
+
+  Future<void> resetProject(String projectId) =>
+      _dao.deleteStatistics(_dao.decks.projectId.equals(projectId));
+
   /// [dailyAnswers], read again after every change.
   Stream<DailySeries> watchDailyAnswers({String? projectId}) =>
       _watch(() => dailyAnswers(projectId: projectId));

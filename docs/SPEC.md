@@ -1232,3 +1232,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - No "Repasar errores" here: errors are always reviewed within one project (US-21 AC1).
     - The cards answered in 30 days are the chart's totals, so both always agree.
     - With no answer ever, the empty state says "Estudia un proyecto para verlas aquí.".
+50. **Reset statistics (T4.7):**
+    - "Reiniciar estadísticas" is where §5.2 puts it: the ⋮ menu of each deck on the project screen (P03), the card editor when editing (P06; an icon in the mobile top bar, a red text button on desktop) and the "Editar proyecto" form (P02). It is not offered when creating a card or a project.
+    - It always asks first ("¿Reiniciar las estadísticas?", saying that past sessions keep their totals) and then shows "Estadísticas reiniciadas". There is no "Deshacer": the confirmation is the safeguard, and the editor or form stays open with its changes.
+    - `StatsRepository.resetCard`, `resetDeck` and `resetProject` delete the attempts and `card_stats` rows of the chosen cards in one transaction (`StatsDao.deleteStatistics`, the cards picked with an SQL subquery). Resetting a project includes its decks in the trash, so a deck restored later does not bring old statistics back. Sessions are not touched: P11 and the history keep their totals, and a reset card is simply missing from the cards of a past session's results.
+    - Since the attempts go, the streak, the charts and the "per day" counts lose them too, as R 7.4 asks.
+    - The deck screen's own ⋮ menu (P05) does not offer it, as §5.2 lists it only for P03.

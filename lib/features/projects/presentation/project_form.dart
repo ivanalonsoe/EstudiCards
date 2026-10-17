@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
@@ -9,6 +11,7 @@ import 'package:estudicards/features/projects/presentation/open_project.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/stats/presentation/reset_statistics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,6 +134,29 @@ class _ProjectFormState extends ConsumerState<ProjectForm> {
           color: _color,
           onChanged: (icon) => setState(() => _icon = icon),
         ),
+        // Only when editing (P02). The form stays open with its changes.
+        if (widget.project case final project?) ...[
+          const SizedBox(height: AppSpacing.xl),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('projectForm.resetStats'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.of(context).error,
+              ),
+              onPressed: () => unawaited(
+                confirmResetStatistics(
+                  context,
+                  ref,
+                  body: l10n.resetProjectStatisticsBody(project.name),
+                  reset: (stats) => stats.resetProject(project.id),
+                ),
+              ),
+              icon: const Icon(Icons.restart_alt_rounded),
+              label: Text(l10n.resetStatistics),
+            ),
+          ),
+        ],
       ],
     );
   }

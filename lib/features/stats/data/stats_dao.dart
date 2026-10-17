@@ -144,6 +144,28 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
     return query.map((row) => row.read(count)!).getSingle();
   }
 
+  /// Deletes the attempts and `card_stats` rows of the cards that match
+  /// [where] (R 7.4, "Reiniciar estadísticas"), in one transaction. The
+  /// cards are picked in SQL: a subquery of their IDs, joined to their deck
+  /// so a project can choose them. Sessions are not touched, so they keep
+  /// their totals.
+  Future<void> deleteStatistics(Expression<bool> where) {
+    final cardIds =
+        selectOnly(cards).join([
+            innerJoin(
+              decks,
+              decks.id.equalsExp(cards.deckId),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([cards.id])
+          ..where(where);
+    return transaction(() async {
+      await (delete(attempts)..where((a) => a.cardId.isInQuery(cardIds))).go();
+      await (delete(cardStats)..where((s) => s.cardId.isInQuery(cardIds))).go();
+    });
+  }
+
   /// Emits every time something the statistics count changes: an answer is
   /// saved, a session ends, cards are edited or deleted, or a deck or
   /// project goes to or leaves the trash.

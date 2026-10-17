@@ -23,6 +23,7 @@ import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/form_parts.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/stats/presentation/reset_statistics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -354,6 +355,18 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     },
   );
 
+  /// "Reiniciar estadísticas" (US-11 AC1): asks, then deletes the card's
+  /// attempts and statistics. The editor stays open with its changes.
+  Future<void> _resetStatistics() {
+    final card = widget.card!;
+    return confirmResetStatistics(
+      context,
+      ref,
+      body: AppLocalizations.of(context).resetCardStatisticsBody(card.question),
+      reset: (stats) => stats.resetCard(card.id),
+    );
+  }
+
   /// Leaves the editor, asking first if there are unsaved changes. The
   /// images picked here are deleted: no card uses them.
   Future<void> _leave() async {
@@ -438,6 +451,9 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       onSave: canSave ? () => unawaited(_save(addAnother: false)) : null,
       onSaveAndAdd: canSave ? () => unawaited(_save(addAnother: true)) : null,
       onDelete: _isEditing ? () => unawaited(_delete()) : null,
+      onResetStatistics: _isEditing
+          ? () => unawaited(_resetStatistics())
+          : null,
     );
     final title = _isEditing ? l10n.editCard : l10n.newCard;
 
@@ -908,6 +924,8 @@ class _MobileFrame extends StatelessWidget {
         ),
         title: Text(title),
         actions: [
+          if (actions.onResetStatistics != null)
+            actions.resetStatisticsButton(context, compact: true),
           if (actions.onDelete != null) ...[
             actions.deleteButton(context, compact: true),
             const SizedBox(width: AppSpacing.sm),
@@ -1120,6 +1138,10 @@ class _DesktopFrame extends StatelessWidget {
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                 ),
+                if (actions.onResetStatistics != null) ...[
+                  actions.resetStatisticsButton(context, compact: false),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
                 if (actions.onDelete != null) ...[
                   actions.deleteButton(context, compact: false),
                   const SizedBox(width: AppSpacing.sm),
@@ -1160,19 +1182,44 @@ class _DesktopFrame extends StatelessWidget {
 }
 
 /// "Guardar" and "Guardar y añadir otra"; a null callback disables them.
-/// "Eliminar tarjeta" only when editing ([onDelete] not null).
+/// "Eliminar tarjeta" and "Reiniciar estadísticas" only when editing
+/// ([onDelete] and [onResetStatistics] not null).
 class _Actions {
   const new({
     required this.isEditing,
     required this.onSave,
     required this.onSaveAndAdd,
     required this.onDelete,
+    required this.onResetStatistics,
   });
 
   final bool isEditing;
   final VoidCallback? onSave;
   final VoidCallback? onSaveAndAdd;
   final VoidCallback? onDelete;
+  final VoidCallback? onResetStatistics;
+
+  /// An icon in the mobile top bar, a text button on desktop.
+  Widget resetStatisticsButton(BuildContext context, {required bool compact}) {
+    final label = AppLocalizations.of(context).resetStatistics;
+    const icon = Icon(Icons.restart_alt_rounded);
+    return compact
+        ? IconButton(
+            key: const Key('cardEditor.resetStats'),
+            tooltip: label,
+            onPressed: onResetStatistics,
+            icon: icon,
+          )
+        : TextButton.icon(
+            key: const Key('cardEditor.resetStats'),
+            onPressed: onResetStatistics,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.of(context).error,
+            ),
+            icon: icon,
+            label: Text(label),
+          );
+  }
 
   /// An icon in the mobile top bar, a text button on desktop.
   Widget deleteButton(BuildContext context, {required bool compact}) {
