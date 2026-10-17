@@ -431,7 +431,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 a row with no answer is reported as an error with its row number.
     - 🧪 missing `question` column → file rejected.
 
-- [ ] **T5.3 Import engine** · SPEC §8.4 · Depends on: T5.1, T5.2
+- [x] **T5.3 Import engine** · SPEC §8.4 · Depends on: T5.1, T5.2
   - Preview, duplicates, new IDs and transaction.
   - **Tests first:**
     - 🧪 as a new project or deck, every ID is new.
