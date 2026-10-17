@@ -12,6 +12,7 @@ import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
+import 'package:estudicards/features/stats/presentation/reset_statistics.dart';
 import 'package:estudicards/features/stats/presentation/stats_texts.dart';
 import 'package:estudicards/features/trash/presentation/move_to_trash.dart';
 import 'package:flutter/material.dart';
@@ -170,8 +171,7 @@ class _ErrorsChip extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of a deck. "Compartir" and "Reiniciar estadísticas" arrive
-/// with their tasks.
+/// The ⋮ menu of a deck. "Compartir" arrives in phase 5.
 class _DeckMenu extends ConsumerWidget {
   const new({required this.summary, required this.project});
 
@@ -193,6 +193,17 @@ class _DeckMenu extends ConsumerWidget {
           value: () =>
               unawaited(showDeckForm(context, project: project, deck: deck)),
           child: Text(l10n.edit),
+        ),
+        PopupMenuItem(
+          value: () => unawaited(
+            confirmResetStatistics(
+              context,
+              ref,
+              body: l10n.resetDeckStatisticsBody(deck.name),
+              reset: (stats) => stats.resetDeck(deck.id),
+            ),
+          ),
+          child: Text(l10n.resetStatistics),
         ),
         PopupMenuItem(
           value: () => unawaited(

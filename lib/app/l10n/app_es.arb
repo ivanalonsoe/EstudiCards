@@ -1386,6 +1386,29 @@
   "@percentCorrectCaption": { "description": "Caption at the right of 'Por proyecto': what the numbers are." },
   "noGlobalStatisticsBody": "Estudia un proyecto para verlas aquí.",
   "@noGlobalStatisticsBody": { "description": "Empty state of the global statistics, under noStatisticsTitle." },
+  "resetStatistics": "Reiniciar estadísticas",
+  "@resetStatistics": { "description": "Menu item and button that reset the statistics of a deck, card or project." },
+  "resetStatisticsTitle": "¿Reiniciar las estadísticas?",
+  "@resetStatisticsTitle": { "description": "Title of the dialog that confirms resetting statistics." },
+  "resetCardStatisticsBody": "Se borrarán las respuestas y los errores de «{name}». Las sesiones pasadas conservan sus totales.",
+  "@resetCardStatisticsBody": {
+    "description": "Body of the dialog that confirms resetting a card's statistics.",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "resetDeckStatisticsBody": "Se borrarán las respuestas y los errores de todas las tarjetas de «{name}». Las sesiones pasadas conservan sus totales.",
+  "@resetDeckStatisticsBody": {
+    "description": "Body of the dialog that confirms resetting a deck's statistics.",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "resetProjectStatisticsBody": "Se borrarán las respuestas y los errores de todas las barajas de «{name}». Las sesiones pasadas conservan sus totales.",
+  "@resetProjectStatisticsBody": {
+    "description": "Body of the dialog that confirms resetting a project's statistics.",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "reset": "Reiniciar",
+  "@reset": { "description": "Confirm button of the dialog that resets statistics." },
+  "statisticsReset": "Estadísticas reiniciadas",
+  "@statisticsReset": { "description": "Snackbar after resetting statistics." },
   "noSessions": "Aún no hay sesiones terminadas.",
   "@noSessions": { "description": "Session history of a project with no finished session." }
 }
