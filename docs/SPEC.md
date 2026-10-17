@@ -765,8 +765,8 @@ The code is in `lib/features/import_export/domain/` (`exchange_document.dart` fo
 
 ### 8.3 CSV
 
-- **Encoding:** UTF-8. A BOM is added on export so that Excel displays accents and "ñ" correctly.
-- **Separator:** `;` on export (the default in Spanish-locale Excel). On import, `;` or `,` is detected automatically.
+- **Encoding:** UTF-8. A BOM is added on export so that Excel displays accents and "ñ" correctly. On import, UTF-8 is read with or without a BOM; a file that is not valid UTF-8 is read as Windows-1252, which is what Spanish Excel's plain "CSV (delimitado por comas)" saves (decided with the owner).
+- **Separator:** `;` on export (the default in Spanish-locale Excel). On import, `;` or `,` is detected automatically from the header row: whichever appears more.
 - **Quoting:** RFC 4180. Fields containing the separator, quotes or line breaks are wrapped in double quotes.
 - **Header row required** as the first row, with these names (order does not matter; optional columns can be omitted). **Column names are in English and are part of the file format**; they are not translated with the UI:
 
@@ -783,6 +783,11 @@ The code is in `lib/features/import_export/domain/` (`exchange_document.dart` fo
 
 - If `correct` has more than one number, the card is created with "Permitir varias correctas" on.
 - `**bold**` and `*italic*` are supported in the text.
+- **Reading rows** (`cards_csv.dart`):
+  - Column names ignore case and surrounding spaces; unknown columns are ignored. A file without `question`, with a column named twice, with no rows, over 5 MB or with more than 10,000 card rows is rejected whole.
+  - Rows are numbered as a spreadsheet shows them: the header is row 1, and a cell with line breaks inside quotes is still one row. Blank rows are skipped without an error and keep their number.
+  - A row with text in any option column is a test card (the answer is ignored); otherwise it is a simple card (the options, `correct` and `explanation` are ignored). `correct` numbers refer to option columns, so an option column may be left empty; each number must be 1–6 and point at an option with text, with spaces around `|` allowed.
+  - A row that is not a valid card follows the editor's rules (`CardInput.validate`) and is reported in the preview, then skipped: no question, no answer, fewer than 2 options, no correct option, or a wrong `correct`.
 
 Downloadable template (`estudicards_template.csv`; the rows are sample content):
 
@@ -1332,3 +1337,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - `encodeExchangeInBackground` and `decodeExchangeInBackground` run in a background isolate (`Isolate.run`), so a large backup never freezes the screen; the import and export screens use them.
     - `appVersion` (`lib/core/app_version.dart`) must match `pubspec.yaml`; a test checks it.
     - A deck's cards are written oldest first; cards created at the same instant keep their insertion order (SQLite's `rowid`).
+52. **CSV reader (T5.2):**
+    - New dependency (confirmed with the owner): `csv` 8.0.0, listed in §3.1. It splits the text into rows and cells following RFC 4180; `cards_csv.dart` adds the encoding, the separator, the header and the card rules (§8.3, "Reading rows"). The separator is detected by the app, not by the package, so the result never depends on the cells' contents.
+    - Windows-1252 fallback (decided with the owner): Spanish Excel's default "CSV" is not UTF-8. Bytes that are not valid UTF-8 are read as Windows-1252 with a 32-entry table for 0x80–0x9F (€, “ ”, – —…), so no extra package is needed.
+    - A test card is any row with an option (a generalisation of "`option1` and `option2` have text"): a row with only one option is reported as "fewer than 2 options" instead of silently becoming a simple card.
+    - `parseCardsCsvInBackground` reads the file in a background isolate, like the JSON reader.
+    - Fixtures in `test/fixtures/` copy real files byte for byte (`.gitattributes` keeps git from converting them): `excel_es.csv` (Excel "CSV UTF-8": `;`, BOM, CRLF, a line break inside a cell), `google_sheets.csv` (`,`, no BOM, LF, other columns and order, `deck`), `ai_generated.csv` (an answer to the §8.5 prompt), `excel_ansi.csv` (Windows-1252), `with_errors.csv` and `missing_question_column.csv`. The fixture with duplicates arrives with the import engine (T5.3).

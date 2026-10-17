@@ -421,7 +421,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 each deck's type and languages survive the round trip.
     - 🧪 a JSON without `format` or with an unknown `version` is rejected with a clear error.
 
-- [ ] **T5.2 CSV parser** · SPEC §8.3 · Depends on: T2.1
+- [x] **T5.2 CSV parser** · SPEC §8.3 · Depends on: T2.1
   - Fixtures in `test/fixtures/`.
   - **Tests first:**
     - 🧪 detects `;` and `,` as the separator.

@@ -1,3 +1,7 @@
 # Shell scripts keep LF line endings on every machine: bash fails on the
 # CR that Windows adds to each line.
 *.sh text eol=lf
+
+# Test fixtures are byte-exact copies of real files (BOM, CRLF or LF line
+# endings, other encodings): git must never convert them.
+test/fixtures/** -text
