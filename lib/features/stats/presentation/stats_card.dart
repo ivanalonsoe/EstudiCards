@@ -83,9 +83,12 @@ class ColoredRateBar extends StatelessWidget {
   );
 }
 
-/// Nothing studied yet (SPEC §5.3, "statistics with no data").
+/// Nothing studied yet (SPEC §5.3, "statistics with no data"). [body]
+/// says what to study; a project's by default.
 class NoStatistics extends StatelessWidget {
-  const new({super.key});
+  const new({this.body, super.key});
+
+  final String? body;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +106,7 @@ class NoStatistics extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          l10n.noStatisticsBody,
+          body ?? l10n.noStatisticsBody,
           textAlign: TextAlign.center,
           style: text.bodyMedium?.copyWith(color: colors.textMuted),
         ),

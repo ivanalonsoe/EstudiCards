@@ -22,7 +22,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 1. Projects and decks | T1.1 – T1.9 | ✅ 9 / 9 |
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
-| 4. Statistics and errors | T4.1 – T4.7 | ⏳ 5 / 7 |
+| 4. Statistics and errors | T4.1 – T4.7 | ⏳ 6 / 7 |
 | 5. Import and export | T5.1 – T5.9 | ⏳ 0 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
@@ -400,7 +400,8 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the 30-day series has 30 points, with zeros on days with no activity.
     - 🧩 the legend shows the totals with ✓ and ✗.
 
-- [ ] **T4.6 Global statistics** · P13 · Depends on: T4.2
+- [x] **T4.6 Global statistics** · P13 · Depends on: T4.2
+  - > **Note:** archived projects count and are listed last under "Por proyecto"; projects in the trash do not. See SPEC §13.2 (assumption 49).
   - **Tests first:** 🧩 shows streak, best streak, today / 7 / 30 days and a summary per project, with no review buttons.
 
 - [ ] **T4.7 Reset statistics** · Depends on: T4.1

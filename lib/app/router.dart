@@ -17,6 +17,7 @@ import 'package:estudicards/features/projects/presentation/archived_screen.dart'
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
 import 'package:estudicards/features/stats/presentation/project_statistics_screen.dart';
+import 'package:estudicards/features/stats/presentation/statistics_screen.dart';
 import 'package:estudicards/features/study/presentation/results_screen.dart';
 import 'package:estudicards/features/study/presentation/session_screen.dart';
 import 'package:estudicards/features/study/presentation/session_setup_screen.dart';
@@ -180,7 +181,11 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                 ),
               ),
               screen('import', 'import', (l10n) => l10n.importTitle),
-              screen('statistics', 'statistics', (l10n) => l10n.statistics),
+              GoRoute(
+                path: 'statistics',
+                builder: (context, state) =>
+                    const StatisticsScreen(key: Key('screen.statistics')),
+              ),
               GoRoute(
                 path: 'archived',
                 builder: (context, state) =>

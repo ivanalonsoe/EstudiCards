@@ -26,6 +26,13 @@ final archivedProjectsProvider = StreamProvider<List<ProjectSummary>>(
   (ref) => ref.watch(projectsRepositoryProvider).watchArchived(),
 );
 
+/// Every project not in the trash, for the global statistics (P13).
+/// `autoDispose`: only that screen uses it.
+final StreamProvider<List<ProjectSummary>> statisticsProjectsProvider =
+    StreamProvider.autoDispose(
+      (ref) => ref.watch(projectsRepositoryProvider).watchForStatistics(),
+    );
+
 /// One project, updated when it changes; null if it does not exist. One
 /// provider per project ID (see `deckSummariesProvider` for `.family`).
 final StreamProviderFamily<Project?, String> projectProvider =

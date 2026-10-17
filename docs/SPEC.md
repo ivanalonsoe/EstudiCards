@@ -1226,3 +1226,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - A project with no answers and no finished sessions keeps the empty state.
     - The statistics refresh after every answer, session end or card change (`StatsRepository._watch`). Their providers are `autoDispose`, so reopening the screen reads them again with today's date.
     - Dates use the app language's short month ("7 sept"; the design shows "1 sep").
+49. **Global statistics (T4.6):**
+    - `StatisticsScreen` (`lib/features/stats/presentation/statistics_screen.dart`) replaces the placeholder at `/statistics` (P13). It shows the current streak and the record, the cards answered today, in the last 7 days and in the last 30 days (all today included), the 30-day chart of every project (assumption 48) and "Por proyecto".
+    - Everything counts every project not in the trash, archived ones too (R 7.6, assumption 45). "Por proyecto" (`ProjectsRepository.watchForStatistics`) lists them in dashboard order with the archived ones last, each with its % correct; on mobile also when it was last studied, on desktop its cards, pending errors and a bar in its colour. Tapping a project opens it.
+    - No "Repasar errores" here: errors are always reviewed within one project (US-21 AC1).
+    - The cards answered in 30 days are the chart's totals, so both always agree.
+    - With no answer ever, the empty state says "Estudia un proyecto para verlas aquí.".

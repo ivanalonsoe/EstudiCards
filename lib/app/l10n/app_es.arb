@@ -1364,6 +1364,28 @@
       "duration": { "type": "String" }
     }
   },
+  "statsBestStreak": "Récord",
+  "@statsBestStreak": { "description": "Global statistics on mobile: label under the best streak." },
+  "statsBestStreakLong": "récord de racha",
+  "@statsBestStreakLong": { "description": "Global statistics on desktop: label under the best streak." },
+  "statsToday": "hoy",
+  "@statsToday": { "description": "Global statistics on mobile: label under the cards answered today." },
+  "statsTodayLong": "tarjetas hoy",
+  "@statsTodayLong": { "description": "Global statistics on desktop: label under the cards answered today." },
+  "statsLast7Days": "últimos 7 días",
+  "@statsLast7Days": { "description": "Global statistics: label under the cards answered in the last 7 days, today included." },
+  "statsLast30Days": "últimos 30 días",
+  "@statsLast30Days": { "description": "Global statistics: label under the cards answered in the last 30 days, today included." },
+  "allProjectsChart": "Todos los proyectos · 30 días",
+  "@allProjectsChart": { "description": "Heading of the 30-day chart of every project (global statistics, mobile)." },
+  "allProjectsChartLong": "Todos los proyectos · últimos 30 días",
+  "@allProjectsChartLong": { "description": "Heading of the 30-day chart of every project (global statistics, desktop)." },
+  "byProject": "Por proyecto",
+  "@byProject": { "description": "Heading of the list of projects in the global statistics." },
+  "percentCorrectCaption": "% aciertos",
+  "@percentCorrectCaption": { "description": "Caption at the right of 'Por proyecto': what the numbers are." },
+  "noGlobalStatisticsBody": "Estudia un proyecto para verlas aquí.",
+  "@noGlobalStatisticsBody": { "description": "Empty state of the global statistics, under noStatisticsTitle." },
   "noSessions": "Aún no hay sesiones terminadas.",
   "@noSessions": { "description": "Session history of a project with no finished session." }
 }
