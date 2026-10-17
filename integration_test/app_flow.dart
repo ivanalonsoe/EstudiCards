@@ -165,6 +165,43 @@ Future<void> addTestCard(
   await waitFor(tester, find.byKey(const Key('screen.deck')));
 }
 
+/// Adds a test card with "Permitir varias correctas" from the deck screen:
+/// [options] in order, the ones at [correct] (indexes) ticked.
+Future<void> addMultipleAnswerCard(
+  WidgetTester tester,
+  String question, {
+  required List<String> options,
+  required Set<int> correct,
+}) async {
+  await tapKey(tester, 'deckScreen.addCard');
+  await tapKey(tester, 'cardEditor.testType');
+  await tapKey(tester, 'cardEditor.allowMultiple');
+  await enterTextInKey(tester, 'cardEditor.question', question);
+  // A new test card starts with two options.
+  for (var i = 2; i < options.length; i++) {
+    await tapKey(tester, 'cardEditor.addOption');
+  }
+  for (final (i, option) in options.indexed) {
+    await enterTextInKey(tester, 'cardEditor.option.$i', option);
+  }
+  for (final i in correct) {
+    await tapKey(tester, 'cardEditor.option.$i.correct');
+  }
+  await tapKey(tester, 'cardEditor.save');
+  await waitFor(tester, find.byKey(const Key('screen.deck')));
+}
+
+/// Answers the test card on screen by ticking [options], then "Comprobar"
+/// and "Siguiente". Right or wrong depends on the options.
+Future<void> answerTestCard(WidgetTester tester, Set<String> options) async {
+  await waitFor(tester, find.byKey(const Key('session.check')));
+  for (final option in options) {
+    await tapText(tester, option);
+  }
+  await tapKey(tester, 'session.check');
+  await tapKey(tester, 'session.next');
+}
+
 /// The timer of the session setup, with its value set by tapping − [steps]
 /// times from where it starts (30 s per question, 10 min in total).
 Future<void> chooseTimer(
