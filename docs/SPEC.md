@@ -625,52 +625,54 @@ File names: `estudicards-backup-YYYY-MM-DD.json`, `<project>.json`, `<project>-<
 
 ### 8.2 JSON
 
-Common structure:
+The code is in `lib/features/import_export/domain/` (`exchange_document.dart` for the contents, `exchange_json.dart` to write and read them). Every file is UTF-8 JSON with this header:
 
 ```json
 {
   "format": "estudicards",
   "version": 1,
   "kind": "backup | project | deck",
-  "exportedAt": "2026-09-30T10:00:00Z",
+  "exportedAt": "2026-09-30T10:00:00.000Z",
   "appVersion": "1.0.0",
   "data": { }
 }
 ```
 
-Contents of `data` depending on `kind`:
+- `format` is always `estudicards`; `version` is the version of the file format (1), not of the app. A change that older apps cannot read bumps `version`, and an app refuses any version it does not know. `appVersion` is only informative.
+- Dates are UTC in ISO 8601 with milliseconds and `Z`. IDs are the UUIDs of the database. Field names are camelCase versions of the column names in §4.2, and text fields with a fixed set of values keep their stored value (`per_card`, `time_up`, `self_eval`…).
+- **Images** go inside the file as `{ "mime": "image/jpeg", "data": "<base64>" }`, never as a path; `null` when there is none. Only JPEG is written and accepted (§3.4). CSV does not support images.
+- **Card fields by type**, as the database stores them: every card has `id`, `type`, `question`, `example`, `notes`, `questionImage` and `answerImage`; a `simple` card adds `answer`; a `test` card adds `allowMultiple`, `explanation` and `options` (`id`, `text`, `isCorrect`), in their editing order (the array order is the `position`).
+- **Shared files (`deck`, `project`, US-26)** carry content only: no statistics, no dates, and no favourite, archived or trash state. Each deck carries its `type` and its languages, also a general deck that kept them hidden (US-06 AC3). A deck with `"color": null` inherits its project's colour.
+- **Backup (US-24)** carries everything: the projects with the fields above plus `isFavorite`, `isArchived`, `archivedAt`, `deletedAt`, `lastUsedAt`, `createdAt` and `updatedAt` (decks: `deletedAt`, `lastUsedAt`, `createdAt`, `updatedAt`; cards: `createdAt`, `updatedAt`), archived projects and projects and decks in the trash, and the `sessions`, `sessionDecks`, `attempts`, `cardStats` and `settings` tables. Attempts carry `localDay` (§4.2); a file without it is accepted and restoring works it out again from `answeredAt`. `selectedOptionIds` is a JSON list, not text as in the database.
 
-- **deck:** `{ "deck": Deck }`. Each deck carries its own `type` (`general` | `language`) and, for a language deck, `sourceLang` and `targetLang`.
-- **project:** `{ "project": Project }` with its decks and cards nested; each deck carries its type and languages as above.
-- **backup:** `{ "projects": [Project], "sessions": [...], "sessionDecks": [...], "attempts": [...], "cardStats": [...], "settings": {...} }`. Includes archived projects and projects in the trash.
-
-Example of a shared deck (card contents are user data, here in Spanish):
+**`kind: deck`** (card contents are user data, here in Spanish):
 
 ```json
 {
   "format": "estudicards", "version": 1, "kind": "deck",
-  "exportedAt": "2026-09-30T10:00:00Z", "appVersion": "1.0.0",
+  "exportedAt": "2026-09-30T10:00:00.000Z", "appVersion": "1.0.0",
   "data": {
     "deck": {
-      "id": "7b0f…", "name": "Verbos irregulares", "description": null, "color": null,
+      "id": "7b0f2c1e-…", "name": "Verbos irregulares", "description": null, "color": null,
       "type": "language", "sourceLang": "en-GB", "targetLang": "es-ES",
       "cards": [
         {
-          "id": "c1a2…", "type": "simple",
-          "question": "to bring", "answer": "traer (brought, brought)",
-          "example": "Can you **bring** me some water?", "notes": null,
-          "questionImage": null, "answerImage": null
+          "id": "c1a2…", "type": "simple", "question": "to bring",
+          "answer": "traer (brought, brought)",
+          "example": "Can you **bring** me some water?", "notes": "Verbo irregular",
+          "questionImage": { "mime": "image/jpeg", "data": "/9j/4AAQSkZJRgABAQ…" },
+          "answerImage": null
         },
         {
-          "id": "d3b4…", "type": "test", "allowMultiple": true,
-          "question": "¿Qué verbos son irregulares?",
-          "explanation": "*Walk* y *play* son regulares.",
+          "id": "d3b4…", "type": "test", "question": "¿Qué verbos son irregulares?",
+          "allowMultiple": true, "explanation": "*Walk* y *play* son regulares.",
           "options": [
-            { "id": "o1", "text": "go", "isCorrect": true },
-            { "id": "o2", "text": "walk", "isCorrect": false },
-            { "id": "o3", "text": "eat", "isCorrect": true },
-            { "id": "o4", "text": "play", "isCorrect": false }
-          ]
+            { "id": "o1a…", "text": "go", "isCorrect": true },
+            { "id": "o2b…", "text": "walk", "isCorrect": false },
+            { "id": "o3c…", "text": "eat", "isCorrect": true },
+            { "id": "o4d…", "text": "play", "isCorrect": false }
+          ],
+          "example": null, "notes": null, "questionImage": null, "answerImage": null
         }
       ]
     }
@@ -678,7 +680,88 @@ Example of a shared deck (card contents are user data, here in Spanish):
 }
 ```
 
-**Images:** embedded as `{ "mime": "image/jpeg", "data": "<base64>" }` instead of the path. CSV does not support images.
+**`kind: project`**: the project and its decks, each deck as in `kind: deck`:
+
+```json
+{
+  "format": "estudicards", "version": 1, "kind": "project",
+  "exportedAt": "2026-09-30T10:00:00.000Z", "appVersion": "1.0.0",
+  "data": {
+    "project": {
+      "id": "5a6b…", "name": "Inglés B2", "description": "Preparación del examen",
+      "color": "orange", "icon": "globe",
+      "decks": [
+        { "id": "7b0f…", "name": "Verbos irregulares", "description": null, "color": null,
+          "type": "language", "sourceLang": "en-GB", "targetLang": "es-ES", "cards": [ … ] },
+        { "id": "8c1d…", "name": "Definiciones", "description": null, "color": "blue",
+          "type": "language", "sourceLang": "en-GB", "targetLang": "en-GB", "cards": [ … ] }
+      ]
+    }
+  }
+}
+```
+
+**`kind: backup`**:
+
+```json
+{
+  "format": "estudicards", "version": 1, "kind": "backup",
+  "exportedAt": "2026-09-30T10:00:00.000Z", "appVersion": "1.0.0",
+  "data": {
+    "projects": [
+      {
+        "id": "5a6b…", "name": "Inglés B2", "description": null, "color": "orange", "icon": "globe",
+        "isFavorite": true, "isArchived": false, "archivedAt": null, "deletedAt": null,
+        "lastUsedAt": "2026-09-29T18:00:00.000Z",
+        "createdAt": "2026-09-01T08:30:00.000Z", "updatedAt": "2026-09-02T18:00:00.000Z",
+        "decks": [
+          {
+            "id": "7b0f…", "name": "Verbos irregulares", "description": null, "color": null,
+            "type": "language", "sourceLang": "en-GB", "targetLang": "es-ES",
+            "deletedAt": null, "lastUsedAt": "2026-09-29T18:00:00.000Z",
+            "createdAt": "2026-09-01T08:31:00.000Z", "updatedAt": "2026-09-01T08:31:00.000Z",
+            "cards": [
+              {
+                "id": "d3b4…", "type": "test", "question": "¿Qué verbos son irregulares?",
+                "allowMultiple": true, "explanation": null,
+                "options": [ { "id": "o1a…", "text": "go", "isCorrect": true }, … ],
+                "example": null, "notes": null, "questionImage": null, "answerImage": null,
+                "createdAt": "2026-09-01T08:32:00.000Z", "updatedAt": "2026-09-01T08:32:00.000Z"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "sessions": [
+      {
+        "id": "6c7d…", "projectId": "5a6b…", "mode": "normal", "direction": "normal",
+        "requestedCount": 20, "prioritizeFailed": false, "repeatFailed": true,
+        "timerType": "per_card", "timerSeconds": 30, "status": "completed",
+        "startedAt": "2026-09-29T17:50:00.000Z", "endedAt": "2026-09-29T18:00:00.000Z",
+        "activeDurationMs": 540000, "correctTotal": 15, "wrongTotal": 4, "unansweredTotal": 1
+      }
+    ],
+    "sessionDecks": [ { "sessionId": "6c7d…", "deckId": "7b0f…" } ],
+    "attempts": [
+      {
+        "id": "8e9f…", "sessionId": "6c7d…", "cardId": "d3b4…", "direction": "normal",
+        "result": "wrong", "source": "test_check", "isFirstAttempt": true,
+        "selectedOptionIds": ["o1a…"], "responseTimeMs": 4200,
+        "answeredAt": "2026-09-29T17:51:00.000Z", "localDay": "2026-09-29"
+      }
+    ],
+    "cardStats": [
+      {
+        "cardId": "d3b4…", "direction": "normal", "correctCount": 0, "wrongCount": 1,
+        "consecutiveCorrect": 0, "inErrorList": true, "lastResult": "wrong",
+        "lastAttemptAt": "2026-09-29T17:51:00.000Z"
+      }
+    ],
+    "settings": { "theme_mode": "dark", "daily_goal": "20" }
+  }
+}
+```
 
 ### 8.3 CSV
 
@@ -713,6 +796,9 @@ to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irr
 ### 8.4 Import rules
 
 1. **Validation:** `format` and `version` (JSON) or the header row (CSV) are checked. An invalid file shows a clear error and imports nothing.
+   - An imported file is not trusted: it is fully read and checked before anything is written. A JSON file must have every field with the right type and an allowed value, no repeated IDs and, in a backup, no session, attempt or statistic pointing at something missing from the file; the first problem rejects the file.
+   - Limits (`import_limits.dart`): a JSON file up to **100 MB** (a backup with a few hundred images), a CSV file up to **5 MB** and **10,000** card rows, and each image up to **5 MB** and **8,000 px** on its longest side. Sizes are checked before decoding. A bigger file is rejected.
+   - Images are never taken from a path in the file: the file holds the JPEG itself, and the app stores it under a new name in its images folder. A JPEG of up to 1600 px is stored byte for byte; a bigger one is shrunk as in §3.4.
 2. **Preview:** number of new cards, number of duplicates that will be skipped, and a list of rows with errors (shown in the UI as, e.g., "Fila 7: falta la respuesta"). Rows with errors are skipped; the rest is imported if the user confirms.
 3. **IDs:**
    - As a new project or new deck: **new IDs** are generated for everything, avoiding clashes.
@@ -1239,3 +1325,10 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - Since the attempts go, the streak, the charts and the "per day" counts lose them too, as R 7.4 asks.
     - The deck screen's own ⋮ menu (P05) does not offer it, as §5.2 lists it only for P03.
     - Phase wrap-up: E2E-02 (`patrol_test/errors_test.dart`) creates a test card with "Permitir varias correctas" and two correct options out of three in a general deck. Ticking only one of them is wrong and "Repasar errores (1)" appears. One correct answer from "Repasar errores" leaves it there; a second one in a row removes it. The helpers `addMultipleAnswerCard` and `answerTestCard` are in `integration_test/app_flow.dart`. The CI's Patrol job runs every file in `patrol_test/`, so it runs E2E-02 too.
+51. **JSON format (T5.1):**
+    - The final schema is in §8.2. Shared files carry no dates and no favourite, archived or trash state (they are the owner's own state, not content); only a backup does. Each card writes only the fields of its type, as the database stores them.
+    - Reading is strict and all-or-nothing (`decodeExchange`): the first wrong field rejects the file with an `ExchangeError` and the path of the field (e.g. `data.deck.cards[3].type`). Content that the import preview reports per card (a test card with no correct option, a simple card with no answer) is left to the import engine (T5.3). The limits are in §8.4 rule 1; the Spanish messages arrive with the import screen (T5.4).
+    - Only `image/jpeg` is accepted, and the bytes themselves must start like a JPEG whatever `mime` says. `ImageFiles.saveImported` reads the size from the JPEG header without decoding the image, refuses more than 8,000 px on a side (a small file can need gigabytes once decoded), keeps a JPEG of up to 1600 px byte for byte (every image the app exports is one) and shrinks a bigger one in a background isolate. The name is always new.
+    - `encodeExchangeInBackground` and `decodeExchangeInBackground` run in a background isolate (`Isolate.run`), so a large backup never freezes the screen; the import and export screens use them.
+    - `appVersion` (`lib/core/app_version.dart`) must match `pubspec.yaml`; a test checks it.
+    - A deck's cards are written oldest first; cards created at the same instant keep their insertion order (SQLite's `rowid`).

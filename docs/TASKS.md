@@ -414,7 +414,7 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 5 — Import and export
 
-- [ ] **T5.1 JSON schema and serialisation** · SPEC §8.2 · Depends on: T2.2
+- [x] **T5.1 JSON schema and serialisation** · SPEC §8.2 · Depends on: T2.2
   - **Tests first:**
     - 🧪 exporting and re-importing a deck gives the same content (round trip).
     - 🧪 images travel as base64 and are restored as files.

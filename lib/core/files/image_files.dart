@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:estudicards/core/files/card_image.dart';
@@ -22,6 +23,15 @@ abstract interface class ImageFiles {
   /// Deletes the images at these paths, relative to the images folder.
   /// Paths that do not exist are ignored.
   Future<void> delete(Iterable<String> relativePaths);
+
+  /// The bytes of the image at [relativePath], to export it. Null if the
+  /// file does not exist.
+  Future<Uint8List?> read(String relativePath);
+
+  /// Stores a JPEG that came inside an imported file, always under a new
+  /// name. Returns its path relative to the images folder, or null if the
+  /// bytes are not a usable JPEG.
+  Future<String?> saveImported(Uint8List jpeg);
 }
 
 /// Stores nothing; for tests that do not care about images.
@@ -33,6 +43,12 @@ class NoImageFiles implements ImageFiles {
 
   @override
   Future<String?> copy(String relativePath) async => null;
+
+  @override
+  Future<Uint8List?> read(String relativePath) async => null;
+
+  @override
+  Future<String?> saveImported(Uint8List jpeg) async => null;
 
   @override
   Future<void> delete(Iterable<String> relativePaths) async {}
@@ -53,14 +69,7 @@ class DiskImageFiles implements ImageFiles {
   @override
   Future<String?> save(Uint8List bytes) async {
     final prepared = await _prepare(bytes);
-    if (prepared == null) return null;
-    final folder = await _folder();
-    final name = '${newId()}.jpg';
-    // Synchronous file calls: the files are small, and they behave the
-    // same inside widget tests, where asynchronous ones never finish.
-    folder.createSync(recursive: true);
-    File('${folder.path}/$name').writeAsBytesSync(prepared);
-    return name;
+    return prepared == null ? null : await _write(prepared);
   }
 
   @override
@@ -81,5 +90,40 @@ class DiskImageFiles implements ImageFiles {
       final file = File('${folder.path}/$path');
       if (file.existsSync()) file.deleteSync();
     }
+  }
+
+  @override
+  Future<Uint8List?> read(String relativePath) async {
+    final file = File('${(await _folder()).path}/$relativePath');
+    return file.existsSync() ? file.readAsBytesSync() : null;
+  }
+
+  /// The bytes come from a file the user picked, so they are checked: only
+  /// a JPEG is accepted, its size is read from its header before decoding
+  /// anything, and the name is always a new one in the images folder.
+  ///
+  /// A JPEG of up to 1600 px is what the app itself stores (every exported
+  /// image is one), so it is kept byte for byte: decoding and encoding it
+  /// again would take time and lose quality. A bigger one is prepared like
+  /// a picked image.
+  @override
+  Future<String?> saveImported(Uint8List jpeg) async {
+    final size = jpegSize(jpeg);
+    if (size == null) return null;
+    final longSide = math.max(size.width, size.height);
+    if (longSide > importedImageMaxSide) return null;
+    final bytes = longSide <= cardImageMaxSide ? jpeg : await _prepare(jpeg);
+    return bytes == null ? null : await _write(bytes);
+  }
+
+  /// Writes [jpeg] under a new name and returns that name.
+  Future<String> _write(Uint8List jpeg) async {
+    final folder = await _folder();
+    final name = '${newId()}.jpg';
+    // Synchronous file calls: the files are small, and they behave the
+    // same inside widget tests, where asynchronous ones never finish.
+    folder.createSync(recursive: true);
+    File('${folder.path}/$name').writeAsBytesSync(jpeg);
+    return name;
   }
 }
