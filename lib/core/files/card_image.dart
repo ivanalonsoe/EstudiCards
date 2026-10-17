@@ -10,6 +10,11 @@ const cardImageMaxSide = 1600;
 /// JPEG quality of a stored card image (SPEC §3.4).
 const cardImageQuality = 80;
 
+/// The longest side an imported image may have, in pixels. Bigger ones are
+/// refused before decoding them: a 20,000 × 20,000 JPEG can be a small file
+/// that needs gigabytes of memory once decoded.
+const importedImageMaxSide = 8000;
+
 /// Turns a picked image (PNG, JPEG, WebP…) into what the app stores: a JPEG
 /// at quality 80 whose long side is at most 1600 px. Returns null if the
 /// bytes are not an image.
@@ -37,6 +42,19 @@ Uint8List? prepareCardImage(Uint8List bytes) {
       ? img.copyResize(upright, width: cardImageMaxSide)
       : img.copyResize(upright, height: cardImageMaxSide);
   return img.encodeJpg(resized, quality: cardImageQuality);
+}
+
+/// The size of a JPEG, read from its header without decoding the image.
+/// Null if [bytes] are not a JPEG.
+({int width, int height})? jpegSize(Uint8List bytes) {
+  try {
+    final info = img.JpegDecoder().startDecode(bytes);
+    if (info == null || info.width <= 0 || info.height <= 0) return null;
+    return (width: info.width, height: info.height);
+  } on Object {
+    // Damaged bytes can make the decoder throw instead of returning null.
+    return null;
+  }
 }
 
 /// [prepareCardImage] in a background isolate. A 4000 px photo takes a

@@ -20,4 +20,10 @@ class FakeImageFiles implements ImageFiles {
   @override
   Future<void> delete(Iterable<String> relativePaths) async =>
       deleted.addAll(relativePaths);
+
+  @override
+  Future<Uint8List?> read(String relativePath) async => null;
+
+  @override
+  Future<String?> saveImported(Uint8List jpeg) async => null;
 }

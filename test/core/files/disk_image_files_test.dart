@@ -79,4 +79,51 @@ void main() {
     expect(stored(deleted).existsSync(), isFalse);
     expect(stored(kept!).existsSync(), isTrue);
   });
+
+  group('read', () {
+    test('gives the bytes of a stored image', () async {
+      final path = await images.save(pngBytes(10, 10));
+
+      expect(await images.read(path!), stored(path).readAsBytesSync());
+    });
+
+    test('gives null for a missing file', () async {
+      expect(await images.read('missing.jpg'), isNull);
+    });
+  });
+
+  group('saveImported', () {
+    test('keeps a JPEG of up to 1600 px as it is, under a new name', () async {
+      final jpeg = jpegBytes(1600, 900);
+
+      final path = await images.saveImported(jpeg);
+
+      expect(path, matches(RegExp(r'^[0-9a-f-]{36}\.jpg$')));
+      expect(stored(path!).readAsBytesSync(), jpeg);
+    });
+
+    test('shrinks a bigger JPEG to 1600 px, as the app stores', () async {
+      final path = await images.saveImported(jpegBytes(3200, 1000));
+
+      final image = img.JpegDecoder().decode(stored(path!).readAsBytesSync());
+      expect((image!.width, image.height), (1600, 500));
+    });
+
+    test('refuses an image over $importedImageMaxSide px on a side', () async {
+      expect(
+        await images.saveImported(jpegBytes(importedImageMaxSide + 1, 1)),
+        isNull,
+      );
+      expect(folder.listSync(), isEmpty);
+    });
+
+    test('refuses bytes that are not a JPEG', () async {
+      expect(await images.saveImported(pngBytes(10, 10)), isNull);
+      expect(
+        await images.saveImported(Uint8List.fromList([0xFF, 0xD8, 0xFF, 0])),
+        isNull,
+      );
+      expect(folder.listSync(), isEmpty);
+    });
+  });
 }
