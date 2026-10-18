@@ -60,6 +60,7 @@ Future<GoRouter> pumpTestApp(
   Clock? clock,
   String location = AppRoutes.home,
   Directory? imagesFolder,
+  Directory? backupsFolder,
   ImageSource? imageSource,
   DocumentPicker? documentPicker,
   FileExporter? fileExporter,
@@ -83,6 +84,9 @@ Future<GoRouter> pumpTestApp(
         // A seeded Random, so shuffling is the same on every run.
         randomProvider.overrideWithValue(createRandom(seed: 1)),
         imagesFolderProvider.overrideWith((ref) => folder),
+        backupsFolderProvider.overrideWith(
+          (ref) => backupsFolder ?? createTempFolder(),
+        ),
         imageFilesProvider.overrideWithValue(
           DiskImageFiles(
             () async => folder,

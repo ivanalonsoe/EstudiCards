@@ -28,6 +28,13 @@ void main() {
     expect(exportFileName(['???', '///'], 'csv'), 'estudicards.csv');
   });
 
+  test('a backup is named after the local day (SPEC §8.1)', () {
+    expect(
+      backupFileName(DateTime.utc(2026, 9, 3)),
+      'estudicards-backup-2026-09-03.json',
+    );
+  });
+
   test('a very long name is cut', () {
     final name = exportFileName(['x' * 200], 'json');
 

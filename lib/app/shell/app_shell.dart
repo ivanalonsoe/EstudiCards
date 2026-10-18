@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 ///
 /// - Desktop (≥ 840 dp): fixed sidebar on the left, the screen on the right.
 /// - Mobile and tablet: only the screen; the menu is a drawer on the
-///   dashboard (see PlaceholderScreen).
+///   dashboard (see DashboardScreen).
 class AppShell extends StatelessWidget {
   const new({required this.location, required this.child, super.key});
 

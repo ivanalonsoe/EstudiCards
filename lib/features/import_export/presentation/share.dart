@@ -6,6 +6,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/choice_tile.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/import_export/domain/cards_csv.dart';
 import 'package:estudicards/features/import_export/domain/csv_template.dart';
@@ -195,7 +196,7 @@ class _ShareDialogState extends State<_ShareDialog> {
             style: text.bodyMedium?.copyWith(color: colors.textMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _FormatOption(
+          ChoiceTile(
             key: const Key('shareDialog.json'),
             icon: Icons.filter_none_rounded,
             title: l10n.shareJson,
@@ -204,7 +205,7 @@ class _ShareDialogState extends State<_ShareDialog> {
             onTap: () => setState(() => _format = ShareFormat.json),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _FormatOption(
+          ChoiceTile(
             key: const Key('shareDialog.csv'),
             icon: Icons.download_rounded,
             title: l10n.shareCsv,
@@ -227,76 +228,6 @@ class _ShareDialogState extends State<_ShareDialog> {
           label: Text(l10n.share),
         ),
       ],
-    );
-  }
-}
-
-/// One format: a radio circle, its icon, its name and what it is for. The
-/// chosen one is tinted orange, as in the design.
-class _FormatOption extends StatelessWidget {
-  const new({
-    required this.icon,
-    required this.title,
-    required this.hint,
-    required this.selected,
-    required this.onTap,
-    super.key,
-  });
-
-  final IconData icon;
-  final String title;
-  final String hint;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
-    return Semantics(
-      selected: selected,
-      inMutuallyExclusiveGroup: true,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: selected ? colors.primarySoft : null,
-            border: Border.all(
-              color: selected ? colors.primaryStrong : colors.border,
-              width: selected ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(AppRadii.control),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected ? colors.primaryStrong : colors.textMuted,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Icon(icon, size: 20, color: colors.text),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: text.titleSmall),
-                    Text(
-                      hint,
-                      style: text.bodySmall?.copyWith(color: colors.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

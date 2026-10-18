@@ -1,3 +1,5 @@
+import 'package:estudicards/core/clock.dart';
+
 /// The longest file name written, without the extension.
 const _maxLength = 80;
 
@@ -14,6 +16,11 @@ String exportFileName(List<String> parts, String extension) {
   if (name.length > _maxLength) name = _clean(name.substring(0, _maxLength));
   return '${name.isEmpty ? 'estudicards' : name}.$extension';
 }
+
+/// The name of a full backup made on [day] (the user's local day, as
+/// `Clock.localDay` gives it): `estudicards-backup-2026-09-30.json`
+/// (SPEC §8.1).
+String backupFileName(DateTime day) => 'estudicards-backup-${dayKey(day)}.json';
 
 /// [text] without the characters a file name cannot have, with single
 /// spaces, and without the spaces and dots Windows refuses at the end.
