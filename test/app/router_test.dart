@@ -115,7 +115,7 @@ void main() {
     // The project screen, the card editor and the results have their own
     // tests (project_screen_test.dart, card_editor_test.dart,
     // results_screen_test.dart).
-    testWidgets('every placeholder route shows its title', (tester) async {
+    testWidgets('every top-level route shows its title', (tester) async {
       final router = await pumpApp(tester, size: mobile);
 
       final routes = {

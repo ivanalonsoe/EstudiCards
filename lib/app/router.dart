@@ -4,19 +4,15 @@
 // so that the path describes the stack: opening `/project/p1/deck/d1` on
 // mobile puts the dashboard, the project and the deck on the stack, and the
 // back button walks back through them.
-//
-// The screens are empty placeholders for now; each one is replaced by the
-// real screen in the task that builds it.
-import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/shell/app_shell.dart';
 import 'package:estudicards/app/shell/not_found_screen.dart';
-import 'package:estudicards/app/shell/placeholder_screen.dart';
 import 'package:estudicards/features/cards/presentation/card_editor_screen.dart';
 import 'package:estudicards/features/decks/presentation/deck_screen.dart';
 import 'package:estudicards/features/import_export/presentation/import_screen.dart';
 import 'package:estudicards/features/projects/presentation/archived_screen.dart';
 import 'package:estudicards/features/projects/presentation/dashboard_screen.dart';
 import 'package:estudicards/features/projects/presentation/project_screen.dart';
+import 'package:estudicards/features/settings/presentation/settings_screen.dart';
 import 'package:estudicards/features/stats/presentation/project_statistics_screen.dart';
 import 'package:estudicards/features/stats/presentation/statistics_screen.dart';
 import 'package:estudicards/features/study/presentation/results_screen.dart';
@@ -85,22 +81,6 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
   // screens shown next to the sidebar on desktop.
   final rootKey = GlobalKey<NavigatorState>();
   final shellKey = GlobalKey<NavigatorState>();
-
-  GoRoute screen(
-    String path,
-    String key,
-    String Function(AppLocalizations l10n) title, {
-    List<RouteBase> routes = const [],
-    bool fullScreen = false,
-  }) => GoRoute(
-    path: path,
-    parentNavigatorKey: fullScreen ? rootKey : null,
-    builder: (context, state) => PlaceholderScreen(
-      key: Key('screen.$key'),
-      title: title(AppLocalizations.of(context)),
-    ),
-    routes: routes,
-  );
 
   return GoRouter(
     navigatorKey: rootKey,
@@ -216,7 +196,11 @@ GoRouter createRouter({String initialLocation = AppRoutes.home}) {
                 builder: (context, state) =>
                     const TrashScreen(key: Key('screen.trash')),
               ),
-              screen('settings', 'settings', (l10n) => l10n.settings),
+              GoRoute(
+                path: 'settings',
+                builder: (context, state) =>
+                    const SettingsScreen(key: Key('screen.settings')),
+              ),
             ],
           ),
         ],

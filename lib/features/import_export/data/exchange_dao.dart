@@ -4,10 +4,56 @@ import 'package:estudicards/core/db/app_database.dart';
 
 part 'exchange_dao.g.dart';
 
-@DriftAccessor(tables: [Projects, Decks, Cards, CardOptions])
+@DriftAccessor(
+  tables: [
+    Projects,
+    Decks,
+    Cards,
+    CardOptions,
+    CardStats,
+    StudySessions,
+    SessionDecks,
+    Attempts,
+    Settings,
+  ],
+)
 class ExchangeDao extends DatabaseAccessor<AppDatabase>
     with _$ExchangeDaoMixin {
   new(super.attachedDatabase);
+
+  // For a backup: every row, archived and in the trash too. Rows come in
+  // the order they were inserted (`rowid`), so a restore inserts them in
+  // the same order; the `card_stats` recalculation uses it to break ties.
+
+  Future<List<ProjectRow>> allProjects() =>
+      (select(projects)..orderBy([(p) => OrderingTerm.asc(p.rowId)])).get();
+
+  /// Every deck of [projectId], in the trash too, in insertion order.
+  Future<List<DeckRow>> allDecksOf(String projectId) =>
+      (select(decks)
+            ..where((d) => d.projectId.equals(projectId))
+            ..orderBy([(d) => OrderingTerm.asc(d.rowId)]))
+          .get();
+
+  Future<List<StudySessionRow>> allSessions() => (select(
+    studySessions,
+  )..orderBy([(s) => OrderingTerm.asc(s.rowId)])).get();
+
+  Future<List<SessionDeckRow>> allSessionDecks() =>
+      (select(sessionDecks)..orderBy([(s) => OrderingTerm.asc(s.rowId)])).get();
+
+  Future<List<AttemptRow>> allAttempts() =>
+      (select(attempts)..orderBy([(a) => OrderingTerm.asc(a.rowId)])).get();
+
+  Future<List<CardStatsRow>> allCardStats() =>
+      (select(cardStats)..orderBy([
+            (s) => OrderingTerm.asc(s.cardId),
+            (s) => OrderingTerm.asc(s.direction),
+          ]))
+          .get();
+
+  Future<List<SettingRow>> allSettings() =>
+      (select(settings)..orderBy([(s) => OrderingTerm.asc(s.key)])).get();
 
   Future<ProjectRow?> projectById(String id) =>
       (select(projects)..where((p) => p.id.equals(id))).getSingleOrNull();
