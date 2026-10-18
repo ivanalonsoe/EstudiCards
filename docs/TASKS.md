@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.11 | ⏳ 10 / 11 |
+| 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -469,7 +469,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the estimated size adds the images as base64.
     - 🧩 over the limit, "Exportar todo" offers to export without images or deck by deck.
 
-- [ ] **T5.11 Data folder on Windows** · Depends on: T0.4
+- [x] **T5.11 Data folder on Windows** · Depends on: T0.4
   - Added after T5.8 (decided with the owner): on Windows the user chooses where the data lives (default `Documents\EstudiCards`), on the first start or when that folder is gone. A chosen folder not called `EstudiCards` gets one inside it. If the folder has data, the user is asked whether to load it. Data left loose in Documents by earlier versions can be moved there.
   - **Tests first:**
     - 🧪 the data folder of a chosen path ends in `EstudiCards`.

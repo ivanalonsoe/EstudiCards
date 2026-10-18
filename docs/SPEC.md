@@ -182,7 +182,7 @@ lefthook.yml                 # git hooks
 
 ### 3.4 File storage
 
-- Database: `<app documents>/estudicards.sqlite`.
+- Database: `<app documents>/estudicards.sqlite`. On Windows, `<app documents>` is the folder the user chose (`Documents\EstudiCards` by default, T5.11), not Documents itself.
 - Images: `<app documents>/images/<uuid>.jpg`. Only the relative path is stored in the database.
 - Images are resized to at most 1600 px on the long side and saved as JPEG at quality 80.
 
@@ -1393,3 +1393,9 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - A full backup may take up to 500 MB (`maxBackupFileBytes`); a shared project or deck keeps 100 MB. The reader checks the backup limit before reading anything and the limit of the kind once it knows it (`exchangeTooLarge`).
     - Before writing a backup, "Exportar todo" works out its size: the JSON without images (written first, which is quick) plus each image as base64 (`estimatedBackupBytes`, `ImageFiles.sizeOf`). Over the limit, the dialog "La copia es demasiado grande" ("Con las imágenes ocuparía unos 612 MB y no se podría restaurar: el máximo es 500 MB.") offers "Exportar sin imágenes" (chosen by default: a full backup with statistics but no images, which is the file already written) or "Compartir las barajas una a una", which explains how to share each deck as JSON (with its images but no statistics).
     - The dialogs with choices (share, restore, backup size) scroll when they do not fit, e.g. with large text on a small phone.
+61. **Data folder on Windows (T5.11, decided with the owner):**
+    - On Windows the app documents folder (`getApplicationDocumentsDirectory`) is the user's own Documents folder, so earlier versions left `estudicards.sqlite`, `images` and `backups` loose there. Now the user chooses a data folder, and the database, images and automatic backups live in it (`appInDataFolder`, `lib/app/windows_startup.dart`). Other platforms are unchanged: their documents folder is already private to the app.
+    - The choice is a small JSON file in the app's settings folder (`getApplicationSupportDirectory`, under AppData), since it cannot live in the database it points at (`DataFolderStore`).
+    - `DataFolderScreen` appears before the app on the first start, or when the chosen folder is gone ("No encontramos la carpeta de tus datos…", offering it again). It proposes `Documents\EstudiCards`; "Cambiar carpeta…" opens the system folder dialog. A chosen folder not called `EstudiCards` (in any case) gets one inside it (`dataFolderFor`).
+    - If the folder already holds a database: "Esta carpeta ya tiene datos" with "Cargar datos" or "Elegir otra carpeta". Otherwise, if Documents holds the data of an earlier version: "Hemos encontrado tus datos" with "Moverlos" (the database with its `-wal`/`-shm` files and the `images` and `backups` folders move into the chosen folder; other files in Documents are not touched; a copy is used across drives and the originals go only after it) or "Empezar sin ellos".
+    - Not added (not asked for): showing or changing the folder later from Settings.
