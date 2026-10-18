@@ -378,8 +378,19 @@ class _MobileDeck extends StatelessWidget {
                 _ReviewErrors(view: view, expanded: true),
               ],
               const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [Expanded(child: _ImportButton(view: view))],
+              // The file actions in a row that scrolls sideways, as in the
+              // design.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _ImportButton(view: view),
+                    const SizedBox(width: AppSpacing.sm),
+                    const _TemplateButton(),
+                    const SizedBox(width: AppSpacing.sm),
+                    const _AiPromptButton(),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               if (view.allCards.isEmpty)
@@ -477,6 +488,8 @@ class _DesktopDeck extends StatelessWidget {
                     runSpacing: AppSpacing.sm,
                     children: [
                       _ImportButton(view: view),
+                      const _TemplateButton(),
+                      const _AiPromptButton(),
                       _ShareButton(view: view),
                       _DeckMenu(view: view),
                     ],
@@ -541,6 +554,9 @@ class _Toolbar extends StatelessWidget {
         if (constraints.maxWidth >= _oneRowWidth) {
           return Row(
             children: [
+              // The buttons get most of the width (5:2), so they fit in one
+              // line on a usual desktop; if not, they wrap instead of
+              // overflowing.
               Flexible(
                 flex: 2,
                 child: ConstrainedBox(
@@ -551,10 +567,8 @@ class _Toolbar extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               _SortSelector(view: view),
               const SizedBox(width: AppSpacing.md),
-              // The rest of the width, so the buttons can wrap if they do
-              // not fit.
               Expanded(
-                flex: 3,
+                flex: 5,
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: wrap(actions),
@@ -1408,8 +1422,34 @@ class _ImportButton extends StatelessWidget {
   );
 }
 
-/// A deck with no cards (SPEC §5.3): "Añade tu primera tarjeta" and "o
-/// importa desde CSV". "Descargar plantilla" arrives with T5.6.
+/// "Plantilla": saves the CSV template (US-28).
+class _TemplateButton extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => OutlinedButton.icon(
+    key: const Key('deckScreen.template'),
+    onPressed: () => unawaited(saveCsvTemplate(context, ref)),
+    icon: const Icon(Icons.download_rounded),
+    label: Text(AppLocalizations.of(context).template),
+  );
+}
+
+/// "Prompt para IA": copies the prompt of SPEC §8.5 (US-28).
+class _AiPromptButton extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    key: const Key('deckScreen.aiPrompt'),
+    onPressed: () => unawaited(copyAiPrompt(context)),
+    icon: const Icon(Icons.auto_awesome_outlined),
+    label: Text(AppLocalizations.of(context).aiPrompt),
+  );
+}
+
+/// A deck with no cards (SPEC §5.3): "Añade tu primera tarjeta", "o
+/// importa desde CSV" and "Descargar plantilla".
 class _EmptyDeck extends StatelessWidget {
   const new({required this.view});
 
@@ -1436,6 +1476,14 @@ class _EmptyDeck extends StatelessWidget {
             key: const Key('deckScreen.emptyImport'),
             onPressed: () => view.importCards(context),
             child: Text(l10n.emptyCardsImport),
+          ),
+          Consumer(
+            builder: (context, ref, _) => TextButton.icon(
+              key: const Key('deckScreen.emptyTemplate'),
+              onPressed: () => unawaited(saveCsvTemplate(context, ref)),
+              icon: const Icon(Icons.download_rounded),
+              label: Text(l10n.downloadTemplate),
+            ),
           ),
         ],
       ),

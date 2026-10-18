@@ -2,20 +2,20 @@
 // `docs/design/movil-claro/dialogos.png` asks for JSON (to open in the app)
 // or CSV (for Excel or Google Sheets); then the file goes to the native
 // share menu on mobile or to "Save as…" on desktop (SPEC §3.5).
-import 'dart:typed_data';
-
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/import_export/domain/cards_csv.dart';
+import 'package:estudicards/features/import_export/domain/csv_template.dart';
 import 'package:estudicards/features/import_export/domain/exchange_document.dart';
 import 'package:estudicards/features/import_export/domain/exchange_json.dart';
 import 'package:estudicards/features/import_export/domain/export_names.dart';
 import 'package:estudicards/features/import_export/presentation/import_providers.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The two formats of a shared file.
@@ -67,9 +67,7 @@ Future<void> _share(
 }) async {
   final l10n = AppLocalizations.of(context);
   final messenger = ScaffoldMessenger.of(context);
-  // Where the share menu points on an iPad: the screen that opened it.
-  final box = context.findRenderObject() as RenderBox?;
-  final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+  final origin = _originOf(context);
 
   final format = await showDialog<ShareFormat>(
     context: context,
@@ -96,6 +94,41 @@ Future<void> _share(
   } on Object {
     messenger.showSnackBar(SnackBar(content: Text(l10n.shareFailed)));
   }
+}
+
+/// "Descargar plantilla" (US-28): shares or saves the CSV template.
+Future<void> saveCsvTemplate(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final saved = await ref
+        .read(fileExporterProvider)
+        .export(
+          name: csvTemplateFileName,
+          bytes: csvTemplate(),
+          mimeType: ShareFormat.csv.mimeType,
+          origin: _originOf(context),
+        );
+    if (saved != null) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.savedTo(saved))));
+    }
+  } on Object {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.shareFailed)));
+  }
+}
+
+/// "Prompt para IA" (US-28): copies the prompt of SPEC §8.5.
+Future<void> copyAiPrompt(BuildContext context) async {
+  final message = AppLocalizations.of(context).aiPromptCopied;
+  final messenger = ScaffoldMessenger.of(context);
+  await Clipboard.setData(ClipboardData(text: aiPrompt));
+  messenger.showSnackBar(SnackBar(content: Text(message)));
+}
+
+/// Where the share menu points on an iPad: the widget that opened it.
+Rect? _originOf(BuildContext context) {
+  final box = context.findRenderObject() as RenderBox?;
+  return box == null ? null : box.localToGlobal(Offset.zero) & box.size;
 }
 
 /// Writes the file in a background isolate: a deck with many images can

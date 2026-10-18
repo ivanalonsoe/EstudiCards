@@ -275,9 +275,9 @@ void main() {
 
       expect(find.byKey(const Key('deckScreen.empty')), findsOneWidget);
       expect(find.text('Añade tu primera tarjeta'), findsOneWidget);
-      // SPEC §5.3; "Descargar plantilla" arrives with T5.6.
+      // SPEC §5.3.
       expect(find.text('o importa desde CSV'), findsOneWidget);
-      expect(find.textContaining('plantilla'), findsNothing);
+      expect(find.text('Descargar plantilla'), findsOneWidget);
       expect(search, findsNothing);
     });
 
