@@ -9,7 +9,9 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/app_version.dart';
+import 'package:estudicards/features/import_export/data/auto_backup_files.dart';
 import 'package:estudicards/features/import_export/presentation/backup.dart';
+import 'package:estudicards/features/import_export/presentation/import_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final autoBackups = ref.watch(autoBackupsProvider).value ?? const [];
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: Align(
@@ -46,8 +49,24 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: l10n.exportAllHint,
                     onTap: () => unawaited(exportAll(context, ref)),
                   ),
+                  SettingsActionTile(
+                    key: const Key('settings.restore'),
+                    icon: Icons.upload_rounded,
+                    title: l10n.restoreBackup,
+                    onTap: () => unawaited(restoreBackupFile(context, ref)),
+                  ),
                 ],
               ),
+              // Shown only when there are any (decided with the owner).
+              if (autoBackups.isNotEmpty) ...[
+                SettingsSectionLabel(l10n.autoBackups),
+                SettingsPanel(
+                  children: [
+                    for (final backup in autoBackups)
+                      _AutoBackupTile(backup: backup),
+                  ],
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
               Text(
                 l10n.appVersionLabel(appVersion),
@@ -63,6 +82,50 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// An automatic backup: when it was made, "Restaurar" and a bin to delete
+/// it after asking.
+class _AutoBackupTile extends ConsumerWidget {
+  const new({required this.backup});
+
+  final AutoBackup backup;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return ListTile(
+      key: Key('autoBackup.${backup.name}'),
+      contentPadding: const EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.sm,
+      ),
+      leading: Icon(Icons.history_rounded, color: colors.text),
+      title: Text(autoBackupLabel(context, backup), style: text.titleSmall),
+      subtitle: Text(
+        l10n.autoBackupHint,
+        style: text.bodySmall?.copyWith(color: colors.textMuted),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton(
+            key: Key('autoBackup.${backup.name}.restore'),
+            onPressed: () => unawaited(restoreAutoBackup(context, ref, backup)),
+            child: Text(l10n.restoreAction),
+          ),
+          IconButton(
+            key: Key('autoBackup.${backup.name}.delete'),
+            tooltip: l10n.deleteAutoBackup,
+            onPressed: () => unawaited(deleteAutoBackup(context, ref, backup)),
+            icon: Icon(Icons.delete_outline_rounded, color: colors.error),
+          ),
+        ],
       ),
     );
   }

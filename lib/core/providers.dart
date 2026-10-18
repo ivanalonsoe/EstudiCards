@@ -45,6 +45,14 @@ final imagesFolderProvider = FutureProvider<Directory>((ref) async {
   return Directory('${documents.path}/images');
 });
 
+/// The folder with the automatic backups that "Reemplazar todo" saves:
+/// `<app documents>/backups` (SPEC §8.4 rule 7). Tests use a temporary
+/// folder instead.
+final backupsFolderProvider = FutureProvider<Directory>((ref) async {
+  final documents = await getApplicationDocumentsDirectory();
+  return Directory('${documents.path}/backups');
+});
+
 /// The card images on disk (see `core/files/image_files.dart`). The trash
 /// purge uses it too, so deleting a project for good deletes its images.
 final imageFilesProvider = Provider<ImageFiles>(

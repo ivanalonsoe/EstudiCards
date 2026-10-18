@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.9 | ⏳ 7 / 9 |
+| 5. Import and export | T5.1 – T5.9 | ⏳ 8 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -456,7 +456,7 @@ Goal: a project that starts, with automated quality from day one.
 - [x] **T5.7 Backup: export all** · US-24 · Depends on: T5.1
   - **Tests first:** 🧪 the backup includes archived projects and projects in the trash, sessions, attempts and settings.
 
-- [ ] **T5.8 Restore backup** · US-25 · Depends on: T5.7
+- [x] **T5.8 Restore backup** · US-25 · Depends on: T5.7
   - **Tests first:**
     - 🧪 with an empty database, restoring leaves the data identical to the export.
     - 🧪 "replace all" deletes the current data.
