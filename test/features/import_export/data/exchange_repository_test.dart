@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
@@ -20,9 +21,11 @@ import 'package:estudicards/features/import_export/domain/exchange_document.dart
 import 'package:estudicards/features/import_export/domain/exchange_json.dart';
 import 'package:estudicards/features/projects/data/projects_dao.dart';
 import 'package:estudicards/features/projects/data/projects_repository.dart';
+import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/test_data.dart';
 import '../../../helpers/test_images.dart';
 
 void main() {
@@ -31,6 +34,7 @@ void main() {
   late DiskImageFiles images;
   late CardsRepository cards;
   late ExchangeRepository repository;
+  late Project project;
   late Deck deck;
   final now = DateTime.utc(2026, 10, 17, 9);
 
@@ -44,7 +48,7 @@ void main() {
     final clock = FakeClock(now);
     cards = CardsRepository(CardsDao(db), clock, images);
     repository = ExchangeRepository(ExchangeDao(db), clock, images);
-    final project = await ProjectsRepository(ProjectsDao(db), clock).create(
+    project = await ProjectsRepository(ProjectsDao(db), clock).create(
       const ProjectInput(name: 'Inglés B2', color: 'orange', icon: 'globe'),
     );
     deck = await DecksRepository(DecksDao(db), clock).create(
@@ -200,5 +204,82 @@ void main() {
 
   test('exporting a deck that does not exist fails', () {
     expect(repository.exportDeck('missing'), throwsStateError);
+  });
+
+  group('a shared project', () {
+    test('contains no attempts, statistics or dates (US-26)', () async {
+      final card = await cards.create(
+        deck.id,
+        const CardInput(
+          type: CardType.simple,
+          question: 'to bring',
+          answer: 'traer',
+        ),
+      );
+      await addTestAnswers(
+        db,
+        projectId: project.id,
+        cardId: card.id,
+        results: ['wrong', 'correct'],
+      );
+
+      final json = jsonDecode(
+        utf8.decode(encodeExchange(await repository.exportProject(project.id))),
+      ) as Map<String, dynamic>;
+
+      expect(json['kind'], 'project');
+      final data = json['data'] as Map<String, dynamic>;
+      expect(data.keys, ['project']);
+      final text = jsonEncode(data);
+      for (final word in [
+        'attempts',
+        'sessions',
+        'cardStats',
+        'correctCount',
+        'createdAt',
+        'isFavorite',
+      ]) {
+        expect(text, isNot(contains(word)), reason: word);
+      }
+      expect(text, contains('to bring'));
+    });
+
+    test('has its decks, oldest first, without those in the trash', () async {
+      final decks = DecksRepository(DecksDao(db), FakeClock(now));
+      final second = await decks.create(
+        project.id,
+        const DeckInput(name: 'Definiciones', color: 'blue'),
+      );
+      final trashed = await decks.create(
+        project.id,
+        const DeckInput(name: 'Borrada'),
+      );
+      await (db.update(db.decks)..where((d) => d.id.equals(trashed.id))).write(
+        DecksCompanion(deletedAt: Value(now)),
+      );
+      await cards.create(
+        second.id,
+        const CardInput(type: CardType.simple, question: 'q', answer: 'a'),
+      );
+
+      final document = await repository.exportProject(project.id);
+      final back =
+          (decodeExchange(encodeExchange(document)) as ProjectDocument).project;
+
+      expect(document.exportedAt, now);
+      expect(back.name, 'Inglés B2');
+      expect((back.color, back.icon), ('orange', 'globe'));
+      expect(
+        [for (final d in back.decks) d.name],
+        ['Verbos irregulares', 'Definiciones'],
+      );
+      expect(back.decks.first.type, DeckType.language);
+      expect(back.decks.last.color, 'blue');
+      expect(back.decks.last.cards.single.question, 'q');
+    });
+
+    test('exporting a project that does not exist fails', () {
+      expect(repository.exportProject('missing'), throwsStateError);
+    });
   });
 }

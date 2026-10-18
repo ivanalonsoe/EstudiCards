@@ -13,6 +13,7 @@ import 'dart:math';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/files/document_picker.dart';
+import 'package:estudicards/core/files/file_exporter.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/random.dart';
@@ -58,6 +59,12 @@ final imageSourceProvider = Provider<ImageSource>(
 /// Where the user picks a file to import (see `core/files/document_picker.dart`).
 final documentPickerProvider = Provider<DocumentPicker>(
   (ref) => const DeviceDocumentPicker(),
+);
+
+/// Shares or saves the files the app makes (see
+/// `core/files/file_exporter.dart`).
+final fileExporterProvider = Provider<FileExporter>(
+  (ref) => const DeviceFileExporter(),
 );
 
 /// Runs [work] somewhere that does not freeze the screen.

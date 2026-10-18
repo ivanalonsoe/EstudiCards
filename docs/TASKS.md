@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.9 | ⏳ 4 / 9 |
+| 5. Import and export | T5.1 – T5.9 | ⏳ 6 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -444,11 +444,11 @@ Goal: a project that starts, with automated quality from day one.
   - 3-step wizard. A CSV imported as a new project or a new deck asks for the type and, for "Idioma", the languages (SPEC §8.4 rule 6).
   - **Tests first:** 🧩 the preview shows "42 nuevas · 3 duplicadas · 1 con errores" for the matching fixture; 🧩 a CSV as a new project asks for the type once.
 
-- [ ] **T5.5 Share project or deck** · US-26 · Depends on: T5.1, T5.2
+- [x] **T5.5 Share project or deck** · US-26 · Depends on: T5.1, T5.2
   - JSON or CSV, without statistics; native share sheet on mobile and "Save as…" on desktop.
   - **Tests first:** 🧪 the shared JSON contains no attempts or statistics; 🧪 the exported CSV uses `;` and a BOM.
 
-- [ ] **T5.6 Template and AI prompt** · US-28 · Depends on: T5.2
+- [x] **T5.6 Template and AI prompt** · US-28 · Depends on: T5.2
   - **Tests first:**
     - 🧪 the downloaded template imports with no errors.
     - 🧪 the prompt contains the template's exact header row.

@@ -10,6 +10,7 @@ import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/decks/presentation/deck_tile.dart';
+import 'package:estudicards/features/import_export/presentation/share.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
@@ -89,6 +90,7 @@ class _MobileProjectState extends State<_MobileProject>
     return Scaffold(
       appBar: AppBar(
         actions: [
+          _ShareButton(project: project),
           _ProjectMenu(project: project),
           const SizedBox(width: AppSpacing.sm),
         ],
@@ -170,7 +172,9 @@ class _DesktopProject extends StatelessWidget {
                   child: _ProjectHeader(project: project, large: true),
                 ),
                 const SizedBox(width: AppSpacing.lg),
-                // An icon next to the ⋮ menu, as in the design.
+                // Share and import are icons next to the ⋮ menu, as in the
+                // design.
+                _ShareButton(project: project),
                 IconButton(
                   key: const Key('projectScreen.importDeck'),
                   tooltip: l10n.importDeck,
@@ -616,8 +620,24 @@ class _Summary extends ConsumerWidget {
   }
 }
 
+/// "Compartir" the project (US-26): an icon in the header, as in the
+/// design.
+class _ShareButton extends ConsumerWidget {
+  const new({required this.project});
+
+  final Project project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
+    key: const Key('projectScreen.share'),
+    tooltip: AppLocalizations.of(context).shareProject,
+    onPressed: () => unawaited(shareProject(context, ref, project)),
+    icon: const Icon(Icons.ios_share_rounded),
+  );
+}
+
 /// The ⋮ menu of the project. On mobile it also has "Importar baraja",
-/// which desktop shows as an icon. "Compartir" arrives with T5.5.
+/// which desktop shows as an icon.
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.project});
 

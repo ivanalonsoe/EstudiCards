@@ -14,6 +14,7 @@ import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/import_export/domain/exchange_document.dart';
 import 'package:estudicards/features/import_export/domain/import_limits.dart';
 
 /// Why a CSV file cannot be imported at all.
@@ -168,6 +169,70 @@ CsvImport parseCardsCsv(Uint8List bytes) {
   return CsvImport(separator: separator, cards: cards, errors: errors);
 }
 
+/// The cards of [decks] as a CSV file to share (US-26), in the template's
+/// format (SPEC §8.3): a UTF-8 BOM, `;`, the English column names and
+/// CRLF line endings, as Spanish Excel saves them. A shared project
+/// ([withDeckColumn]) starts each row with its deck. CSV has no images,
+/// so they are left out.
+Uint8List encodeCardsCsv(
+  List<ExchangeDeck> decks, {
+  bool withDeckColumn = false,
+}) {
+  final rows = <List<String>>[
+    [if (withDeckColumn) csvDeckColumn, ...csvColumns],
+    for (final deck in decks)
+      for (final card in deck.cards)
+        [if (withDeckColumn) deck.name, ..._cardRow(card)].map(_guard).toList(),
+  ];
+  // `encode` separates rows with CRLF; the last one gets its own, as Excel
+  // writes it.
+  final text =
+      '${Csv(fieldDelimiter: ';', autoDetect: false).encode(rows)}\r\n';
+  return Uint8List.fromList([..._utf8Bom, ...utf8.encode(text)]);
+}
+
+const _utf8Bom = [0xEF, 0xBB, 0xBF];
+
+/// The cells of [card] in the order of [csvColumns].
+List<String> _cardRow(ExchangeCard card) {
+  final isTest = card.type == CardType.test;
+  final options = isTest ? card.options : const <ExchangeOption>[];
+  return [
+    card.question,
+    if (isTest) '' else card.answer ?? '',
+    // `option1` … `option6`, empty after the last option.
+    for (final option in options) option.text,
+    for (var i = options.length; i < 6; i++) '',
+    [
+      for (final (i, option) in options.indexed)
+        if (option.isCorrect) '${i + 1}',
+    ].join('|'),
+    if (isTest) card.explanation ?? '' else '',
+    card.example ?? '',
+    card.notes ?? '',
+  ];
+}
+
+/// The first characters that make Excel and Google Sheets read a cell as a
+/// formula (or, for tab and carriage return, hide one). A shared file could
+/// carry `=HYPERLINK(...)` or worse in a card; opened in a spreadsheet, it
+/// would run.
+const _formulaStarts = '=+-@\t\r';
+
+/// Protection against "CSV injection": a cell that starts like a formula
+/// gets an apostrophe in front, so the spreadsheet shows it as text. The
+/// apostrophe is visible in the cell, the usual price of this protection;
+/// this app removes it again when it imports the file ([_unguard]).
+String _guard(String cell) =>
+    cell.isNotEmpty && _formulaStarts.contains(cell[0]) ? "'$cell" : cell;
+
+/// Undoes [_guard] when importing: an apostrophe followed by a formula
+/// start is the one the app added.
+String _unguard(String cell) =>
+    cell.length > 1 && cell[0] == "'" && _formulaStarts.contains(cell[1])
+    ? cell.substring(1)
+    : cell;
+
 /// [parseCardsCsv] in a background isolate, so a large file does not
 /// freeze the screen (see `encodeExchangeInBackground`).
 Future<CsvImport> parseCardsCsvInBackground(Uint8List bytes) =>
@@ -246,7 +311,7 @@ class _Row {
   String operator [](String column) {
     final index = _columns[column];
     if (index == null || index >= _cells.length) return '';
-    return '${_cells[index]}'.replaceAll('\r\n', '\n');
+    return _unguard('${_cells[index]}'.replaceAll('\r\n', '\n'));
   }
 }
 

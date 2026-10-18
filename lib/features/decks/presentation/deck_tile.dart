@@ -10,6 +10,7 @@ import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
+import 'package:estudicards/features/import_export/presentation/share.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/stats/presentation/reset_statistics.dart';
@@ -171,7 +172,7 @@ class _ErrorsChip extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of a deck. "Compartir" arrives in phase 5.
+/// The ⋮ menu of a deck (P03).
 class _DeckMenu extends ConsumerWidget {
   const new({required this.summary, required this.project});
 
@@ -193,6 +194,12 @@ class _DeckMenu extends ConsumerWidget {
           value: () =>
               unawaited(showDeckForm(context, project: project, deck: deck)),
           child: Text(l10n.edit),
+        ),
+        PopupMenuItem(
+          key: const Key('deckTile.share'),
+          value: () =>
+              unawaited(shareDeck(context, ref, project: project, deck: deck)),
+          child: Text(l10n.share),
         ),
         PopupMenuItem(
           value: () => unawaited(
