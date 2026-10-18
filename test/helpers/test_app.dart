@@ -15,6 +15,7 @@ import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/random.dart';
 import 'package:estudicards/core/voice/voice.dart';
+import 'package:estudicards/features/import_export/presentation/import_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,6 +65,7 @@ Future<GoRouter> pumpTestApp(
   ImageSource? imageSource,
   DocumentPicker? documentPicker,
   FileExporter? fileExporter,
+  int? backupLimit,
   Voice? voice,
 }) async {
   final folder = imagesFolder ?? createTempFolder();
@@ -100,6 +102,8 @@ Future<GoRouter> pumpTestApp(
         fileExporterProvider.overrideWithValue(
           fileExporter ?? FakeFileExporter(),
         ),
+        if (backupLimit != null)
+          backupLimitProvider.overrideWithValue(backupLimit),
         // No background isolate: it would never finish under fake time.
         backgroundRunnerProvider.overrideWithValue(
           <T>(FutureOr<T> Function() work) => Future.sync(work),

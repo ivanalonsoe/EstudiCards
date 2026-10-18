@@ -55,99 +55,113 @@ class ExchangeRepository {
     );
   }
 
+  /// The size of every image a backup would carry, one per card side that
+  /// has one, to work out the backup's size before writing it (T5.10).
+  Future<List<int>> backupImageSizes() async => [
+    for (final card in await _dao.allCards())
+      for (final path in [?card.questionImage, ?card.answerImage])
+        ?await _images.sizeOf(path),
+  ];
+
   /// Everything in the database (US-24): every project, archived and in the
   /// trash too, with all its decks (those in the trash too), cards, images
   /// and dates, plus the sessions, attempts, statistics and settings.
-  Future<BackupDocument> exportBackup() async => BackupDocument(
-    exportedAt: _clock.now(),
-    appVersion: appVersion,
-    projects: [
-      for (final row in await _dao.allProjects())
-        ExchangeProject(
-          id: row.id,
-          name: row.name,
-          description: row.description,
-          color: row.color,
-          icon: row.icon,
-          isFavorite: row.isFavorite,
-          isArchived: row.isArchived,
-          archivedAt: row.archivedAt,
-          deletedAt: row.deletedAt,
-          lastUsedAt: row.lastUsedAt,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-          decks: [
-            for (final deck in await _dao.allDecksOf(row.id))
-              await _deck(deck, full: true),
-          ],
-        ),
-    ],
-    sessions: [
-      for (final s in await _dao.allSessions())
-        ExchangeSession(
-          id: s.id,
-          projectId: s.projectId,
-          mode: s.mode,
-          direction: s.direction,
-          requestedCount: s.requestedCount,
-          prioritizeFailed: s.prioritizeFailed,
-          repeatFailed: s.repeatFailed,
-          timerType: s.timerType,
-          timerSeconds: s.timerSeconds,
-          status: s.status,
-          startedAt: s.startedAt,
-          endedAt: s.endedAt,
-          activeDurationMs: s.activeDurationMs,
-          correctTotal: s.correctTotal,
-          wrongTotal: s.wrongTotal,
-          unansweredTotal: s.unansweredTotal,
-        ),
-    ],
-    sessionDecks: [
-      for (final s in await _dao.allSessionDecks())
-        ExchangeSessionDeck(sessionId: s.sessionId, deckId: s.deckId),
-    ],
-    attempts: [
-      for (final a in await _dao.allAttempts())
-        ExchangeAttempt(
-          id: a.id,
-          sessionId: a.sessionId,
-          cardId: a.cardId,
-          direction: a.direction,
-          result: a.result,
-          source: a.source,
-          isFirstAttempt: a.isFirstAttempt,
-          // Stored as JSON text; in the file it is a list (§8.2).
-          selectedOptionIds: switch (a.selectedOptionIds) {
-            final json? => (jsonDecode(json) as List).cast<String>(),
-            null => null,
-          },
-          responseTimeMs: a.responseTimeMs,
-          answeredAt: a.answeredAt,
-          localDay: a.localDay,
-        ),
-    ],
-    cardStats: [
-      for (final s in await _dao.allCardStats())
-        ExchangeCardStats(
-          cardId: s.cardId,
-          direction: s.direction,
-          correctCount: s.correctCount,
-          wrongCount: s.wrongCount,
-          consecutiveCorrect: s.consecutiveCorrect,
-          inErrorList: s.inErrorList,
-          lastResult: s.lastResult,
-          lastAttemptAt: s.lastAttemptAt,
-        ),
-    ],
-    settings: {
-      for (final setting in await _dao.allSettings())
-        setting.key: setting.value,
-    },
-  );
+  /// Without [withImages], the cards come without their images (T5.10).
+  Future<BackupDocument> exportBackup({bool withImages = true}) async =>
+      BackupDocument(
+        exportedAt: _clock.now(),
+        appVersion: appVersion,
+        projects: [
+          for (final row in await _dao.allProjects())
+            ExchangeProject(
+              id: row.id,
+              name: row.name,
+              description: row.description,
+              color: row.color,
+              icon: row.icon,
+              isFavorite: row.isFavorite,
+              isArchived: row.isArchived,
+              archivedAt: row.archivedAt,
+              deletedAt: row.deletedAt,
+              lastUsedAt: row.lastUsedAt,
+              createdAt: row.createdAt,
+              updatedAt: row.updatedAt,
+              decks: [
+                for (final deck in await _dao.allDecksOf(row.id))
+                  await _deck(deck, full: true, withImages: withImages),
+              ],
+            ),
+        ],
+        sessions: [
+          for (final s in await _dao.allSessions())
+            ExchangeSession(
+              id: s.id,
+              projectId: s.projectId,
+              mode: s.mode,
+              direction: s.direction,
+              requestedCount: s.requestedCount,
+              prioritizeFailed: s.prioritizeFailed,
+              repeatFailed: s.repeatFailed,
+              timerType: s.timerType,
+              timerSeconds: s.timerSeconds,
+              status: s.status,
+              startedAt: s.startedAt,
+              endedAt: s.endedAt,
+              activeDurationMs: s.activeDurationMs,
+              correctTotal: s.correctTotal,
+              wrongTotal: s.wrongTotal,
+              unansweredTotal: s.unansweredTotal,
+            ),
+        ],
+        sessionDecks: [
+          for (final s in await _dao.allSessionDecks())
+            ExchangeSessionDeck(sessionId: s.sessionId, deckId: s.deckId),
+        ],
+        attempts: [
+          for (final a in await _dao.allAttempts())
+            ExchangeAttempt(
+              id: a.id,
+              sessionId: a.sessionId,
+              cardId: a.cardId,
+              direction: a.direction,
+              result: a.result,
+              source: a.source,
+              isFirstAttempt: a.isFirstAttempt,
+              // Stored as JSON text; in the file it is a list (§8.2).
+              selectedOptionIds: switch (a.selectedOptionIds) {
+                final json? => (jsonDecode(json) as List).cast<String>(),
+                null => null,
+              },
+              responseTimeMs: a.responseTimeMs,
+              answeredAt: a.answeredAt,
+              localDay: a.localDay,
+            ),
+        ],
+        cardStats: [
+          for (final s in await _dao.allCardStats())
+            ExchangeCardStats(
+              cardId: s.cardId,
+              direction: s.direction,
+              correctCount: s.correctCount,
+              wrongCount: s.wrongCount,
+              consecutiveCorrect: s.consecutiveCorrect,
+              inErrorList: s.inErrorList,
+              lastResult: s.lastResult,
+              lastAttemptAt: s.lastAttemptAt,
+            ),
+        ],
+        settings: {
+          for (final setting in await _dao.allSettings())
+            setting.key: setting.value,
+        },
+      );
 
   /// A deck and its cards. A backup ([full]) adds the dates and the trash.
-  Future<ExchangeDeck> _deck(DeckRow row, {bool full = false}) async {
+  Future<ExchangeDeck> _deck(
+    DeckRow row, {
+    bool full = false,
+    bool withImages = true,
+  }) async {
     final cards = await _dao.cardsOf([row.id]);
     final options = await _dao.optionsOf([for (final card in cards) card.id]);
     return ExchangeDeck(
@@ -164,10 +178,15 @@ class ExchangeRepository {
       updatedAt: full ? row.updatedAt : null,
       cards: [
         for (final card in cards)
-          await _card(card, [
-            for (final option in options)
-              if (option.cardId == card.id) option,
-          ], full: full),
+          await _card(
+            card,
+            [
+              for (final option in options)
+                if (option.cardId == card.id) option,
+            ],
+            full: full,
+            withImages: withImages,
+          ),
       ],
     );
   }
@@ -176,6 +195,7 @@ class ExchangeRepository {
     CardRow row,
     List<CardOptionRow> options, {
     required bool full,
+    required bool withImages,
   }) async => ExchangeCard(
     createdAt: full ? row.createdAt : null,
     updatedAt: full ? row.updatedAt : null,
@@ -187,8 +207,8 @@ class ExchangeRepository {
     allowMultiple: row.allowMultiple,
     example: row.example,
     notes: row.notes,
-    questionImage: await _image(row.questionImage),
-    answerImage: await _image(row.answerImage),
+    questionImage: withImages ? await _image(row.questionImage) : null,
+    answerImage: withImages ? await _image(row.answerImage) : null,
     options: [
       for (final option in options)
         ExchangeOption(

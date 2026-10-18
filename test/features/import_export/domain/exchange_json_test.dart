@@ -445,11 +445,14 @@ void main() {
       }
     });
 
-    test('a file over the size limit, before reading it', () {
-      expect(
-        () => decodeExchange(Uint8List(maxJsonFileBytes + 1)),
-        _failsWith(ExchangeError.tooLarge),
-      );
+    test('a shared deck over its 100 MB limit (T5.10)', () {
+      final deck = encodeExchange(_deckDocument());
+      // Spaces after the JSON keep it valid and make it big enough.
+      final padded = Uint8List(maxJsonFileBytes + 1)
+        ..setAll(0, deck)
+        ..fillRange(deck.length, maxJsonFileBytes + 1, 0x20);
+
+      expect(() => decodeExchange(padded), _failsWith(ExchangeError.tooLarge));
     });
 
     test('missing or mistyped fields, saying where they are', () {

@@ -1515,6 +1515,23 @@
     "description": "Body of the dialog that deletes an automatic backup.",
     "placeholders": { "date": { "type": "String" } }
   },
+  "backupTooLargeTitle": "La copia es demasiado grande",
+  "@backupTooLargeTitle": { "description": "Dialog when a full backup would be bigger than the app can restore (T5.10)." },
+  "backupTooLargeBody": "Con las imágenes ocuparía unos {size} y no se podría restaurar: el máximo es {max}.",
+  "@backupTooLargeBody": {
+    "description": "Body of the dialog for a backup over the size limit.",
+    "placeholders": { "size": { "type": "String" }, "max": { "type": "String" } }
+  },
+  "backupWithoutImages": "Exportar sin imágenes",
+  "@backupWithoutImages": { "description": "Option: a full backup without the card images." },
+  "backupWithoutImagesHint": "Copia completa con estadísticas, sin las imágenes",
+  "@backupWithoutImagesHint": { "description": "What «Exportar sin imágenes» does." },
+  "backupDeckByDeck": "Compartir las barajas una a una",
+  "@backupDeckByDeck": { "description": "Option: share each deck by hand instead of a full backup." },
+  "backupDeckByDeckHint": "Cada baraja con sus imágenes, sin estadísticas",
+  "@backupDeckByDeckHint": { "description": "What «Compartir las barajas una a una» means." },
+  "backupDeckByDeckHelp": "Abre cada baraja y usa «Compartir» › JSON: lleva sus imágenes, pero no las estadísticas.",
+  "@backupDeckByDeckHelp": { "description": "Snackbar after choosing to share the decks one by one." },
   "importDefaultDeck": "Importadas",
   "@importDefaultDeck": { "description": "Deck of the CSV rows without a «deck» column when a CSV becomes a new project (SPEC §8.3)." },
   "importCardsTitle": "Importar tarjetas",

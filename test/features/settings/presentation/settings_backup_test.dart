@@ -88,6 +88,66 @@ void main() {
     });
   });
 
+  group('a backup over the size limit (T5.10)', () {
+    Future<FakeFileExporter> openWithLimit(WidgetTester tester) async {
+      final exporter = FakeFileExporter();
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        location: AppRoutes.settings,
+        fileExporter: exporter,
+        // Any backup is bigger than 10 bytes.
+        backupLimit: 10,
+      );
+      await tapAndSettle(tester, _key('settings.exportAll'));
+      return exporter;
+    }
+
+    testWidgets('offers to export without images', (tester) async {
+      final exporter = await openWithLimit(tester);
+
+      expect(find.text('La copia es demasiado grande'), findsOneWidget);
+      expect(
+        find.text('Copia completa con estadísticas, sin las imágenes'),
+        findsOneWidget,
+      );
+      await tapAndSettle(tester, _key('backupTooLarge.withoutImages'));
+      await tapAndSettle(tester, _key('backupTooLarge.continue'));
+
+      final file = exporter.exported.single;
+      expect(file.name, 'estudicards-backup-2026-10-06.json');
+      final backup = decodeExchange(file.bytes) as BackupDocument;
+      expect(backup.projects.single.name, 'Inglés B2');
+    });
+
+    testWidgets('or explains how to share the decks one by one', (
+      tester,
+    ) async {
+      final exporter = await openWithLimit(tester);
+
+      await tapAndSettle(tester, _key('backupTooLarge.deckByDeck'));
+      await tapAndSettle(tester, _key('backupTooLarge.continue'));
+
+      expect(exporter.exported, isEmpty);
+      expect(
+        find.text(
+          'Abre cada baraja y usa «Compartir» › JSON: lleva sus imágenes, '
+          'pero no las estadísticas.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('"Cancelar" exports nothing', (tester) async {
+      final exporter = await openWithLimit(tester);
+
+      await tapAndSettle(tester, _key('backupTooLarge.cancel'));
+
+      expect(exporter.exported, isEmpty);
+    });
+  });
+
   testWidgets('shows the app version and the privacy note', (tester) async {
     await pumpTestApp(
       tester,

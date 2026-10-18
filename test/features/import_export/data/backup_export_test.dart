@@ -193,6 +193,50 @@ void main() {
     expect(attempt.localDay, isNull);
   });
 
+  group('the size of a backup (T5.10)', () {
+    Future<String> cardWithImage() async {
+      final clock = FakeClock(now);
+      final project = await ProjectsRepository(
+        ProjectsDao(db),
+        clock,
+      ).create(const ProjectInput(name: 'P', color: 'blue', icon: 'book'));
+      final deck = await DecksRepository(
+        DecksDao(db),
+        clock,
+      ).create(project.id, const DeckInput(name: 'D'));
+      final image = await images.saveImported(jpegBytes(40, 30));
+      await CardsRepository(CardsDao(db), clock, images).create(
+        deck.id,
+        CardInput(
+          type: CardType.simple,
+          question: 'q',
+          answer: 'a',
+          questionImage: image,
+          answerImage: image,
+        ),
+      );
+      return image!;
+    }
+
+    test('a backup can leave the images out', () async {
+      await cardWithImage();
+
+      final backup = await repository.exportBackup(withImages: false);
+
+      final card = backup.projects.single.decks.single.cards.single;
+      expect(card.questionImage, isNull);
+      expect(card.answerImage, isNull);
+    });
+
+    test('lists the size of every image a backup would carry', () async {
+      final image = await cardWithImage();
+      final size = File('${folder.path}/$image').lengthSync();
+
+      // The same file twice: once as the question, once as the answer.
+      expect(await repository.backupImageSizes(), [size, size]);
+    });
+  });
+
   test('an empty database gives an empty backup', () async {
     final backup = await repository.exportBackup();
 

@@ -13,6 +13,7 @@ import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_input.dart';
+import 'package:estudicards/features/import_export/domain/backup_size.dart';
 import 'package:estudicards/features/import_export/domain/exchange_document.dart';
 import 'package:estudicards/features/import_export/domain/import_limits.dart';
 import 'package:estudicards/features/projects/domain/project_input.dart';
@@ -29,7 +30,8 @@ const exchangeVersion = 1;
 
 /// Why a file cannot be read as an EstudiCards JSON file.
 enum ExchangeError {
-  /// Bigger than [maxJsonFileBytes].
+  /// Bigger than its limit: [maxBackupFileBytes] for a backup,
+  /// [maxJsonFileBytes] for a shared project or deck (`exchangeTooLarge`).
   tooLarge,
 
   /// Not UTF-8 text, not JSON, or not a JSON object.
@@ -109,8 +111,9 @@ Uint8List encodeExchange(ExchangeDocument document) {
 /// Reads a file. Throws [ExchangeFormatException] if it is not a valid
 /// EstudiCards file.
 ExchangeDocument decodeExchange(Uint8List bytes) {
-  // The size is checked first, before reading anything.
-  if (bytes.length > maxJsonFileBytes) {
+  // The size is checked first, before reading anything, and again once the
+  // kind is known: a shared file has a smaller limit than a backup.
+  if (exchangeTooLarge(bytes.length)) {
     throw const ExchangeFormatException(.tooLarge);
   }
   final Object? json;
@@ -136,6 +139,9 @@ ExchangeDocument decodeExchange(Uint8List bytes) {
   }
   final kind = ExchangeKind.values.asNameMap()[json['kind']];
   if (kind == null) throw const ExchangeFormatException(.unknownKind, 'kind');
+  if (exchangeTooLarge(bytes.length, kind: kind)) {
+    throw const ExchangeFormatException(.tooLarge);
+  }
 
   final root = _Json(json, '');
   final exportedAt = root.date('exportedAt');

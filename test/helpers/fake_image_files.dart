@@ -26,4 +26,7 @@ class FakeImageFiles implements ImageFiles {
 
   @override
   Future<String?> saveImported(Uint8List jpeg) async => null;
+
+  @override
+  Future<int?> sizeOf(String relativePath) async => null;
 }
