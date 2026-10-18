@@ -28,7 +28,7 @@ class CardsRepository {
     // if one fails, none is. A card is never left without its options.
     await _dao.transaction(() async {
       await _dao.insertCard(
-        _fields(
+        cardFields(
           input,
           now,
         ).copyWith(id: Value(id), deckId: Value(deckId), createdAt: Value(now)),
@@ -48,7 +48,10 @@ class CardsRepository {
     _checkValid(input);
     final unused = await _dao.transaction(() async {
       final before = await _dao.findById(id);
-      final changed = await _dao.updateCard(id, _fields(input, _clock.now()));
+      final changed = await _dao.updateCard(
+        id,
+        cardFields(input, _clock.now()),
+      );
       if (before == null || changed == 0) {
         throw StateError('No card with id $id');
       }
@@ -198,25 +201,6 @@ class CardsRepository {
     );
   }
 
-  /// The columns the user edits. Each type stores only its own fields: a
-  /// simple card has no explanation or "allow multiple", and a test card
-  /// has no answer. Example and notes are kept for both (SPEC §4.2).
-  static CardsCompanion _fields(CardInput input, DateTime now) {
-    final isTest = input.type == CardType.test;
-    return CardsCompanion(
-      type: Value(input.type.name),
-      question: Value(input.trimmedQuestion),
-      questionImage: Value(input.questionImage),
-      answer: Value(isTest ? null : input.trimmedAnswer),
-      answerImage: Value(input.answerImage),
-      explanation: Value(isTest ? input.trimmedExplanation : null),
-      allowMultiple: Value(isTest && input.allowMultiple),
-      example: Value(input.trimmedExample),
-      notes: Value(input.trimmedNotes),
-      updatedAt: Value(now),
-    );
-  }
-
   /// Saves the options of a test card in the order given, keeping the IDs
   /// it brings, and deletes the stored options that are no longer there. A
   /// simple card ends up with no options.
@@ -249,6 +233,26 @@ class CardsRepository {
     final errors = input.validate();
     if (errors.isNotEmpty) throw InvalidCardException(errors);
   }
+}
+
+/// The columns the user edits. Each type stores only its own fields: a
+/// simple card has no explanation or "allow multiple", and a test card has
+/// no answer. Example and notes are kept for both (SPEC §4.2). The import
+/// engine stores cards with it too.
+CardsCompanion cardFields(CardInput input, DateTime now) {
+  final isTest = input.type == CardType.test;
+  return CardsCompanion(
+    type: Value(input.type.name),
+    question: Value(input.trimmedQuestion),
+    questionImage: Value(input.questionImage),
+    answer: Value(isTest ? null : input.trimmedAnswer),
+    answerImage: Value(input.answerImage),
+    explanation: Value(isTest ? input.trimmedExplanation : null),
+    allowMultiple: Value(isTest && input.allowMultiple),
+    example: Value(input.trimmedExample),
+    notes: Value(input.trimmedNotes),
+    updatedAt: Value(now),
+  );
 }
 
 /// The domain card for a stored [row] and its [options] (already in their

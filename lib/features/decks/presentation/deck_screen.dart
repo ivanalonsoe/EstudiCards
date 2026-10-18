@@ -275,6 +275,10 @@ class _DeckView {
 
   void addCard(BuildContext context) =>
       context.go(AppRoutes.newCard(project.id, deck.id));
+
+  /// Opens the import wizard to add cards to this deck (US-27).
+  void importCards(BuildContext context) =>
+      context.go(AppRoutes.importCards(projectId: project.id, deckId: deck.id));
 }
 
 /// The explanation of a [TransferWarning], with the pairs in short form
@@ -372,9 +376,13 @@ class _MobileDeck extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 _ReviewErrors(view: view, expanded: true),
               ],
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [Expanded(child: _ImportButton(view: view))],
+              ),
               const SizedBox(height: AppSpacing.lg),
               if (view.allCards.isEmpty)
-                const _EmptyDeck()
+                _EmptyDeck(view: view)
               else ...[
                 Row(
                   children: [
@@ -458,6 +466,8 @@ class _DesktopDeck extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
+                _ImportButton(view: view),
+                const SizedBox(width: AppSpacing.sm),
                 _DeckMenu(view: view),
                 // In the header rather than the toolbar, which is full
                 // with the search, the orders and "Añadir tarjeta".
@@ -473,7 +483,7 @@ class _DesktopDeck extends StatelessWidget {
             _Toolbar(view: view),
             const SizedBox(height: AppSpacing.lg),
             if (view.allCards.isEmpty)
-              const _EmptyDeck()
+              _EmptyDeck(view: view)
             else if (view.shownCards.isEmpty)
               _NoResults(query: view.query)
             else
@@ -1324,14 +1334,32 @@ class _DeckMenu extends ConsumerWidget {
   }
 }
 
-/// A deck with no cards (SPEC §5.3). "o importa desde CSV" and "Descargar
-/// plantilla" arrive in phase 5 (decided with the owner).
+/// "Importar CSV": adds the cards of a file to this deck (P07).
+class _ImportButton extends StatelessWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    key: const Key('deckScreen.import'),
+    onPressed: () => view.importCards(context),
+    icon: const Icon(Icons.upload_rounded),
+    label: Text(AppLocalizations.of(context).importCsv),
+  );
+}
+
+/// A deck with no cards (SPEC §5.3): "Añade tu primera tarjeta" and "o
+/// importa desde CSV". "Descargar plantilla" arrives with T5.6.
 class _EmptyDeck extends StatelessWidget {
-  const new();
+  const new({required this.view});
+
+  final _DeckView view;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       key: const Key('deckScreen.empty'),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
@@ -1340,10 +1368,15 @@ class _EmptyDeck extends StatelessWidget {
           Icon(Icons.style_outlined, size: 40, color: colors.textMuted),
           const SizedBox(height: AppSpacing.md),
           Text(
-            AppLocalizations.of(context).emptyCards,
+            l10n.emptyCards,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge
                 ?.copyWith(color: colors.textMuted),
+          ),
+          TextButton(
+            key: const Key('deckScreen.emptyImport'),
+            onPressed: () => view.importCards(context),
+            child: Text(l10n.emptyCardsImport),
           ),
         ],
       ),

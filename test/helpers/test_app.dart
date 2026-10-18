@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -7,6 +8,7 @@ import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/files/card_image.dart';
+import 'package:estudicards/core/files/document_picker.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
@@ -17,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'fake_document_picker.dart';
 import 'fake_image_source.dart';
 import 'fake_voice.dart';
 import 'test_images.dart';
@@ -56,6 +59,7 @@ Future<GoRouter> pumpTestApp(
   String location = AppRoutes.home,
   Directory? imagesFolder,
   ImageSource? imageSource,
+  DocumentPicker? documentPicker,
   Voice? voice,
 }) async {
   final folder = imagesFolder ?? createTempFolder();
@@ -83,6 +87,13 @@ Future<GoRouter> pumpTestApp(
           ),
         ),
         imageSourceProvider.overrideWithValue(imageSource ?? FakeImageSource()),
+        documentPickerProvider.overrideWithValue(
+          documentPicker ?? FakeDocumentPicker(),
+        ),
+        // No background isolate: it would never finish under fake time.
+        backgroundRunnerProvider.overrideWithValue(
+          <T>(FutureOr<T> Function() work) => Future.sync(work),
+        ),
         // The system voices need the real platform; tests use a fake.
         voiceProvider.overrideWithValue(voice ?? FakeVoice()),
       ],

@@ -32,7 +32,7 @@ class AppMenuDrawer extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            for (final destination in menuDestinations)
+            for (final destination in [importDestination, ...menuDestinations])
               NavTile(
                 destination: destination,
                 selected: false,
