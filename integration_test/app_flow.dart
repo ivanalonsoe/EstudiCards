@@ -2,22 +2,83 @@
 // tests (patrol_test/). They drive the app through the screen, the way a
 // user does, on any window size: a sidebar on desktop, a side menu and the
 // back button on a phone.
+import 'dart:convert';
+
 import 'package:drift/native.dart';
 import 'package:estudicards/app/app.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/files/document_picker.dart';
+import 'package:estudicards/core/files/file_exporter.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/features/import_export/domain/exchange_json.dart';
+import 'package:estudicards/features/import_export/presentation/import_providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The whole app with an in-memory database, so tests never touch the
-/// data of the app installed on the device.
-Widget appWithTestDatabase() {
-  final db = AppDatabase(NativeDatabase.memory());
-  return ProviderScope(
-    overrides: [databaseProvider.overrideWithValue(db)],
-    child: const EstudiCardsApp(),
+/// The whole app with an in-memory database ([db], or a new one), so tests
+/// never touch the data of the app installed on the device. [overrides]
+/// replace other services, e.g. the file dialogs.
+Widget appWithTestDatabase({
+  AppDatabase? db,
+  List<Override> overrides = const [],
+}) => ProviderScope(
+  overrides: [
+    databaseProvider.overrideWithValue(
+      db ?? AppDatabase(NativeDatabase.memory()),
+    ),
+    ...overrides,
+  ],
+  child: const EstudiCardsApp(),
+);
+
+/// Keeps the files the app shares or saves instead of opening the system
+/// dialogs, for flows that test what the file holds rather than the
+/// dialogs themselves (E2E-07 opens the real share menu).
+class MemoryFileExporter implements FileExporter {
+  final files = <String, Uint8List>{};
+
+  @override
+  bool get savesToDisk => false;
+
+  @override
+  Future<String?> export({
+    required String name,
+    required Uint8List bytes,
+    required String mimeType,
+    Rect? origin,
+  }) async {
+    files[name] = bytes;
+    return null;
+  }
+}
+
+/// Hands out [name] with [bytes] as the picked file, without the system
+/// dialog (E2E-04 uses the real one).
+class MemoryDocumentPicker implements DocumentPicker {
+  new(this.name, this.bytes);
+
+  final String name;
+  final Uint8List bytes;
+
+  @override
+  Future<PickedDocument?> pick(List<String> extensions) async =>
+      PickedDocument(name: name, size: bytes.length, read: () async => bytes);
+}
+
+/// What a full backup of the running app holds (its `data`, without the
+/// time it was made), to compare two databases.
+Future<Map<String, dynamic>> backupData(WidgetTester tester) async {
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(EstudiCardsApp)),
   );
+  final backup = await container
+      .read(exchangeRepositoryProvider)
+      .exportBackup();
+  final json = jsonDecode(utf8.decode(encodeExchange(backup)));
+  return (json as Map<String, dynamic>)['data'] as Map<String, dynamic>;
 }
 
 /// Flutter's Spanish tooltip for the button that opens the side menu.

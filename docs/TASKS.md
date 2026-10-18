@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.9 | ⏳ 8 / 9 |
+| 5. Import and export | T5.1 – T5.9 | ✅ 9 / 9 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -462,7 +462,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 "replace all" deletes the current data.
     - 🧪 "merge" keeps the item with the most recent `updated_at` and recalculates `card_stats`.
 
-- [ ] **T5.9 Phase 5 wrap-up**
+- [x] **T5.9 Phase 5 wrap-up**
   - 🔗 Export all → new database → restore → compare.
   - 🤖 E2E-04, E2E-05 and E2E-07.
 
