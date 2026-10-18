@@ -29,6 +29,30 @@ class ExchangeRepository {
     );
   }
 
+  /// A project with its decks and cards, as shared (US-26): no statistics,
+  /// no dates and no favourite or archived state. Decks in the trash are
+  /// left out. Throws [StateError] if there is no project with
+  /// [projectId].
+  Future<ProjectDocument> exportProject(String projectId) async {
+    final row = await _dao.projectById(projectId);
+    if (row == null) throw StateError('No project with id $projectId');
+    return ProjectDocument(
+      exportedAt: _clock.now(),
+      appVersion: appVersion,
+      project: ExchangeProject(
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        color: row.color,
+        icon: row.icon,
+        decks: [
+          for (final deck in await _dao.activeDecksOf(projectId))
+            await _deck(deck),
+        ],
+      ),
+    );
+  }
+
   Future<ExchangeDeck> _deck(DeckRow row) async {
     final cards = await _dao.cardsOf([row.id]);
     final options = await _dao.optionsOf([for (final card in cards) card.id]);

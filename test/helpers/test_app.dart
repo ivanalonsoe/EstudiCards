@@ -9,6 +9,7 @@ import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/core/files/card_image.dart';
 import 'package:estudicards/core/files/document_picker.dart';
+import 'package:estudicards/core/files/file_exporter.dart';
 import 'package:estudicards/core/files/image_files.dart';
 import 'package:estudicards/core/files/image_source.dart';
 import 'package:estudicards/core/providers.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'fake_document_picker.dart';
+import 'fake_file_exporter.dart';
 import 'fake_image_source.dart';
 import 'fake_voice.dart';
 import 'test_images.dart';
@@ -60,6 +62,7 @@ Future<GoRouter> pumpTestApp(
   Directory? imagesFolder,
   ImageSource? imageSource,
   DocumentPicker? documentPicker,
+  FileExporter? fileExporter,
   Voice? voice,
 }) async {
   final folder = imagesFolder ?? createTempFolder();
@@ -89,6 +92,9 @@ Future<GoRouter> pumpTestApp(
         imageSourceProvider.overrideWithValue(imageSource ?? FakeImageSource()),
         documentPickerProvider.overrideWithValue(
           documentPicker ?? FakeDocumentPicker(),
+        ),
+        fileExporterProvider.overrideWithValue(
+          fileExporter ?? FakeFileExporter(),
         ),
         // No background isolate: it would never finish under fake time.
         backgroundRunnerProvider.overrideWithValue(

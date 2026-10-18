@@ -5,6 +5,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/features/import_export/presentation/share.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/archive_project.dart';
 import 'package:estudicards/features/projects/presentation/open_project.dart';
@@ -176,7 +177,7 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-/// The ⋮ menu of a project card. "Compartir" arrives in phase 5.
+/// The ⋮ menu of a project card (P01).
 class _ProjectMenu extends ConsumerWidget {
   const new({required this.summary});
 
@@ -198,6 +199,11 @@ class _ProjectMenu extends ConsumerWidget {
           value: () =>
               unawaited(showProjectForm(context, ref, project: project)),
           child: Text(l10n.edit),
+        ),
+        PopupMenuItem(
+          key: const Key('projectCard.share'),
+          value: () => unawaited(shareProject(context, ref, project)),
+          child: Text(l10n.share),
         ),
         PopupMenuItem(
           value: () => unawaited(

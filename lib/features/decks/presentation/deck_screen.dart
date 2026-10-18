@@ -20,6 +20,7 @@ import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_picker.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
+import 'package:estudicards/features/import_export/presentation/share.dart';
 import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/stats/presentation/stats_texts.dart';
@@ -445,12 +446,10 @@ class _DesktopDeck extends StatelessWidget {
             _Breadcrumb(view: view),
             const SizedBox(height: AppSpacing.xl),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // With errors, the title and "Repasar errores" share the
-                // width 3:2, so in a narrow window the button shrinks and
-                // its label ends in "…" instead of overflowing.
                 Expanded(
-                  flex: 3,
+                  flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -466,17 +465,23 @@ class _DesktopDeck extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
-                _ImportButton(view: view),
-                const SizedBox(width: AppSpacing.sm),
-                _DeckMenu(view: view),
-                // In the header rather than the toolbar, which is full
-                // with the search, the orders and "Añadir tarjeta".
-                const SizedBox(width: AppSpacing.sm),
-                if (view.errorCount > 0) ...[
-                  Flexible(flex: 2, child: _ReviewErrors(view: view)),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                _StudyButton(view: view),
+                // The file actions next to the title, as in the design. In
+                // a narrow window they go onto more lines instead of
+                // overflowing.
+                Flexible(
+                  flex: 3,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      _ImportButton(view: view),
+                      _ShareButton(view: view),
+                      _DeckMenu(view: view),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -495,58 +500,83 @@ class _DesktopDeck extends StatelessWidget {
   }
 }
 
-/// The desktop search, the three orders and "Añadir tarjeta" in one row;
-/// in a narrow window, the orders go on a second row.
+/// The desktop search, the three orders, "Repasar errores", "Estudiar" and
+/// "Añadir tarjeta" in one row, as in the design; in a narrow window the
+/// search gets its own row and the rest wrap below it.
 class _Toolbar extends StatelessWidget {
   const new({required this.view});
 
   final _DeckView view;
 
-  /// The width from which the three fit in one row.
-  static const _oneRowWidth = 900.0;
+  /// The width from which everything fits in one row; "Repasar errores"
+  /// needs more.
+  double get _oneRowWidth => view.errorCount > 0 ? 1080 : 880;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final addCard = FilledButton.icon(
-      key: const Key('deckScreen.addCard'),
-      onPressed: () => view.addCard(context),
-      icon: const Icon(Icons.add_rounded),
-      label: Text(l10n.addCard),
+    final actions = [
+      if (view.errorCount > 0) _ReviewErrors(view: view),
+      _StudyButton(view: view),
+      FilledButton.icon(
+        key: const Key('deckScreen.addCard'),
+        onPressed: () => view.addCard(context),
+        icon: const Icon(Icons.add_rounded),
+        label: Text(l10n.addCard),
+      ),
+    ];
+    Widget wrap(List<Widget> children) => Wrap(
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: children,
     );
     if (view.allCards.isEmpty) {
-      return Align(alignment: Alignment.centerRight, child: addCard);
+      return Align(alignment: Alignment.centerRight, child: wrap(actions));
     }
-    final search = ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 360),
-      child: _SearchField(view: view, hint: l10n.searchCardsLong),
-    );
+    final search = _SearchField(view: view, hint: l10n.searchCardsLong);
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= _oneRowWidth) {
           return Row(
             children: [
-              Flexible(child: search),
+              Flexible(
+                flex: 2,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: search,
+                ),
+              ),
               const SizedBox(width: AppSpacing.md),
               _SortSelector(view: view),
               const SizedBox(width: AppSpacing.md),
-              const Spacer(),
-              addCard,
+              // The rest of the width, so the buttons can wrap if they do
+              // not fit.
+              Expanded(
+                flex: 3,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: wrap(actions),
+                ),
+              ),
             ],
           );
         }
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
+            search,
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(child: search),
-                const SizedBox(width: AppSpacing.md),
-                addCard,
+                _SortSelector(view: view),
+                ...actions,
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            _SortSelector(view: view),
           ],
         );
       },
@@ -1289,8 +1319,26 @@ class _SelectionBar extends StatelessWidget {
   }
 }
 
-/// The ⋮ menu of the deck: edit it, or move it to the trash and go back to
-/// the project. "Compartir" arrives in phase 5.
+/// "Compartir" the deck (US-26): an icon in the desktop header, as in the
+/// design.
+class _ShareButton extends ConsumerWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => IconButton.outlined(
+    key: const Key('deckScreen.share'),
+    tooltip: AppLocalizations.of(context).shareDeck,
+    onPressed: () => unawaited(
+      shareDeck(context, ref, project: view.project, deck: view.deck),
+    ),
+    icon: const Icon(Icons.ios_share_rounded),
+  );
+}
+
+/// The ⋮ menu of the deck: edit or share it (on mobile; desktop has an
+/// icon), or move it to the trash and go back to the project.
 class _DeckMenu extends ConsumerWidget {
   const new({required this.view});
 
@@ -1299,6 +1347,9 @@ class _DeckMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final isDesktop =
+        FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
+        FormFactor.desktop;
     return PopupMenuButton<VoidCallback>(
       key: const Key('deckScreen.menu'),
       tooltip: l10n.deckOptions,
@@ -1311,6 +1362,14 @@ class _DeckMenu extends ConsumerWidget {
           ),
           child: Text(l10n.editDeck),
         ),
+        if (!isDesktop)
+          PopupMenuItem(
+            key: const Key('deckScreen.share'),
+            value: () => unawaited(
+              shareDeck(context, ref, project: view.project, deck: view.deck),
+            ),
+            child: Text(l10n.share),
+          ),
         PopupMenuItem(
           value: () => unawaited(
             confirmMoveDeckToTrash(
