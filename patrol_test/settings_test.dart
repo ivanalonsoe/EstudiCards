@@ -33,7 +33,9 @@ void main() {
     await tester.ensureVisible(slider);
     await tester.drag(slider, const Offset(800, 0));
     await tester.pumpAndSettle();
-    await $('160%').waitUntilVisible();
+    // On a small phone the % is scrolled just above the screen once the
+    // slider is in view, so check the value is there, not that it is seen.
+    expect(find.text('160%'), findsOneWidget);
 
     // Close the app and its database, then start it again on the same file.
     await $.pumpWidgetAndSettle(const SizedBox());
@@ -45,6 +47,7 @@ void main() {
     await waitFor(tester, find.byKey(const Key('screen.dashboard')));
     expect(brightness(), Brightness.dark);
     await goTo(tester, 'settings');
-    await $('160%').waitUntilVisible();
+    await waitFor(tester, find.byKey(const Key('settings.cardTextScale')));
+    expect(find.text('160%'), findsOneWidget);
   });
 }
