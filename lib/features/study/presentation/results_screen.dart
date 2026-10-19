@@ -3,6 +3,8 @@ import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/app/theme/motion.dart';
+import 'package:estudicards/core/widgets/play_once.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
 import 'package:estudicards/features/stats/presentation/stats_texts.dart';
@@ -259,6 +261,9 @@ class _DesktopResults extends StatelessWidget {
 
 /// The % correct in an orange ring, with the subtle celebration around it
 /// from 80% (SPEC §13.2, assumption 4).
+///
+/// The ring fills up and the confetti bursts out from behind it once
+/// (brief §8). With "reduce motion" on, both just fade in where they end.
 class _ScoreRing extends StatelessWidget {
   const new({required this.results, required this.size});
 
@@ -270,18 +275,27 @@ class _ScoreRing extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final reduced = AppMotion.reduced(context);
     final percent = results.correctPercent;
+    final value = (percent ?? 0) / 100;
     final ring = SizedBox.square(
+      key: const Key('results.ring'),
       dimension: size,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CircularProgressIndicator(
-            value: (percent ?? 0) / 100,
-            strokeWidth: size / 10,
-            strokeCap: StrokeCap.round,
-            backgroundColor: colors.surfaceVariant,
-            color: colors.primary,
+          // From 0 to the result, or straight to it with reduced motion.
+          PlayOnce(
+            duration: AppMotion.ringFill,
+            builder: (context, t, _) => CircularProgressIndicator(
+              value: reduced
+                  ? value
+                  : value * AppMotion.ringFillCurve.transform(t),
+              strokeWidth: size / 10,
+              strokeCap: StrokeCap.round,
+              backgroundColor: colors.surfaceVariant,
+              color: colors.primary,
+            ),
           ),
           Center(
             child: Column(
@@ -319,28 +333,58 @@ class _ScoreRing extends StatelessWidget {
     return SizedBox.square(
       key: const Key('results.celebration'),
       dimension: size * 1.4,
-      child: Stack(
-        children: [
-          Center(child: ring),
-          for (final (alignment, color, square) in pieces)
-            Align(
-              alignment: alignment,
-              child: ExcludeSemantics(
-                child: Transform.rotate(
-                  angle: square ? 0.4 : 0,
-                  child: Container(
-                    width: size / 14,
-                    height: size / 14,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: square ? BoxShape.rectangle : BoxShape.circle,
-                      borderRadius: square ? BorderRadius.circular(2) : null,
-                    ),
+      child: PlayOnce(
+        duration: reduced ? AppMotion.fade : AppMotion.confetti,
+        builder: (context, t, ring) {
+          // The pieces fly out from the middle; the curve overshoots a
+          // little, as if they bounced into place.
+          final flight = reduced ? 1.0 : AppMotion.confettiCurve.transform(t);
+          return Stack(
+            children: [
+              Center(child: ring),
+              Positioned.fill(
+                child: Opacity(
+                  key: const Key('results.celebrationFade'),
+                  // Fully visible in the first third of the flight.
+                  opacity: reduced ? t : (t * 3).clamp(0.0, 1.0),
+                  child: Stack(
+                    children: [
+                      for (final (i, (alignment, color, square))
+                          in pieces.indexed)
+                        Align(
+                          alignment: Alignment.lerp(
+                            Alignment.center,
+                            alignment,
+                            flight,
+                          )!,
+                          child: ExcludeSemantics(
+                            child: Transform.rotate(
+                              angle: (square ? 0.4 : 0) + (1 - flight) * 2,
+                              child: Container(
+                                key: Key('results.confetti.$i'),
+                                width: size / 14,
+                                height: size / 14,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: square
+                                      ? BoxShape.rectangle
+                                      : BoxShape.circle,
+                                  borderRadius: square
+                                      ? BorderRadius.circular(2)
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-            ),
-        ],
+            ],
+          );
+        },
+        child: ring,
       ),
     );
   }

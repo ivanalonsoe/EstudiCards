@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/app/theme/motion.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/play_once.dart';
 import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/speaker_button.dart';
@@ -63,7 +66,11 @@ class _SessionView extends ConsumerStatefulWidget {
   ConsumerState<_SessionView> createState() => _SessionViewState();
 }
 
-class _SessionViewState extends ConsumerState<_SessionView> {
+// `TickerProviderStateMixin` lets this state drive its own animations
+// (`AnimationController`s): it gives them a "ticker", which calls them on
+// every frame while the screen is visible.
+class _SessionViewState extends ConsumerState<_SessionView>
+    with TickerProviderStateMixin {
   late final SessionRunner _runner;
 
   /// Tells the screen when the app changes state, e.g. goes to the
@@ -74,6 +81,45 @@ class _SessionViewState extends ConsumerState<_SessionView> {
   /// the order they happened.
   Future<void> _saving = Future.value();
   bool _started = false;
+
+  // The animations (brief §8) only draw what the engine already did: an
+  // answer is recorded, and the next card is ready, before they start.
+
+  /// The card on screen, to notice when the next one replaces it.
+  CurrentCard? _shown;
+
+  /// The result recorded for [_shown], if any.
+  AttemptResult? _shownResult;
+
+  /// How far the user dragged the card that was just graded, so it leaves
+  /// from there.
+  double _dragOffset = 0;
+
+  /// The card leaving the screen while the next one comes in.
+  _LeavingCard? _leaving;
+
+  /// The answered card leaving and the next one coming in. It rests at its
+  /// end (1) until a card is replaced.
+  ///
+  /// `preserve` keeps the duration with "reduce motion" on, which Flutter
+  /// would otherwise cut 20 times, so the fade that replaces the movement
+  /// can be seen.
+  late final AnimationController _swap = AnimationController(
+    vsync: this,
+    duration: AppMotion.cardSwap,
+    value: 1,
+    animationBehavior: AnimationBehavior.preserve,
+  )..addStatusListener(_onSwapStatus);
+
+  /// The border flash of an answer recorded on a card that stays on
+  /// screen: a checked test card, a revealed answer or a timeout.
+  late final AnimationController _flash = AnimationController(
+    vsync: this,
+    duration: AppMotion.flash,
+    value: 1,
+    animationBehavior: AnimationBehavior.preserve,
+  );
+  AttemptResult? _flashResult;
 
   @override
   void initState() {
@@ -86,6 +132,7 @@ class _SessionViewState extends ConsumerState<_SessionView> {
       onStep: _onStep,
     );
     _started = true;
+    _shown = _currentOf(_runner.state);
     // Flutter reports the app's lifecycle: `resumed` (on screen and in
     // use), `inactive` (on screen but not in use, e.g. during a phone
     // call), `hidden` (not visible: in the background on a phone,
@@ -100,6 +147,8 @@ class _SessionViewState extends ConsumerState<_SessionView> {
   void dispose() {
     _lifecycle.dispose();
     _runner.dispose();
+    _swap.dispose();
+    _flash.dispose();
     super.dispose();
   }
 
@@ -114,10 +163,52 @@ class _SessionViewState extends ConsumerState<_SessionView> {
     if (step.state is Finished) {
       unawaited(_showResults());
     } else if (_started && mounted) {
+      _animate(step);
       // A tick or a button changed the state: draw it again.
       setState(() {});
     }
   }
+
+  /// Starts the animation that [step] calls for, once the engine has
+  /// already moved on: the card leaving when the next one replaces it, or a
+  /// flash when an answer is recorded on a card that stays.
+  void _animate(SessionStep step) {
+    final previous = _shown;
+    final next = _currentOf(step.state);
+    for (final attempt in step.attempts) {
+      if (attempt.result != AttemptResult.unanswered) {
+        _shownResult = attempt.result;
+      }
+    }
+    _shown = next;
+    if (previous == null || next == null) return;
+    if (next.turn != previous.turn) {
+      _leaving = _LeavingCard(
+        card: previous,
+        result: _shownResult,
+        dragOffset: _dragOffset,
+      );
+      _shownResult = null;
+      _dragOffset = 0;
+      _flash.value = 1;
+      _swap.forward(from: 0);
+    } else if (step.attempts.isNotEmpty && _shownResult != null) {
+      _flashResult = _shownResult;
+      _flash.forward(from: 0);
+    }
+  }
+
+  void _onSwapStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && mounted) {
+      setState(() => _leaving = null);
+    }
+  }
+
+  static CurrentCard? _currentOf(SessionState state) => switch (state) {
+    InProgress(:final current) => current,
+    Paused(:final session) => session.current,
+    Finished() => null,
+  };
 
   /// Once the end is saved, the results replace the session.
   Future<void> _showResults() async {
@@ -135,9 +226,21 @@ class _SessionViewState extends ConsumerState<_SessionView> {
   }
 
   /// "Acerté" or "Fallé", with a light vibration on phones (brief §8).
-  void _grade({required bool correct, required bool haptics}) {
+  /// [dragOffset] is how far the card was dragged to answer, if it was.
+  void _grade({
+    required bool correct,
+    required bool haptics,
+    double dragOffset = 0,
+  }) {
     if (haptics) unawaited(HapticFeedback.lightImpact());
+    _dragOffset = dragOffset;
     _send((turn) => SelfGrade(turn: turn, correct: correct));
+  }
+
+  /// "Comprobar", with the same light vibration on phones.
+  void _check({required bool haptics}) {
+    if (haptics) unawaited(HapticFeedback.lightImpact());
+    _send((turn) => Check(turn: turn));
   }
 
   /// "Salir" (US-19 AC3): after confirming, the session ends and what was
@@ -199,17 +302,37 @@ class _SessionViewState extends ConsumerState<_SessionView> {
                       )
                     : _CardAndActions(
                         isDesktop: isDesktop,
-                        card: _SwipeToGrade(
-                          // Swiping is for phones and tablets (US-15 AC2).
-                          enabled: !isDesktop && step is Flipped,
-                          onGrade: (correct) =>
-                              _grade(correct: correct, haptics: true),
-                          child: _SessionCard(
-                            current: session.current,
-                            projectId: widget.launch.projectId,
-                            onFlip: () => _send((turn) => Flip(turn: turn)),
-                            onOptionTap: (id) => _send(
-                              (turn) => ToggleOption(turn: turn, optionId: id),
+                        card: _AnimatedCards(
+                          swap: _swap,
+                          flash: _flash,
+                          flashResult: _flashResult,
+                          leaving: _leaving,
+                          leavingCard: switch (_leaving) {
+                            final leaving? => _SessionCard(
+                              current: leaving.card,
+                              projectId: widget.launch.projectId,
+                              onFlip: () {},
+                              onOptionTap: (_) {},
+                            ),
+                            null => null,
+                          },
+                          card: _SwipeToGrade(
+                            // Swiping is for phones and tablets (US-15 AC2).
+                            enabled: !isDesktop && step is Flipped,
+                            onGrade: ({required correct, required offset}) =>
+                                _grade(
+                                  correct: correct,
+                                  haptics: true,
+                                  dragOffset: offset,
+                                ),
+                            child: _SessionCard(
+                              current: session.current,
+                              projectId: widget.launch.projectId,
+                              onFlip: () => _send((turn) => Flip(turn: turn)),
+                              onOptionTap: (id) => _send(
+                                (turn) =>
+                                    ToggleOption(turn: turn, optionId: id),
+                              ),
                             ),
                           ),
                         ),
@@ -217,7 +340,7 @@ class _SessionViewState extends ConsumerState<_SessionView> {
                           step: step,
                           isTest: isTest,
                           onFlip: () => _send((turn) => Flip(turn: turn)),
-                          onCheck: () => _send((turn) => Check(turn: turn)),
+                          onCheck: () => _check(haptics: !isDesktop),
                           onReveal: () =>
                               _send((turn) => RevealAnswer(turn: turn)),
                           onLeave: () =>
@@ -549,34 +672,73 @@ class _TimerChip extends StatelessWidget {
     final time = _clockText(
       Duration(seconds: (timeLeft.inMilliseconds / 1000).ceil()),
     );
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: warning
+            ? colors.warning.withValues(alpha: 0.15)
+            : colors.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppRadii.chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.schedule_rounded, size: 16, color: color),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            time,
+            key: const Key('session.timer'),
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: color),
+          ),
+        ],
+      ),
+    );
     return Semantics(
       label: AppLocalizations.of(context).timeLeftLabel(time),
       excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: warning
-              ? colors.warning.withValues(alpha: 0.15)
-              : colors.surfaceVariant,
-          borderRadius: BorderRadius.circular(AppRadii.chip),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.schedule_rounded, size: 16, color: color),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              time,
-              key: const Key('session.timer'),
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: color),
-            ),
-          ],
-        ),
-      ),
+      child: warning ? _Pulse(beat: time, child: chip) : chip,
+    );
+  }
+}
+
+/// The gentle pulse of the timer in its last seconds (brief §8): the chip
+/// grows a little and back, once per second, or only dims a little with
+/// "reduce motion" on.
+///
+/// Each beat is its own short animation, started when the time shown
+/// changes ([beat]), never a loop. So it never delays the timer (it only
+/// draws what the timer says), and between beats nothing moves: tests that
+/// wait for the screen to be still (`pumpAndSettle`) still finish.
+class _Pulse extends StatelessWidget {
+  const new({required this.beat, required this.child});
+
+  final String beat;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = AppMotion.reduced(context);
+    return PlayOnce(
+      // Plays again, from the start, every time the second changes.
+      replayKey: beat,
+      duration: AppMotion.timerPulse,
+      builder: (context, t, child) {
+        // Up and back down: 0 at both ends, 1 in the middle.
+        final strength = math.sin(math.pi * t);
+        return Transform.scale(
+          key: const Key('session.timerPulse'),
+          scale: reduced ? 1 : 1 + 0.08 * strength,
+          child: Opacity(
+            opacity: reduced ? 1 - 0.4 * strength : 1,
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
@@ -774,6 +936,174 @@ class _SessionCard extends ConsumerWidget {
   }
 }
 
+/// The card that was on screen, while it leaves (brief §8, "Next card").
+class _LeavingCard {
+  const new({
+    required this.card,
+    required this.result,
+    required this.dragOffset,
+  });
+
+  final CurrentCard card;
+
+  /// What was recorded for it: it leaves to the right if correct and to
+  /// the left if wrong, with its ✓ or ✗. Null when it was left for later,
+  /// and then it just fades away.
+  final AttemptResult? result;
+
+  /// How far it had been dragged to answer, so it leaves from there.
+  final double dragOffset;
+}
+
+/// The card on screen and the animations around it: the card that is
+/// leaving goes off over it towards the side of its answer, and the new
+/// one grows into place (brief §8). An answer recorded on a card that stays
+/// flashes its border. With "reduce motion" on, the cards only fade.
+///
+/// The leaving card is drawn on top but lets taps through, so the new card
+/// can be used at once.
+class _AnimatedCards extends StatelessWidget {
+  const new({
+    required this.swap,
+    required this.flash,
+    required this.flashResult,
+    required this.leaving,
+    required this.leavingCard,
+    required this.card,
+  });
+
+  final Animation<double> swap;
+  final Animation<double> flash;
+  final AttemptResult? flashResult;
+  final _LeavingCard? leaving;
+  final Widget? leavingCard;
+  final Widget card;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = AppMotion.reduced(context);
+    // `AnimatedBuilder` builds again on every frame of the animations.
+    return AnimatedBuilder(
+      animation: Listenable.merge([swap, flash]),
+      builder: (context, _) {
+        final leaving = this.leaving;
+        final leavingCard = this.leavingCard;
+        final swapping =
+            swap.status == AnimationStatus.forward &&
+            leaving != null &&
+            leavingCard != null;
+        // How far the swap has gone, from 0 to 1 (1 when there is none).
+        final t = swapping
+            ? AppMotion.cardSwapCurve.transform(swap.value)
+            : 1.0;
+        final flashResult = this.flashResult;
+        final flashing =
+            flash.status == AnimationStatus.forward && flashResult != null;
+        return Stack(
+          children: [
+            // The new card. Its wrappers are always there, so it keeps its
+            // state when the animation ends.
+            Opacity(
+              opacity: reduced ? t : 0.3 + 0.7 * t,
+              child: Transform.scale(
+                scale: reduced ? 1 : 0.94 + 0.06 * t,
+                child: card,
+              ),
+            ),
+            if (flashing)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 1 - flash.value,
+                  child: _ResultFlash(result: flashResult, withIcon: false),
+                ),
+              ),
+            if (swapping)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final result = leaving.result;
+                      // Right for correct, left for wrong, nowhere when it
+                      // was left for later.
+                      final side = switch (result) {
+                        AttemptResult.correct => 1,
+                        AttemptResult.wrong => -1,
+                        _ => 0,
+                      };
+                      Widget out = Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          leavingCard,
+                          if (result != null)
+                            _ResultFlash(result: result, withIcon: true),
+                        ],
+                      );
+                      if (!reduced) {
+                        final dx =
+                            leaving.dragOffset +
+                            side * constraints.maxWidth * 1.2 * t;
+                        out = Transform.translate(
+                          offset: Offset(dx, 0),
+                          child: Transform.rotate(
+                            angle: dx / 2000,
+                            child: Transform.scale(
+                              // Without a side, it shrinks a little instead.
+                              scale: side == 0 ? 1 - 0.1 * t : 1,
+                              child: out,
+                            ),
+                          ),
+                        );
+                      }
+                      return Opacity(opacity: 1 - t, child: out);
+                    },
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// A green or red border over the card, with a big ✓ or ✗ in the middle
+/// when [withIcon]: colour is never the only sign (brief §9). Screen
+/// readers already hear the result, so it is only decoration.
+class _ResultFlash extends StatelessWidget {
+  const new({required this.result, required this.withIcon});
+
+  final AttemptResult result;
+  final bool withIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final correct = result == AttemptResult.correct;
+    final color = correct ? colors.success : colors.error;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          key: Key('session.flash.${correct ? 'correct' : 'wrong'}'),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppRadii.studyCard),
+            border: Border.all(color: color, width: 3),
+          ),
+          child: withIcon
+              ? Center(
+                  child: Icon(
+                    correct ? Icons.check_rounded : Icons.close_rounded,
+                    size: 72,
+                    color: color,
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
 /// Lets a flipped card be dragged to answer on phones (US-15 AC2): to the
 /// right is "Acerté" and to the left "Fallé". While dragging, the card is
 /// tinted green with ✓ or red with ✗ (brief §6.9).
@@ -785,7 +1115,9 @@ class _SwipeToGrade extends StatefulWidget {
   });
 
   final bool enabled;
-  final ValueChanged<bool> onGrade;
+
+  /// Called with whether it was "Acerté" and how far the card was dragged.
+  final void Function({required bool correct, required double offset}) onGrade;
   final Widget child;
 
   @override
@@ -811,10 +1143,11 @@ class _SwipeToGradeState extends State<_SwipeToGrade> {
       onHorizontalDragEnd: widget.enabled
           ? (_) {
               // Read the offset now: the drag may end before a rebuild.
-              final answered = _offset.abs() >= _threshold;
-              final toTheRight = _offset > 0;
+              final offset = _offset;
               setState(() => _offset = 0);
-              if (answered) widget.onGrade(toTheRight);
+              if (offset.abs() >= _threshold) {
+                widget.onGrade(correct: offset > 0, offset: offset);
+              }
             }
           : null,
       child: Transform.translate(
