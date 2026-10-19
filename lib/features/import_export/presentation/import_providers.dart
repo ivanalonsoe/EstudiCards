@@ -10,6 +10,7 @@ import 'package:estudicards/features/import_export/data/import_dao.dart';
 import 'package:estudicards/features/import_export/data/import_repository.dart';
 import 'package:estudicards/features/import_export/domain/exchange_document.dart';
 import 'package:estudicards/features/import_export/domain/exchange_json.dart';
+import 'package:estudicards/features/import_export/domain/import_limits.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Builds the files to share and back up (see `ExchangeRepository`).
@@ -20,6 +21,9 @@ final exchangeRepositoryProvider = Provider<ExchangeRepository>(
     ref.watch(imageFilesProvider),
   ),
 );
+
+/// The biggest backup "Exportar todo" writes; tests make it small.
+final backupLimitProvider = Provider<int>((ref) => maxBackupFileBytes);
 
 /// The automatic backups (see `AutoBackupFiles`).
 final autoBackupFilesProvider = Provider<AutoBackupFiles>(

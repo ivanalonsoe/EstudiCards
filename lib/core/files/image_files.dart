@@ -28,6 +28,10 @@ abstract interface class ImageFiles {
   /// file does not exist.
   Future<Uint8List?> read(String relativePath);
 
+  /// The size in bytes of the image at [relativePath], or null if the file
+  /// does not exist (to work out the size of a backup, T5.10).
+  Future<int?> sizeOf(String relativePath);
+
   /// Stores a JPEG that came inside an imported file, always under a new
   /// name. Returns its path relative to the images folder, or null if the
   /// bytes are not a usable JPEG.
@@ -46,6 +50,9 @@ class NoImageFiles implements ImageFiles {
 
   @override
   Future<Uint8List?> read(String relativePath) async => null;
+
+  @override
+  Future<int?> sizeOf(String relativePath) async => null;
 
   @override
   Future<String?> saveImported(Uint8List jpeg) async => null;
@@ -96,6 +103,12 @@ class DiskImageFiles implements ImageFiles {
   Future<Uint8List?> read(String relativePath) async {
     final file = File('${(await _folder()).path}/$relativePath');
     return file.existsSync() ? file.readAsBytesSync() : null;
+  }
+
+  @override
+  Future<int?> sizeOf(String relativePath) async {
+    final file = File('${(await _folder()).path}/$relativePath');
+    return file.existsSync() ? file.lengthSync() : null;
   }
 
   /// The bytes come from a file the user picked, so they are checked: only

@@ -35,6 +35,9 @@ class ExchangeDao extends DatabaseAccessor<AppDatabase>
             ..orderBy([(d) => OrderingTerm.asc(d.rowId)]))
           .get();
 
+  /// Every card, in decks in the trash too.
+  Future<List<CardRow>> allCards() => select(cards).get();
+
   Future<List<StudySessionRow>> allSessions() => (select(
     studySessions,
   )..orderBy([(s) => OrderingTerm.asc(s.rowId)])).get();

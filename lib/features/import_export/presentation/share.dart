@@ -171,6 +171,8 @@ class _ShareDialogState extends State<_ShareDialog> {
     final text = Theme.of(context).textTheme;
     return AlertDialog(
       key: const Key('shareDialog'),
+      // Scrolls if it does not fit: a small phone or large text.
+      scrollable: true,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

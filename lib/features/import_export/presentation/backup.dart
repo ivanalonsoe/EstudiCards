@@ -12,6 +12,7 @@ import 'package:estudicards/core/widgets/choice_tile.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/import_export/data/auto_backup_files.dart';
 import 'package:estudicards/features/import_export/data/backup_repository.dart';
+import 'package:estudicards/features/import_export/domain/backup_size.dart';
 import 'package:estudicards/features/import_export/domain/exchange_document.dart';
 import 'package:estudicards/features/import_export/domain/exchange_json.dart';
 import 'package:estudicards/features/import_export/domain/export_names.dart';
@@ -32,8 +33,42 @@ Future<void> exportAll(BuildContext context, WidgetRef ref) async {
   final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
   try {
     final clock = ref.read(clockProvider);
-    final backup = await ref.read(exchangeRepositoryProvider).exportBackup();
-    final bytes = await _encode(ref.read(backgroundRunnerProvider), backup);
+    final repository = ref.read(exchangeRepositoryProvider);
+    final run = ref.read(backgroundRunnerProvider);
+    final limit = ref.read(backupLimitProvider);
+    // First without images, which is quick, to work out the size of the
+    // whole backup before writing it (T5.10).
+    final textOnly = await _encode(
+      run,
+      await repository.exportBackup(withImages: false),
+    );
+    final size = estimatedBackupBytes(
+      textBytes: textOnly.length,
+      imageSizes: await repository.backupImageSizes(),
+    );
+    final Uint8List bytes;
+    if (size <= limit) {
+      bytes = await _encode(run, await repository.exportBackup());
+    } else {
+      // Too big to restore: the user chooses another way.
+      if (!context.mounted) return;
+      final choice = await showDialog<_TooLargeChoice>(
+        context: context,
+        builder: (context) =>
+            _BackupTooLargeDialog(size: megabytes(size), max: megabytes(limit)),
+      );
+      switch (choice) {
+        case null:
+          return;
+        case _TooLargeChoice.deckByDeck:
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.backupDeckByDeckHelp)),
+          );
+          return;
+        case _TooLargeChoice.withoutImages:
+          bytes = textOnly;
+      }
+    }
     final saved = await ref
         .read(fileExporterProvider)
         .export(
@@ -54,6 +89,95 @@ Future<void> exportAll(BuildContext context, WidgetRef ref) async {
 Future<Uint8List> _encode(BackgroundRunner run, BackupDocument backup) =>
     run(() => encodeExchange(backup));
 
+/// What to do with a backup too big to restore (T5.10).
+enum _TooLargeChoice { withoutImages, deckByDeck }
+
+/// "La copia es demasiado grande": export without images (chosen by
+/// default) or share the decks one by one (decided with the owner).
+class _BackupTooLargeDialog extends StatefulWidget {
+  const new({required this.size, required this.max});
+
+  /// The estimated size and the limit, e.g. "512 MB".
+  final String size;
+  final String max;
+
+  @override
+  State<_BackupTooLargeDialog> createState() => _BackupTooLargeDialogState();
+}
+
+class _BackupTooLargeDialogState extends State<_BackupTooLargeDialog> {
+  _TooLargeChoice _choice = _TooLargeChoice.withoutImages;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return AlertDialog(
+      key: const Key('backupTooLarge'),
+      // Scrolls if it does not fit: a small phone or large text.
+      scrollable: true,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.primarySoft,
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Icon(Icons.download_rounded, color: colors.primaryStrong),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(l10n.backupTooLargeTitle, style: text.titleLarge),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.backupTooLargeBody(widget.size, widget.max),
+            style: text.bodyMedium?.copyWith(color: colors.textMuted),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ChoiceTile(
+            key: const Key('backupTooLarge.withoutImages'),
+            icon: Icons.hide_image_outlined,
+            title: l10n.backupWithoutImages,
+            hint: l10n.backupWithoutImagesHint,
+            selected: _choice == _TooLargeChoice.withoutImages,
+            onTap: () =>
+                setState(() => _choice = _TooLargeChoice.withoutImages),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ChoiceTile(
+            key: const Key('backupTooLarge.deckByDeck'),
+            icon: Icons.ios_share_rounded,
+            title: l10n.backupDeckByDeck,
+            hint: l10n.backupDeckByDeckHint,
+            selected: _choice == _TooLargeChoice.deckByDeck,
+            onTap: () => setState(() => _choice = _TooLargeChoice.deckByDeck),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          key: const Key('backupTooLarge.cancel'),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          key: const Key('backupTooLarge.continue'),
+          onPressed: () => Navigator.of(context).pop(_choice),
+          child: Text(l10n.restoreContinue),
+        ),
+      ],
+    );
+  }
+}
+
 /// "Restaurar copia" (US-25): picks a backup file and restores it.
 Future<void> restoreBackupFile(BuildContext context, WidgetRef ref) async {
   final l10n = AppLocalizations.of(context);
@@ -61,11 +185,11 @@ Future<void> restoreBackupFile(BuildContext context, WidgetRef ref) async {
   final file = await ref.read(documentPickerProvider).pick(const ['json']);
   if (file == null || !context.mounted) return;
   final size = file.size;
-  if (size != null && size > maxJsonFileBytes) {
+  if (size != null && size > maxBackupFileBytes) {
     // Refused before reading it, as in the import wizard.
     messenger.showSnackBar(
       SnackBar(
-        content: Text(l10n.importErrorTooLarge(megabytes(maxJsonFileBytes))),
+        content: Text(l10n.importErrorTooLarge(megabytes(maxBackupFileBytes))),
       ),
     );
     return;
@@ -220,6 +344,8 @@ class _RestoreDialogState extends State<_RestoreDialog> {
     final text = Theme.of(context).textTheme;
     return AlertDialog(
       key: const Key('restoreDialog'),
+      // Scrolls if it does not fit: a small phone or large text.
+      scrollable: true,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

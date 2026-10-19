@@ -23,7 +23,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 2. Cards | T2.1 – T2.10 | ✅ 10 / 10 |
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
-| 5. Import and export | T5.1 – T5.9 | ⏳ 8 / 9 |
+| 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
 | 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
 
 ---
@@ -462,7 +462,22 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 "replace all" deletes the current data.
     - 🧪 "merge" keeps the item with the most recent `updated_at` and recalculates `card_stats`.
 
-- [ ] **T5.9 Phase 5 wrap-up**
+- [x] **T5.10 Backup size** · US-24 · Depends on: T5.7, T5.8
+  - Added after T5.8 (decided with the owner): a backup may reach 500 MB (shared files keep 100 MB). Before "Exportar todo", the size is worked out; over the limit, the user can export without images or share the decks one by one.
+  - **Tests first:**
+    - 🧪 a backup of up to 500 MB is read, and a shared file over 100 MB is not.
+    - 🧪 the estimated size adds the images as base64.
+    - 🧩 over the limit, "Exportar todo" offers to export without images or deck by deck.
+
+- [x] **T5.11 Data folder on Windows** · Depends on: T0.4
+  - Added after T5.8 (decided with the owner): on Windows the user chooses where the data lives (default `Documents\EstudiCards`), on the first start or when that folder is gone. A chosen folder not called `EstudiCards` gets one inside it. If the folder has data, the user is asked whether to load it. Data left loose in Documents by earlier versions can be moved there.
+  - **Tests first:**
+    - 🧪 the data folder of a chosen path ends in `EstudiCards`.
+    - 🧪 the chosen folder is remembered, and forgotten if it no longer exists.
+    - 🧪 the data of earlier versions is moved without losing anything.
+    - 🧩 the first start asks for the folder and offers the found data.
+
+- [x] **T5.9 Phase 5 wrap-up**
   - 🔗 Export all → new database → restore → compare.
   - 🤖 E2E-04, E2E-05 and E2E-07.
 

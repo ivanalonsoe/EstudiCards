@@ -8,6 +8,11 @@
 /// base64 makes it a third bigger: 100 MB holds a few hundred images.
 const int maxJsonFileBytes = 100 * 1024 * 1024;
 
+/// A full backup (T5.10, decided with the owner): about 1,400 images. Before
+/// "Exportar todo" writes one, its size is worked out; a bigger one could
+/// not be restored, so the user is offered other ways.
+const int maxBackupFileBytes = 500 * 1024 * 1024;
+
 /// A CSV file. It has no images: 5 MB is tens of thousands of cards.
 const int maxCsvFileBytes = 5 * 1024 * 1024;
 

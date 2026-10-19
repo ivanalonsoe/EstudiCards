@@ -262,7 +262,11 @@ jobs:
           # once took minutes. A failed or stuck attempt is tried once more;
           # two failures in a row still fail the job. `--verbose` shows
           # Gradle's output in the log, to find the cause.
+          #
+          # E2E-04 picks `verbos_ia.csv` from the emulator's Downloads with
+          # the system file picker, so it is copied there first.
           script: |
+            adb push test/fixtures/verbos_ia.csv /sdcard/Download/verbos_ia.csv
             timeout 8m flutter test integration_test -d emulator-5554 || timeout 8m flutter test integration_test -d emulator-5554
             timeout 15m patrol test --device emulator-5554 --verbose || timeout 15m patrol test --device emulator-5554 --verbose
 
