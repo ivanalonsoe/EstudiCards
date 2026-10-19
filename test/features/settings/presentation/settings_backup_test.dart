@@ -155,6 +155,9 @@ void main() {
       db: db,
       location: AppRoutes.settings,
     );
+    // The footer is at the bottom, below every section.
+    await tester.drag(find.byType(ListView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
 
     expect(find.text('EstudiCards 1.0.0'), findsOneWidget);
     expect(

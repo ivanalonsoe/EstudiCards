@@ -1,6 +1,8 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_theme.dart';
+import 'package:estudicards/features/settings/domain/app_settings.dart';
+import 'package:estudicards/features/settings/presentation/settings_providers.dart';
 import 'package:estudicards/features/trash/presentation/trash_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,22 +44,31 @@ class _EstudiCardsAppState extends ConsumerState<EstudiCardsApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
-    onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-    debugShowCheckedModeBanner: false,
-    // The UI is only in Spanish in v1, whatever the device language.
-    locale: const Locale('es'),
-    // Delegates load the strings: ours (generated from app_es.arb) and
-    // Flutter's own (dialog buttons, date pickers, tooltips…) in Spanish.
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    theme: AppTheme.light(),
-    darkTheme: AppTheme.dark(),
-    // No `themeMode` given: it defaults to `ThemeMode.system`, so the app
-    // follows the device's light/dark setting. Settings will let the user
-    // override it later (SPEC §4.2, `theme_mode`).
-    routerConfig: _router,
-  );
+  Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsProvider);
+    // The settings take a moment to load when the app starts. Showing
+    // nothing until then avoids a flash of the light theme for someone who
+    // chose the dark one. If they cannot be read, the defaults are used.
+    if (settings.isLoading && !settings.hasValue) {
+      return const SizedBox.shrink();
+    }
+    return MaterialApp.router(
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      debugShowCheckedModeBanner: false,
+      // The UI is only in Spanish in v1, whatever the device language.
+      locale: const Locale('es'),
+      // Delegates load the strings: ours (generated from app_es.arb) and
+      // Flutter's own (dialog buttons, date pickers, tooltips…) in Spanish.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      // "Sistema" (the default) follows the device's light/dark setting;
+      // "Claro" and "Oscuro" override it (SPEC §4.2, `theme_mode`).
+      themeMode: themeModeOf(settings.value?.themeMode ?? AppThemeMode.system),
+      routerConfig: _router,
+    );
+  }
 }
 
 /// Adds the Plus Jakarta Sans licence (SIL OFL) to the app's licence list.

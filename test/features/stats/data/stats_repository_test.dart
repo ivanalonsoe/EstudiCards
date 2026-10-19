@@ -229,5 +229,28 @@ void main() {
       final goal = (await stats.dailyGoal())!;
       expect((goal.done, goal.goal, goal.remaining), (2, 20, 18));
     });
+
+    test(
+      'the overview is read again when the goal changes in Settings',
+      () async {
+        // The first two overviews: before and after setting the goal.
+        final goals = stats
+            .watchOverview()
+            .map((overview) => overview.dailyGoal?.goal)
+            .take(2)
+            .toList();
+        await pumpEventQueue();
+        await db
+            .into(db.settings)
+            .insert(
+              SettingsCompanion.insert(
+                key: 'daily_goal',
+                value: const Value('30'),
+              ),
+            );
+
+        expect(await goals, [null, 30]);
+      },
+    );
   });
 }

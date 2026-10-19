@@ -46,7 +46,8 @@ class SpeakerButton extends ConsumerWidget {
       children: [
         button,
         TextButton.icon(
-          onPressed: () => unawaited(_explain(context)),
+          onPressed: () =>
+              unawaited(showVoiceMissingDialog(context, speech.language)),
           style: TextButton.styleFrom(
             foregroundColor: colors.textMuted,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -57,31 +58,30 @@ class SpeakerButton extends ConsumerWidget {
       ],
     );
   }
+}
 
-  /// How to install a voice on this system.
-  Future<void> _explain(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final steps = switch (defaultTargetPlatform) {
-      TargetPlatform.android => l10n.voiceMissingAndroid,
-      TargetPlatform.windows => l10n.voiceMissingWindows,
-      TargetPlatform.macOS => l10n.voiceMissingMacos,
-      TargetPlatform.iOS => l10n.voiceMissingIos,
-      _ => l10n.voiceMissingOther,
-    };
-    return showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          l10n.voiceMissingTitle(languageName(l10n, speech.language)),
+/// "No hay voz para Alemán" with the steps to install a voice for
+/// [language] on this system (US-13 AC2). Settings uses it too.
+Future<void> showVoiceMissingDialog(BuildContext context, String language) {
+  final l10n = AppLocalizations.of(context);
+  final steps = switch (defaultTargetPlatform) {
+    TargetPlatform.android => l10n.voiceMissingAndroid,
+    TargetPlatform.windows => l10n.voiceMissingWindows,
+    TargetPlatform.macOS => l10n.voiceMissingMacos,
+    TargetPlatform.iOS => l10n.voiceMissingIos,
+    _ => l10n.voiceMissingOther,
+  };
+  return showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.voiceMissingTitle(languageName(l10n, language))),
+      content: Text(steps),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.close),
         ),
-        content: Text(steps),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.close),
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }

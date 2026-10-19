@@ -39,10 +39,16 @@ class StudyCard extends StatelessWidget {
     this.options,
     this.onOptionTap,
     this.reversed = false,
+    this.textScale = 1.0,
     super.key,
   });
 
   final Flashcard card;
+
+  /// The card text size from Settings (80–160%, SPEC §9), on top of the
+  /// system's text size. It enlarges the card's content: the question,
+  /// answer, options and explanation, not the label at the top.
+  final double textScale;
 
   /// Test cards: the options in the order to show them. The session
   /// shuffles them every time it shows the card (R 7.2); null keeps the
@@ -115,6 +121,7 @@ class StudyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget side(CardFace face) => _CardFrame(
       key: Key('studyCard.${face.name}'),
+      textScale: textScale,
       color: color,
       borderColor: _borderColor(context, face),
       header: _Header(label: label, badge: _badge(context, face)),
@@ -311,11 +318,13 @@ class _CardFrame extends StatelessWidget {
     required this.color,
     required this.header,
     required this.child,
+    required this.textScale,
     this.borderColor,
     this.hint,
     super.key,
   });
 
+  final double textScale;
   final String color;
   final Widget header;
   final Widget child;
@@ -369,7 +378,19 @@ class _CardFrame extends StatelessWidget {
                   children: [
                     header,
                     const SizedBox(height: AppSpacing.md),
-                    Expanded(child: child),
+                    Expanded(
+                      // `MediaQuery` tells the widgets below how big to draw
+                      // text; here, the system's size times the card's.
+                      child: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          textScaler: _CardTextScaler(
+                            MediaQuery.textScalerOf(context),
+                            textScale,
+                          ),
+                        ),
+                        child: child,
+                      ),
+                    ),
                     if (hint != null) ...[
                       const SizedBox(height: AppSpacing.sm),
                       _Hint(hint),
@@ -383,6 +404,32 @@ class _CardFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The system's text size ([system]) with the card text size ([factor]) on
+/// top. It keeps the system's own rule, which on some phones enlarges big
+/// text less than small text.
+class _CardTextScaler extends TextScaler {
+  const new(this.system, this.factor);
+
+  final TextScaler system;
+  final double factor;
+
+  @override
+  double scale(double fontSize) => system.scale(fontSize) * factor;
+
+  // Flutter still asks for this old single number in a few places.
+  @override
+  double get textScaleFactor => scale(14) / 14;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _CardTextScaler &&
+      other.system == system &&
+      other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(system, factor);
 }
 
 class _Header extends StatelessWidget {

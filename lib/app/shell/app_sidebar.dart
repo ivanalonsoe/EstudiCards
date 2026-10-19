@@ -10,13 +10,15 @@ import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_search_field.dart';
+import 'package:estudicards/features/stats/presentation/goal_ring.dart';
+import 'package:estudicards/features/stats/presentation/stats_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The fixed left sidebar on desktop (`docs/design/escritorio-claro/`):
-/// logo, project search, "Inicio", the projects (favourites on top) and the
-/// menu at the bottom. Each project shows its pending errors. The daily
-/// goal card arrives with Settings (T6.2), when a goal can be set.
+/// logo, project search, "Inicio", the projects (favourites on top), the
+/// daily goal card when there is a goal, and the menu at the bottom. Each
+/// project shows its pending errors.
 class AppSidebar extends ConsumerWidget {
   const new({required this.location, super.key});
 
@@ -99,6 +101,7 @@ class AppSidebar extends ConsumerWidget {
                 ],
               ),
             ),
+            const _SidebarGoal(),
             for (final destination in menuDestinations)
               NavTile(
                 destination: destination,
@@ -106,6 +109,66 @@ class AppSidebar extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "14 de 20 hoy" and the streak, with the goal ring, above the menu; only
+/// when a daily goal is set (US-23 AC2).
+class _SidebarGoal extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final overview = ref.watch(statsOverviewProvider).value;
+    final goal = overview?.dailyGoal;
+    if (overview == null || goal == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Container(
+      key: const Key('sidebar.goal'),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(AppRadii.control),
+      ),
+      child: Row(
+        children: [
+          GoalRing(progress: goal, size: 44, showGoal: false),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.goalToday(goal.done, goal.goal),
+                  style: text.titleSmall,
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department_outlined,
+                      size: 14,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: 2),
+                    Flexible(
+                      child: Text(
+                        l10n.streakOfDays(overview.streak.current),
+                        style: text.labelMedium?.copyWith(
+                          color: colors.primaryStrong,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

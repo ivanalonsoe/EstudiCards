@@ -738,23 +738,23 @@
       "language": { "type": "String" }
     }
   },
-  "voiceMissingAndroid": "Para escuchar esta tarjeta, instala una voz de este idioma en Ajustes › Sistema › Idiomas › Salida de texto a voz, en el motor de voz que uses (por ejemplo, «Servicios de voz de Google» › Instalar datos de voz).",
+  "voiceMissingAndroid": "Para escuchar las tarjetas en este idioma, instala una voz en Ajustes › Sistema › Idiomas › Salida de texto a voz, en el motor de voz que uses (por ejemplo, «Servicios de voz de Google» › Instalar datos de voz).",
   "@voiceMissingAndroid": {
     "description": "How to install a voice on Android."
   },
-  "voiceMissingWindows": "Para escuchar esta tarjeta, instala una voz de este idioma en Configuración › Hora e idioma › Voz › Agregar voces. Después, reinicia la aplicación.",
+  "voiceMissingWindows": "Para escuchar las tarjetas en este idioma, instala una voz en Configuración › Hora e idioma › Voz › Agregar voces. Después, reinicia la aplicación.",
   "@voiceMissingWindows": {
     "description": "How to install a voice on Windows."
   },
-  "voiceMissingMacos": "Para escuchar esta tarjeta, instala una voz de este idioma en Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces.",
+  "voiceMissingMacos": "Para escuchar las tarjetas en este idioma, instala una voz en Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces.",
   "@voiceMissingMacos": {
     "description": "How to install a voice on macOS."
   },
-  "voiceMissingIos": "Para escuchar esta tarjeta, descarga una voz de este idioma en Ajustes › Accesibilidad › Contenido leído › Voces.",
+  "voiceMissingIos": "Para escuchar las tarjetas en este idioma, descarga una voz en Ajustes › Accesibilidad › Contenido leído › Voces.",
   "@voiceMissingIos": {
     "description": "How to install a voice on iOS."
   },
-  "voiceMissingOther": "Para escuchar esta tarjeta, instala una voz de este idioma en los ajustes de voz del sistema.",
+  "voiceMissingOther": "Para escuchar las tarjetas en este idioma, instala una voz en los ajustes de voz del sistema.",
   "@voiceMissingOther": {
     "description": "How to install a voice on another system."
   },
@@ -1456,6 +1456,75 @@
   "@aiPromptCopied": { "description": "Snackbar after copying the AI prompt." },
   "settingsData": "Datos",
   "@settingsData": { "description": "Settings section with the backup actions (P16)." },
+  "settingsAppearance": "Apariencia",
+  "@settingsAppearance": { "description": "Settings section with the theme and the card text size (P16)." },
+  "settingsTheme": "Tema",
+  "@settingsTheme": { "description": "Settings: the light/dark theme choice." },
+  "themeSystem": "Sistema",
+  "@themeSystem": { "description": "Theme option: follow the device." },
+  "themeLight": "Claro",
+  "@themeLight": { "description": "Theme option: always light." },
+  "themeDark": "Oscuro",
+  "@themeDark": { "description": "Theme option: always dark." },
+  "cardTextSize": "Texto de las tarjetas",
+  "@cardTextSize": { "description": "Settings: the size of the study card's text, with a slider." },
+  "settingsStudy": "Estudio",
+  "@settingsStudy": { "description": "Settings section with the daily goal (P16)." },
+  "dailyGoal": "Objetivo diario",
+  "@dailyGoal": { "description": "Settings switch for the daily goal (US-23), and the title of the goal card on the desktop dashboard." },
+  "cardsPerDay": "Tarjetas al día",
+  "@cardsPerDay": { "description": "Settings: the number of cards of the daily goal." },
+  "fewerCards": "Menos tarjetas",
+  "@fewerCards": { "description": "Tooltip of the «−» button of the daily goal." },
+  "moreCards": "Más tarjetas",
+  "@moreCards": { "description": "Tooltip of the «+» button of the daily goal." },
+  "settingsVoices": "Voces",
+  "@settingsVoices": { "description": "Settings section with the voice status of each language (P16)." },
+  "voiceInstalled": "Instalada",
+  "@voiceInstalled": { "description": "Settings: the system has a voice for this language." },
+  "voiceNotInstalled": "No instalada",
+  "@voiceNotInstalled": { "description": "Settings: the system has no voice for this language." },
+  "voiceHowToInstall": "Cómo instalarla",
+  "@voiceHowToInstall": { "description": "Settings: opens the steps to install a missing voice." },
+  "noLanguageDecks": "Cuando tengas barajas de idioma, aquí verás si el sistema tiene voz para leerlas.",
+  "@noLanguageDecks": { "description": "Settings, «Voces», with no language decks." },
+  "goalRemaining": "{count, plural, =1{Te queda 1 tarjeta para tu objetivo de hoy} other{Te quedan {count} tarjetas para tu objetivo de hoy}}",
+  "@goalRemaining": {
+    "description": "Mobile dashboard, under the greeting: cards left for today's goal.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "goalRemainingSentence": "{count, plural, =1{Te queda 1 tarjeta para tu objetivo de hoy.} other{Te quedan {count} tarjetas para tu objetivo de hoy.}}",
+  "@goalRemainingSentence": {
+    "description": "Desktop dashboard, under the greeting, before the pending errors.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "goalReached": "¡Objetivo de hoy cumplido!",
+  "@goalReached": { "description": "Dashboard: today's goal is reached." },
+  "goalOf": "de {goal}",
+  "@goalOf": {
+    "description": "Inside the goal ring, under the cards done: «14 / de 20».",
+    "placeholders": { "goal": { "type": "int" } }
+  },
+  "goalDonePercent": "{percent}% completado",
+  "@goalDonePercent": {
+    "description": "Desktop goal card: how much of today's goal is done.",
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "goalToday": "{done} de {goal} hoy",
+  "@goalToday": {
+    "description": "Sidebar goal card: cards answered today and the goal.",
+    "placeholders": { "done": { "type": "int" }, "goal": { "type": "int" } }
+  },
+  "streakOfDays": "{count, plural, =1{1 día de racha} other{{count} días de racha}}",
+  "@streakOfDays": {
+    "description": "Sidebar goal card: the current streak.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "goalRingLabel": "{done} de {goal} tarjetas hoy",
+  "@goalRingLabel": {
+    "description": "What screen readers say for the goal ring.",
+    "placeholders": { "done": { "type": "int" }, "goal": { "type": "int" } }
+  },
   "exportAll": "Exportar todo",
   "@exportAll": { "description": "Saves a full backup (US-24), in Settings and in the mobile menu." },
   "exportAllHint": "Copia de seguridad en JSON",

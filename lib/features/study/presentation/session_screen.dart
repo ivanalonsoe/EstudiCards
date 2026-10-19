@@ -20,6 +20,7 @@ import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/settings/presentation/settings_providers.dart';
 import 'package:estudicards/features/study/domain/attempt_record.dart';
 import 'package:estudicards/features/study/domain/session_engine.dart';
 import 'package:estudicards/features/study/domain/session_event.dart';
@@ -908,6 +909,7 @@ class _SessionCard extends ConsumerWidget {
       answerImage: _imageFor(ref, card.answerImage),
       speechLanguages: deck == null ? null : speechLanguagesOf(deck),
       speaker: (speech) => SpeakerButton(speech: speech),
+      textScale: ref.watch(cardTextScaleProvider),
     );
   }
 

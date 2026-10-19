@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:estudicards/app/app.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
@@ -48,8 +49,19 @@ Future<OpenSession> openSession(
   TimerType timerType = TimerType.none,
   int? timerSeconds,
   Clock? clock,
+  String? cardTextScale,
 }) async {
   final db = createTestDatabase();
+  if (cardTextScale != null) {
+    await db
+        .into(db.settings)
+        .insert(
+          SettingsCompanion.insert(
+            key: 'card_text_scale',
+            value: Value(cardTextScale),
+          ),
+        );
+  }
   final project = await ProjectsRepository(
     ProjectsDao(db),
     _clock,
@@ -470,6 +482,29 @@ void main() {
           .getSingle();
       expect(stored.status, 'abandoned');
     });
+  });
+
+  testWidgets('the text size from Settings applies to the study card, and '
+      'only to it', (tester) async {
+    await openSession(
+      tester,
+      cardTextScale: '1.5',
+      cards: [simple('to bring', 'traer')],
+    );
+
+    /// How much [finder]'s text is enlarged, beyond the system's size.
+    double scaleOf(Finder finder) =>
+        tester
+            .widget<RichText>(
+              find.descendant(of: finder, matching: find.byType(RichText)),
+            )
+            .textScaler
+            .scale(10) /
+        10;
+
+    expect(scaleOf(find.text('to bring')), 1.5);
+    expect(scaleOf(byKey('session.progress')), 1);
+    expect(scaleOf(find.text('Girar')), 1);
   });
 
   group('animations (brief §8)', () {

@@ -177,6 +177,8 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
       decks,
       projects,
       studySessions,
+      // The daily goal, set in Settings.
+      settings,
     ]),
   );
 
