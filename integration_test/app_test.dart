@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'app_flow.dart';
 import 'flows/backup_flow.dart';
 import 'flows/cards_flow.dart';
 import 'flows/projects_flow.dart';
@@ -29,9 +30,9 @@ void main() {
 
   testWidgets('the app starts and shows the home screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: EstudiCardsApp()));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('screen.dashboard')), findsOneWidget);
+    // The app draws nothing until the settings are read from the real
+    // database, and `pumpAndSettle` does not wait for that (see `waitFor`).
+    await expectSoon(tester, find.byKey(const Key('screen.dashboard')));
     expect(find.text('EstudiCards'), findsWidgets);
 
     // This test opens the real database. Let the startup purge finish

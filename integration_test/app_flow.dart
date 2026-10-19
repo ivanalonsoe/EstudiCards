@@ -147,6 +147,23 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
 Future<void> tapKey(WidgetTester tester, String key) =>
     _tap(tester, find.byKey(Key(key)));
 
+/// Taps the widget with [key] in Settings. On a phone the lower sections
+/// are below the screen, and a list only builds what can be seen, so it
+/// scrolls down until the widget appears first.
+Future<void> tapKeyInSettings(WidgetTester tester, String key) async {
+  final list = find.descendant(
+    of: find.byKey(const Key('settings.list')),
+    matching: find.byType(Scrollable),
+  );
+  await waitFor(tester, list);
+  await tester.scrollUntilVisible(
+    find.byKey(Key(key)),
+    200,
+    scrollable: list.first,
+  );
+  await tapKey(tester, key);
+}
+
 /// Taps the widget found by [finder] once it appears.
 Future<void> tapFinder(WidgetTester tester, Finder finder) =>
     _tap(tester, finder);

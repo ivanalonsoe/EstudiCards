@@ -40,6 +40,7 @@ class SettingsScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: ListView(
+            key: const Key('settings.list'),
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.sm,
