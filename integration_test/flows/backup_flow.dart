@@ -47,7 +47,7 @@ void backupFlowTests() {
     await backFromResults(tester);
 
     await goTo(tester, 'settings');
-    await tapKey(tester, 'settings.exportAll');
+    await tapKeyInSettings(tester, 'settings.exportAll');
     final deadline = DateTime.now().add(const Duration(seconds: 15));
     while (exporter.files.isEmpty && DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -73,7 +73,7 @@ void backupFlowTests() {
     );
     await waitFor(tester, find.byKey(const Key('dashboard.empty')));
     await goTo(tester, 'settings');
-    await tapKey(tester, 'settings.restore');
+    await tapKeyInSettings(tester, 'settings.restore');
     await expectSoon(tester, find.text('Copia restaurada.'));
 
     expect(await backupData(tester), exported);

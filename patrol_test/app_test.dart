@@ -16,6 +16,9 @@ void main() {
     $,
   ) async {
     await $.pumpWidgetAndSettle(const ProviderScope(child: EstudiCardsApp()));
+    // The app draws nothing until the settings are read from the database,
+    // and settling does not wait for that.
+    await $(const Key('screen.dashboard')).waitUntilVisible();
 
     expect($(const Key('screen.dashboard')), findsOneWidget);
     expect($('EstudiCards'), findsWidgets);

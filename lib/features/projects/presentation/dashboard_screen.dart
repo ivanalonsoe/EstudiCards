@@ -13,6 +13,8 @@ import 'package:estudicards/features/projects/presentation/project_card.dart';
 import 'package:estudicards/features/projects/presentation/project_form.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
 import 'package:estudicards/features/projects/presentation/project_search_field.dart';
+import 'package:estudicards/features/stats/domain/metrics.dart';
+import 'package:estudicards/features/stats/presentation/goal_ring.dart';
 import 'package:estudicards/features/stats/presentation/stats_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +23,7 @@ import 'package:go_router/go_router.dart';
 /// P01: the project list, the first screen of the app
 /// (`docs/design/movil-claro/dashboard.png`, `escritorio-claro/dashboard.png`).
 ///
-/// The daily goal stays hidden until it can be set in Settings (T6.2).
+/// The daily goal appears once it is turned on in Settings (T6.2).
 class DashboardScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -117,7 +119,7 @@ class _MobileDashboard extends StatelessWidget {
             AppSpacing.xxxl * 2,
           ),
           children: [
-            const _GreetingText(),
+            const _MobileGreeting(),
             const SizedBox(height: AppSpacing.lg),
             const ProjectSearchField(key: Key('dashboard.search')),
             const SizedBox(height: AppSpacing.sm),
@@ -145,6 +147,7 @@ class _DesktopDashboard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final goal = ref.watch(statsOverviewProvider).value?.dailyGoal;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
@@ -168,7 +171,7 @@ class _DesktopDashboard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _GreetingText(large: true),
-                        _PendingErrorsText(),
+                        _DesktopSubtitle(),
                       ],
                     ),
                   ),
@@ -188,17 +191,31 @@ class _DesktopDashboard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xl),
-              // The daily goal card joins these two with Settings (T6.2).
-              // `IntrinsicHeight` gives both cards the height of the
-              // taller one.
+              // `IntrinsicHeight` gives the cards the height of the
+              // tallest one. With a daily goal, its card goes first and the
+              // three share the width, as in the design.
               IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(width: tileWidth, child: const _StreakCard()),
-                    const SizedBox(width: _gap),
-                    SizedBox(width: tileWidth, child: const _LastWeekCard()),
-                  ],
+                  children: goal == null
+                      ? [
+                          SizedBox(
+                            width: tileWidth,
+                            child: const _StreakCard(),
+                          ),
+                          const SizedBox(width: _gap),
+                          SizedBox(
+                            width: tileWidth,
+                            child: const _LastWeekCard(),
+                          ),
+                        ]
+                      : [
+                          Expanded(child: _GoalCard(progress: goal)),
+                          const SizedBox(width: _gap),
+                          const Expanded(child: _StreakCard()),
+                          const SizedBox(width: _gap),
+                          const Expanded(child: _LastWeekCard()),
+                        ],
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),
@@ -241,35 +258,107 @@ class _DesktopDashboard extends ConsumerWidget {
   }
 }
 
-/// "Buenos días", "Buenas tardes" or "Buenas noches", by local time.
+/// "Buenos días", "Buenas tardes" or "Buenas noches", by local time:
+/// [large] on desktop, [compact] inside the mobile goal card.
 class _GreetingText extends ConsumerWidget {
-  const new({this.large = false});
+  const new({this.large = false, this.compact = false});
 
   final bool large;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final now = ref.watch(clockProvider).now().toLocal();
-    return Text(switch (Greeting.at(now)) {
-      Greeting.morning => l10n.greetingMorning,
-      Greeting.afternoon => l10n.greetingAfternoon,
-      Greeting.evening => l10n.greetingEvening,
-    }, style: large ? text.displaySmall : text.headlineSmall);
+    return Text(
+      switch (Greeting.at(now)) {
+        Greeting.morning => l10n.greetingMorning,
+        Greeting.afternoon => l10n.greetingAfternoon,
+        Greeting.evening => l10n.greetingEvening,
+      },
+      style: large
+          ? text.displaySmall
+          : compact
+          ? text.titleLarge
+          : text.headlineSmall,
+    );
   }
 }
 
-/// "Tienes 13 errores pendientes en 2 proyectos.", under the desktop
-/// greeting; nothing when there are none. It counts the projects on the
-/// dashboard, so archived projects are left out (assumption 2).
-class _PendingErrorsText extends ConsumerWidget {
+/// "Te quedan 6 tarjetas para tu objetivo de hoy", or that it is reached;
+/// null without a daily goal.
+String? _goalText(
+  AppLocalizations l10n,
+  DailyGoalProgress? goal, {
+  bool sentence = false,
+}) => switch (goal) {
+  null => null,
+  DailyGoalProgress(isReached: true) => l10n.goalReached,
+  DailyGoalProgress(:final remaining) =>
+    sentence
+        ? l10n.goalRemainingSentence(remaining)
+        : l10n.goalRemaining(remaining),
+};
+
+/// Mobile and tablet: the greeting alone, or, with a daily goal, a card
+/// with the goal ring, the greeting and the cards left (US-23 AC2).
+class _MobileGreeting extends ConsumerWidget {
   const new();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final goal = ref.watch(statsOverviewProvider).value?.dailyGoal;
+    if (goal == null) return const _GreetingText();
+    final colors = AppColors.of(context);
+    return Card(
+      key: const Key('dashboard.goal'),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: colors.border),
+        borderRadius: BorderRadius.circular(AppRadii.listCard),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            GoalRing(progress: goal, size: 64),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _GreetingText(compact: true),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    _goalText(AppLocalizations.of(context), goal)!,
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: colors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Under the desktop greeting: "Te quedan 6 tarjetas para tu objetivo de
+/// hoy." with a daily goal, then "Tienes 13 errores pendientes en 2
+/// proyectos." when there are any; nothing without either. The errors
+/// count the projects on the dashboard, so archived projects are left out
+/// (assumption 2).
+class _DesktopSubtitle extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final summaries =
         ref.watch(projectSummariesProvider).value ?? const <ProjectSummary>[];
+    final goal = ref.watch(statsOverviewProvider).value?.dailyGoal;
     var errors = 0;
     var projects = 0;
     for (final summary in summaries) {
@@ -277,13 +366,60 @@ class _PendingErrorsText extends ConsumerWidget {
       errors += summary.errorCount;
       projects++;
     }
-    if (errors == 0) return const SizedBox.shrink();
+    final parts = [
+      ?_goalText(l10n, goal, sentence: true),
+      if (errors > 0) l10n.pendingErrorsInProjects(errors, projects),
+    ];
+    if (parts.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Text(
-        AppLocalizations.of(context).pendingErrorsInProjects(errors, projects),
+        parts.join(' '),
         style: Theme.of(context).textTheme.bodyLarge
             ?.copyWith(color: AppColors.of(context).textMuted),
+      ),
+    );
+  }
+}
+
+/// The daily goal card on the desktop dashboard: the ring, "Objetivo
+/// diario" and "70% completado".
+class _GoalCard extends StatelessWidget {
+  const new({required this.progress});
+
+  final DailyGoalProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Card(
+      key: const Key('dashboard.goal'),
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.listCard),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Row(
+          children: [
+            GoalRing(progress: progress, size: 64),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.dailyGoal, style: text.titleMedium),
+                  Text(
+                    l10n.goalDonePercent((progress.fraction * 100).floor()),
+                    style: text.labelMedium?.copyWith(color: colors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.8 | ⏳ 0 / 8 |
+| 6. Polish and release | T6.1 – T6.8 | ⏳ 2 / 8 |
 
 ---
 
@@ -485,11 +485,11 @@ Goal: a project that starts, with automated quality from day one.
 
 ## Phase 6 — Polish and release
 
-- [ ] **T6.1 Animations** · DESIGN_BRIEF §8
+- [x] **T6.1 Animations** · DESIGN_BRIEF §8
   - 3D flip, correct and wrong flashes, card-to-card transition, timer pulse, celebration; fades if the system asks for reduced motion.
   - **Tests first:** 🧩 with "reduce motion" on, the flip animation is not used.
 
-- [ ] **T6.2 Settings** · P16
+- [x] **T6.2 Settings** · P16
   - Theme, card text size, daily goal, voice status.
   - **Tests first:** 🧩 the text size applies to the study card; 🧩 settings persist after restarting. 🤖 E2E-08.
 
@@ -505,6 +505,7 @@ Goal: a project that starts, with automated quality from day one.
 
 - [ ] **T6.6 Full visual review**
   - Compare each screen with `docs/design/` on mobile and desktop, light and dark. Note and fix differences.
+  - Turn the daily goal on by default (asked by the owner after T6.2): a new install starts with "Objetivo diario" on, with the default goal. Update SPEC §4.2 (`daily_goal` default) and the decision log.
 
 - [ ] **T6.7 CD: `release.yml`**
   - Android signing with repository secrets; Android, Windows and macOS builds when a `v*` tag is created; attach them to a *Release*.

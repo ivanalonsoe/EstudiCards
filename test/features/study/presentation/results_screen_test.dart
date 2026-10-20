@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/motion.dart';
 import '../../../helpers/test_app.dart';
 
 final _now = DateTime.utc(2026, 10, 6, 12);
@@ -227,6 +228,70 @@ void main() {
       );
 
       expect(find.text('¡Se acabó el tiempo!'), findsOneWidget);
+    });
+
+    /// Opens the results from the dashboard and stops right after the
+    /// first frame, so the animations have just started.
+    Future<void> openResults(
+      WidgetTester tester, {
+      required int correct,
+      required int wrong,
+    }) async {
+      final db = createTestDatabase();
+      final saved = await saveFinishedSession(
+        db,
+        correct: correct,
+        wrong: wrong,
+      );
+      final router = await pumpTestApp(tester, size: mobile, db: db);
+      router.go(AppRoutes.results(saved.sessionId));
+      // The results load from the database, then start animating.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump();
+      }
+    }
+
+    double ringValue(WidgetTester tester) => tester
+        .widget<CircularProgressIndicator>(
+          find.descendant(
+            of: find.byKey(const Key('results.ring')),
+            matching: find.byType(CircularProgressIndicator),
+          ),
+        )
+        .value!;
+
+    Offset pieceAt(WidgetTester tester) =>
+        tester.getCenter(find.byKey(const Key('results.confetti.0')));
+
+    testWidgets('the ring fills up and the confetti bursts out', (
+      tester,
+    ) async {
+      await openResults(tester, correct: 4, wrong: 1);
+
+      expect(ringValue(tester), lessThan(0.8));
+      final early = pieceAt(tester);
+
+      await tester.pumpAndSettle();
+      expect(ringValue(tester), closeTo(0.8, 0.001));
+      expect(pieceAt(tester), isNot(early));
+    });
+
+    testWidgets('with reduced motion, the ring and the confetti fade in '
+        'where they end', (tester) async {
+      reduceMotion(tester);
+      await openResults(tester, correct: 4, wrong: 1);
+
+      expect(ringValue(tester), closeTo(0.8, 0.001));
+      final early = pieceAt(tester);
+      expect(
+        tester
+            .widget<Opacity>(find.byKey(const Key('results.celebrationFade')))
+            .opacity,
+        lessThan(1),
+      );
+
+      await tester.pumpAndSettle();
+      expect(pieceAt(tester), early);
     });
   });
 

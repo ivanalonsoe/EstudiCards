@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/app/theme/motion.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -38,10 +39,16 @@ class StudyCard extends StatelessWidget {
     this.options,
     this.onOptionTap,
     this.reversed = false,
+    this.textScale = 1.0,
     super.key,
   });
 
   final Flashcard card;
+
+  /// The card text size from Settings (80–160%, SPEC §9), on top of the
+  /// system's text size. It enlarges the card's content: the question,
+  /// answer, options and explanation, not the label at the top.
+  final double textScale;
 
   /// Test cards: the options in the order to show them. The session
   /// shuffles them every time it shows the card (R 7.2); null keeps the
@@ -114,6 +121,7 @@ class StudyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget side(CardFace face) => _CardFrame(
       key: Key('studyCard.${face.name}'),
+      textScale: textScale,
       color: color,
       borderColor: _borderColor(context, face),
       header: _Header(label: label, badge: _badge(context, face)),
@@ -204,9 +212,9 @@ class StudyCard extends StatelessWidget {
   }
 }
 
-/// Turns from [front] to [back] around the vertical axis (~350 ms, brief
-/// §8). With the system's "reduce motion" on, it changes at once.
-class _FlipCardView extends StatelessWidget {
+/// Turns from [front] to [back] around the vertical axis (brief §8). With
+/// the system's "reduce motion" on, one face fades into the other instead.
+class _FlipCardView extends StatefulWidget {
   const new({required this.face, required this.front, required this.back});
 
   final CardFace face;
@@ -214,36 +222,92 @@ class _FlipCardView extends StatelessWidget {
   final Widget back;
 
   @override
+  State<_FlipCardView> createState() => _FlipCardViewState();
+}
+
+class _FlipCardViewState extends State<_FlipCardView>
+    with SingleTickerProviderStateMixin {
+  /// How far the card has turned: 0 is the front up, 1 the back. A card
+  /// shown for the first time starts on its face, without turning.
+  ///
+  /// `preserve` keeps the duration with "reduce motion" on, which Flutter
+  /// would otherwise cut 20 times, so the fade can be seen.
+  late final AnimationController _turn = AnimationController(
+    vsync: this,
+    value: _target,
+    animationBehavior: AnimationBehavior.preserve,
+  );
+
+  double get _target => widget.face == CardFace.back ? 1 : 0;
+
+  @override
+  void didUpdateWidget(_FlipCardView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.face != oldWidget.face) {
+      _turn.animateTo(
+        _target,
+        duration: AppMotion.reduced(context) ? AppMotion.fade : AppMotion.flip,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _turn.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    // `TweenAnimationBuilder` animates a value each time its target
-    // changes: here the angle, from 0 (front) to π (back).
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: face == CardFace.back ? math.pi : 0),
-      duration: reduceMotion
-          ? Duration.zero
-          : const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-      builder: (context, angle, _) {
-        final showBack = angle > math.pi / 2;
-        return Transform(
-          alignment: Alignment.center,
-          // The perspective entry makes the near edge look bigger, so the
-          // turn looks 3D instead of a squash.
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(angle),
-          child: showBack
-              // The back is drawn mirrored, so it reads the right way round
-              // once the card has turned.
-              ? Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.rotationY(math.pi),
-                  child: back,
-                )
-              : front,
-        );
-      },
+    final reduced = AppMotion.reduced(context);
+    return AnimatedBuilder(
+      animation: _turn,
+      builder: (context, _) =>
+          reduced ? _fade(_turn.value) : _flip(_turn.value),
+    );
+  }
+
+  /// Both faces on top of each other, the back showing through as [t]
+  /// grows. A face that cannot be seen is not built.
+  Widget _fade(double t) => Stack(
+    fit: StackFit.expand,
+    children: [
+      // Keys keep each face's state when the other one comes or goes.
+      if (t < 1)
+        Opacity(
+          key: const ValueKey(CardFace.front),
+          opacity: 1 - t,
+          child: widget.front,
+        ),
+      if (t > 0)
+        Opacity(
+          key: const ValueKey(CardFace.back),
+          opacity: t,
+          child: widget.back,
+        ),
+    ],
+  );
+
+  /// The card turned by [t] × 180° around its vertical axis.
+  Widget _flip(double t) {
+    final angle = AppMotion.flipCurve.transform(t) * math.pi;
+    final showBack = angle > math.pi / 2;
+    return Transform(
+      alignment: Alignment.center,
+      // The perspective entry makes the near edge look bigger, so the turn
+      // looks 3D instead of a squash.
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.001)
+        ..rotateY(angle),
+      child: showBack
+          // The back is drawn mirrored, so it reads the right way round once
+          // the card has turned.
+          ? Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.rotationY(math.pi),
+              child: widget.back,
+            )
+          : widget.front,
     );
   }
 }
@@ -254,11 +318,13 @@ class _CardFrame extends StatelessWidget {
     required this.color,
     required this.header,
     required this.child,
+    required this.textScale,
     this.borderColor,
     this.hint,
     super.key,
   });
 
+  final double textScale;
   final String color;
   final Widget header;
   final Widget child;
@@ -312,7 +378,19 @@ class _CardFrame extends StatelessWidget {
                   children: [
                     header,
                     const SizedBox(height: AppSpacing.md),
-                    Expanded(child: child),
+                    Expanded(
+                      // `MediaQuery` tells the widgets below how big to draw
+                      // text; here, the system's size times the card's.
+                      child: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          textScaler: _CardTextScaler(
+                            MediaQuery.textScalerOf(context),
+                            textScale,
+                          ),
+                        ),
+                        child: child,
+                      ),
+                    ),
                     if (hint != null) ...[
                       const SizedBox(height: AppSpacing.sm),
                       _Hint(hint),
@@ -326,6 +404,32 @@ class _CardFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The system's text size ([system]) with the card text size ([factor]) on
+/// top. It keeps the system's own rule, which on some phones enlarges big
+/// text less than small text.
+class _CardTextScaler extends TextScaler {
+  const new(this.system, this.factor);
+
+  final TextScaler system;
+  final double factor;
+
+  @override
+  double scale(double fontSize) => system.scale(fontSize) * factor;
+
+  // Flutter still asks for this old single number in a few places.
+  @override
+  double get textScaleFactor => scale(14) / 14;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _CardTextScaler &&
+      other.system == system &&
+      other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(system, factor);
 }
 
 class _Header extends StatelessWidget {

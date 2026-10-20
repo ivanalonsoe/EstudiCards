@@ -23,6 +23,7 @@ import 'package:estudicards/features/projects/domain/project.dart';
 import 'package:estudicards/features/projects/presentation/form_parts.dart';
 import 'package:estudicards/features/projects/presentation/project_labels.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
+import 'package:estudicards/features/settings/presentation/settings_providers.dart';
 import 'package:estudicards/features/stats/presentation/reset_statistics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -539,6 +540,8 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       // Language decks read the card aloud (US-13), also in the preview.
       speechLanguages: speechLanguagesOf(widget.deck),
       speaker: (speech) => SpeakerButton(speech: speech),
+      // The preview is the study card, so it uses its text size too.
+      textScale: ref.watch(cardTextScaleProvider),
       onTap: () => setState(
         () => _previewFace = _previewFace == CardFace.front
             ? CardFace.back

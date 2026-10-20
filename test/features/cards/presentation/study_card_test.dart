@@ -3,6 +3,7 @@ import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../helpers/motion.dart';
 import '../../../helpers/pump_widget.dart';
 import '../../../helpers/test_images.dart';
 
@@ -357,22 +358,29 @@ void main() {
     // Halfway through, the card is still turning.
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byKey(const Key('studyCard.back')), findsNothing);
+    expect(isTurned(tester), isTrue);
 
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
+    expect(isTurned(tester), isFalse);
   });
 
-  testWidgets('with reduced motion the card changes face at once', (
-    tester,
-  ) async {
-    tester.platformDispatcher.accessibilityFeaturesTestValue =
-        const FakeAccessibilityFeatures(disableAnimations: true);
-    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  testWidgets('with reduced motion, the flip animation is not used: the '
+      'card fades to the other face', (tester) async {
+    reduceMotion(tester);
     await pumpCard(tester, simpleCard());
 
     await pumpCard(tester, simpleCard(), face: CardFace.back);
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
+    // Both faces are on screen, one fading out and the other in, and
+    // nothing turns.
+    expect(find.byKey(const Key('studyCard.front')), findsOneWidget);
+    expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
+    expect(isTurned(tester), isFalse);
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('studyCard.front')), findsNothing);
     expect(find.byKey(const Key('studyCard.back')), findsOneWidget);
   });
 

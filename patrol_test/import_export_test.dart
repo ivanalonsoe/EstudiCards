@@ -93,7 +93,7 @@ void main() {
     final before = await backupData(tester);
 
     await goTo(tester, 'settings');
-    await tapKey(tester, 'settings.exportAll');
+    await tapKeyInSettings(tester, 'settings.exportAll');
     await waitFor(tester, find.byKey(const Key('settings.restore')));
     expect(exporter.files, hasLength(1));
 
@@ -108,7 +108,7 @@ void main() {
 
     // With nothing left, the backup goes in without asking.
     await goTo(tester, 'settings');
-    await tapKey(tester, 'settings.restore');
+    await tapKeyInSettings(tester, 'settings.restore');
     await $('Copia restaurada.').waitUntilVisible();
     expect(await backupData(tester), before);
     await goTo(tester, 'home');

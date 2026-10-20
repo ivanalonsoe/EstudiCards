@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:estudicards/app/app.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/motion.dart';
 import '../../../helpers/test_app.dart';
 
 final _clock = FakeClock(DateTime.utc(2026, 10, 15, 9));
@@ -46,8 +48,20 @@ Future<OpenSession> openSession(
   bool repeatFailed = false,
   TimerType timerType = TimerType.none,
   int? timerSeconds,
+  Clock? clock,
+  String? cardTextScale,
 }) async {
   final db = createTestDatabase();
+  if (cardTextScale != null) {
+    await db
+        .into(db.settings)
+        .insert(
+          SettingsCompanion.insert(
+            key: 'card_text_scale',
+            value: Value(cardTextScale),
+          ),
+        );
+  }
   final project = await ProjectsRepository(
     ProjectsDao(db),
     _clock,
@@ -81,6 +95,7 @@ Future<OpenSession> openSession(
     tester,
     size: size,
     db: db,
+    clock: clock,
     location: AppRoutes.project(project.id),
   );
   ProviderScope.containerOf(tester.element(find.byType(EstudiCardsApp)))
@@ -466,6 +481,229 @@ void main() {
           .select(session.db.studySessions)
           .getSingle();
       expect(stored.status, 'abandoned');
+    });
+  });
+
+  testWidgets('the text size from Settings applies to the study card, and '
+      'only to it', (tester) async {
+    await openSession(
+      tester,
+      cardTextScale: '1.5',
+      cards: [simple('to bring', 'traer')],
+    );
+
+    /// How much [finder]'s text is enlarged, beyond the system's size.
+    double scaleOf(Finder finder) =>
+        tester
+            .widget<RichText>(
+              find.descendant(of: finder, matching: find.byType(RichText)),
+            )
+            .textScaler
+            .scale(10) /
+        10;
+
+    expect(scaleOf(find.text('to bring')), 1.5);
+    expect(scaleOf(byKey('session.progress')), 1);
+    expect(scaleOf(find.text('Girar')), 1);
+  });
+
+  group('animations (brief §8)', () {
+    const short = Duration(milliseconds: 80);
+
+    /// Where the centre of [text] is, across the screen.
+    double xOf(WidgetTester tester, String text) =>
+        tester.getCenter(find.text(text)).dx;
+
+    for (final (button, result, toTheRight) in [
+      ('session.correct', 'correct', true),
+      ('session.wrong', 'wrong', false),
+    ]) {
+      testWidgets('a $result answer is counted at once, flashes and leaves '
+          'towards its side while the next card comes in', (tester) async {
+        await openSession(
+          tester,
+          cards: [simple('to bring', 'traer'), simple('to seek', 'buscar')],
+        );
+        await tapKey(tester, 'session.flip');
+        final start = xOf(tester, 'traer');
+
+        await tester.tap(byKey(button));
+        await tester.pump();
+
+        // Nothing waits for the animation: the answer is already counted
+        // and the next card is already there.
+        expect(
+          textOf(
+            tester,
+            result == 'correct' ? 'session.correctCount' : 'session.wrongCount',
+          ),
+          '1',
+        );
+        expect(textOf(tester, 'session.progress'), '1 / 2');
+        expect(find.text('to seek'), findsOneWidget);
+
+        await tester.pump(short);
+        // The answered card is still leaving, with its ✓ or ✗.
+        expect(find.text('traer'), findsOneWidget);
+        expect(byKey('session.flash.$result'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: byKey('session.flash.$result'),
+            matching: find.byIcon(
+              result == 'correct' ? Icons.check_rounded : Icons.close_rounded,
+            ),
+          ),
+          findsOneWidget,
+        );
+        final now = xOf(tester, 'traer');
+        expect(toTheRight ? now > start : now < start, isTrue);
+
+        await tester.pumpAndSettle();
+        expect(find.text('traer'), findsNothing);
+        expect(byKey('session.flash.$result'), findsNothing);
+      });
+    }
+
+    testWidgets('the card on its way out cannot be tapped; the new one can', (
+      tester,
+    ) async {
+      final session = await openSession(
+        tester,
+        cards: [simple('to bring', 'traer'), simple('to seek', 'buscar')],
+      );
+      await tapKey(tester, 'session.flip');
+
+      await tester.tap(byKey('session.correct'));
+      await tester.pump(short);
+      // `warnIfMissed: false`: the old card is on top but lets the tap
+      // through, to the new card under it.
+      await tester.tap(find.text('to seek'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(byKey('session.correct'), findsOneWidget);
+      expect(find.text('buscar'), findsOneWidget);
+      expect((await attempts(session.db)).single.result, 'correct');
+    });
+
+    testWidgets('checking a test card flashes its border with the result', (
+      tester,
+    ) async {
+      await openSession(tester, cards: [capitalQuestion]);
+      await tester.tap(find.text('París'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(byKey('session.check'));
+      await tester.pump(short);
+
+      expect(byKey('session.flash.correct'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(byKey('session.flash.correct'), findsNothing);
+      // The result stays, with its icon.
+      expect(find.text('¡Correcto!'), findsOneWidget);
+    });
+
+    testWidgets('"Dejar para el final" swaps the card without a flash', (
+      tester,
+    ) async {
+      await openSession(
+        tester,
+        cards: [simple('to bring', 'traer'), simple('to seek', 'buscar')],
+      );
+
+      await tester.tap(byKey('session.leave'));
+      await tester.pump(short);
+
+      expect(find.text('to seek'), findsOneWidget);
+      expect(byKey('session.flash.correct'), findsNothing);
+      expect(byKey('session.flash.wrong'), findsNothing);
+    });
+
+    testWidgets('with reduced motion, the cards fade instead of moving', (
+      tester,
+    ) async {
+      reduceMotion(tester);
+      await openSession(
+        tester,
+        cards: [simple('to bring', 'traer'), simple('to seek', 'buscar')],
+      );
+      await tapKey(tester, 'session.flip');
+      final start = xOf(tester, 'traer');
+
+      await tester.tap(byKey('session.correct'));
+      await tester.pump(short);
+
+      expect(find.text('traer'), findsOneWidget);
+      expect(xOf(tester, 'traer'), start);
+      expect(find.text('to seek'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('traer'), findsNothing);
+    });
+
+    testWidgets('the timer pulses in its last seconds, and the screen still '
+        'settles between pulses', (tester) async {
+      final clock = FakeClock(DateTime.utc(2026, 10, 15, 9));
+      await openSession(
+        tester,
+        clock: clock,
+        timerType: TimerType.perCard,
+        timerSeconds: 30,
+        cards: [simple('to bring', 'traer')],
+      );
+      expect(byKey('session.timerPulse'), findsNothing);
+
+      // 4 seconds left: the warning.
+      clock.advance(const Duration(seconds: 26));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(textOf(tester, 'session.timer'), '0:04');
+      final pulse = tester.widget<Transform>(byKey('session.timerPulse'));
+      expect(pulse.transform.entry(0, 0), greaterThan(1));
+
+      // `pumpAndSettle` finishes: each pulse is short and ends before the
+      // next second.
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Transform>(byKey('session.timerPulse'))
+            .transform
+            .entry(0, 0),
+        1,
+      );
+    });
+
+    testWidgets('with reduced motion, the timer fades instead of growing', (
+      tester,
+    ) async {
+      reduceMotion(tester);
+      final clock = FakeClock(DateTime.utc(2026, 10, 15, 9));
+      await openSession(
+        tester,
+        clock: clock,
+        timerType: TimerType.perCard,
+        timerSeconds: 30,
+        cards: [simple('to bring', 'traer')],
+      );
+
+      clock.advance(const Duration(seconds: 26));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        tester
+            .widget<Transform>(byKey('session.timerPulse'))
+            .transform
+            .entry(0, 0),
+        1,
+      );
+      final fade = tester.widget<Opacity>(
+        find.descendant(
+          of: byKey('session.timerPulse'),
+          matching: find.byType(Opacity),
+        ),
+      );
+      expect(fade.opacity, lessThan(1));
+      await tester.pumpAndSettle();
     });
   });
 

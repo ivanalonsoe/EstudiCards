@@ -78,15 +78,19 @@ void main() {
     for (final p in await db.select(db.projects).get()) p.name,
   ];
 
-  Future<void> openSettings(WidgetTester tester, {PickedDocument? file}) =>
-      pumpTestApp(
-        tester,
-        size: mobile,
-        db: db,
-        location: AppRoutes.settings,
-        documentPicker: FakeDocumentPicker(file),
-        backupsFolder: backups,
-      );
+  /// Opens Settings and scrolls down to "Datos", below the other sections.
+  Future<void> openSettings(WidgetTester tester, {PickedDocument? file}) async {
+    await pumpTestApp(
+      tester,
+      size: mobile,
+      db: db,
+      location: AppRoutes.settings,
+      documentPicker: FakeDocumentPicker(file),
+      backupsFolder: backups,
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -2000));
+    await tester.pumpAndSettle();
+  }
 
   Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
     await tapVisible(tester, finder);
