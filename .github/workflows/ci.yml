@@ -264,9 +264,14 @@ jobs:
           # Gradle's output in the log, to find the cause.
           #
           # E2E-04 picks `verbos_ia.csv` from the emulator's Downloads with
-          # the system file picker, so it is copied there first.
+          # the system file picker, so it is copied there first. Right after
+          # booting, the shared storage sometimes refuses writes ("Operation
+          # not permitted"), so the copy is tried every 5 seconds for up to 2
+          # minutes; `ls` then fails the step if it never got there. The
+          # action runs each line on its own, so the loop is one line.
           script: |
-            adb push test/fixtures/verbos_ia.csv /sdcard/Download/verbos_ia.csv
+            for i in $(seq 1 24); do adb push test/fixtures/verbos_ia.csv /sdcard/Download/verbos_ia.csv && break; echo "Storage not ready, trying again in 5 s"; sleep 5; done
+            adb shell ls /sdcard/Download/verbos_ia.csv
             timeout 8m flutter test integration_test -d emulator-5554 || timeout 8m flutter test integration_test -d emulator-5554
             timeout 15m patrol test --device emulator-5554 --verbose || timeout 15m patrol test --device emulator-5554 --verbose
 

@@ -505,7 +505,7 @@ Goal: a project that starts, with automated quality from day one.
 
 - [ ] **T6.6 Full visual review**
   - Compare each screen with `docs/design/` on mobile and desktop, light and dark. Note and fix differences.
-  - Turn the daily goal on by default (asked by the owner after T6.2): a new install starts with "Objetivo diario" on, with the default goal. Update SPEC §4.2 (`daily_goal` default) and the decision log.
+  - Turn the daily goal on by default (asked by the owner after T6.2): a new install starts with "Objetivo diario" on, at 20 cards. Decided with the owner: it also applies to anyone who never touched the setting (nobody has installed the app yet); someone who turned it off keeps it off. Update SPEC §4.2 (`daily_goal` default) and the decision log.
 
 - [ ] **T6.7 CD: `release.yml`**
   - Android signing with repository secrets; Android, Windows and macOS builds when a `v*` tag is created; attach them to a *Release*.
