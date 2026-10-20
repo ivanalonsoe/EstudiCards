@@ -191,6 +191,8 @@
       "query": { "type": "String" }
     }
   },
+  "retry": "Reintentar",
+  "@retry": { "description": "Under «No se han podido cargar los datos»: reads the screen's data again (T6.4)." },
   "loadError": "No se han podido cargar los datos",
   "@loadError": {
     "description": "Shown when reading the database fails."

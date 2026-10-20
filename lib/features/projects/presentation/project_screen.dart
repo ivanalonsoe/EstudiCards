@@ -7,6 +7,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/dashed_border.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
@@ -49,7 +50,9 @@ class ProjectScreen extends ConsumerWidget {
           loading: () => const Scaffold(),
           error: (error, stackTrace) => Scaffold(
             appBar: AppBar(),
-            body: Center(child: Text(AppLocalizations.of(context).loadError)),
+            body: LoadErrorState(
+              onRetry: () => ref.invalidate(projectProvider(projectId)),
+            ),
           ),
           data: (project) {
             if (project == null) return const _ProjectNotFound();
@@ -131,8 +134,7 @@ class _MobileProjectState extends State<_MobileProject>
               ),
               const SizedBox(height: AppSpacing.lg),
               if (_tabs.index == 0) ...[
-                _DeckList(project: project),
-                _NewDeckButton(project: project),
+                _DeckList(project: project, isMobile: true),
               ] else
                 ProjectStatisticsView(projectId: project.id),
             ],
@@ -466,17 +468,22 @@ class _Metric extends StatelessWidget {
   }
 }
 
-/// The project's decks, or the empty state when it has none.
+/// The project's decks, or the empty state when it has none. On mobile
+/// the dashed "Nueva baraja" button follows the decks; with no decks, the
+/// empty state's own button takes its place.
 class _DeckList extends ConsumerWidget {
-  const new({required this.project});
+  const new({required this.project, this.isMobile = false});
 
   final Project project;
+  final bool isMobile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaries = ref.watch(deckSummariesProvider(project.id)).value;
     if (summaries == null) return const SizedBox.shrink();
-    if (summaries.isEmpty) return const _EmptyDecks();
+    if (summaries.isEmpty) {
+      return _EmptyDecks(project: project, isMobile: isMobile);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -484,6 +491,7 @@ class _DeckList extends ConsumerWidget {
           DeckTile(summary: summary, project: project),
           const SizedBox(height: AppSpacing.md),
         ],
+        if (isMobile) _NewDeckButton(project: project),
       ],
     );
   }
@@ -528,28 +536,31 @@ class _NewDeckButton extends StatelessWidget {
   }
 }
 
-/// A project with no decks yet (SPEC §5.3).
+/// A project with no decks yet (SPEC §5.3). On mobile it has "Nueva
+/// baraja", in place of the dashed button; on desktop that button is
+/// already next to the "Barajas" heading.
 class _EmptyDecks extends StatelessWidget {
-  const new();
+  const new({required this.project, required this.isMobile});
+
+  final Project project;
+  final bool isMobile;
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Padding(
+    final l10n = AppLocalizations.of(context);
+    return EmptyState(
       key: const Key('projectScreen.empty'),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-      child: Column(
-        children: [
-          Icon(Icons.layers_outlined, size: 40, color: colors.textMuted),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            AppLocalizations.of(context).emptyDecks,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge
-                ?.copyWith(color: colors.textMuted),
+      icon: Icons.layers_outlined,
+      title: l10n.emptyDecks,
+      actions: [
+        if (isMobile)
+          FilledButton.icon(
+            key: const Key('projectScreen.newDeck'),
+            onPressed: () => showDeckForm(context, project: project),
+            icon: const Icon(Icons.add_rounded),
+            label: Text(l10n.newDeck),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

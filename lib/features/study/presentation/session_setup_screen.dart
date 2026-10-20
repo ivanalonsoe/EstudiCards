@@ -4,6 +4,7 @@ import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
@@ -46,7 +47,12 @@ class SessionSetupScreen extends ConsumerWidget {
     if (project.hasError || decks.hasError || data.hasError) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text(AppLocalizations.of(context).loadError)),
+        body: LoadErrorState(
+          onRetry: () => ref
+            ..invalidate(projectProvider(projectId))
+            ..invalidate(deckSummariesProvider(projectId))
+            ..invalidate(sessionSetupDataProvider(projectId)),
+        ),
       );
     }
     final loadedProject = project.value;

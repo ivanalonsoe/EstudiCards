@@ -18,6 +18,7 @@ import 'package:estudicards/core/voice/voice.dart';
 import 'package:estudicards/features/import_export/presentation/import_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -67,6 +68,7 @@ Future<GoRouter> pumpTestApp(
   FileExporter? fileExporter,
   int? backupLimit,
   Voice? voice,
+  List<Override> overrides = const [],
 }) async {
   final folder = imagesFolder ?? createTempFolder();
   tester.view
@@ -110,6 +112,8 @@ Future<GoRouter> pumpTestApp(
         ),
         // The system voices need the real platform; tests use a fake.
         voiceProvider.overrideWithValue(voice ?? FakeVoice()),
+        // A test's own replacements, e.g. a provider that fails to load.
+        ...overrides,
       ],
       child: EstudiCardsApp(router: router),
     ),

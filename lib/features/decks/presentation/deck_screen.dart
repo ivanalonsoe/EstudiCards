@@ -9,6 +9,7 @@ import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
 import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -137,7 +138,6 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final project = ref.watch(projectProvider(widget.projectId));
     // The project's deck list is watched, so the screen follows edits to
     // the deck (name, colour, type) and notices when it goes to the trash.
@@ -147,7 +147,15 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final pending = ref.watch(pendingCardDeletionsProvider);
 
     if (project.hasError || decks.hasError || cards.hasError) {
-      return _Message(l10n.loadError);
+      return Scaffold(
+        appBar: AppBar(),
+        body: LoadErrorState(
+          onRetry: () => ref
+            ..invalidate(projectProvider(widget.projectId))
+            ..invalidate(deckSummariesProvider(widget.projectId))
+            ..invalidate(deckCardsProvider(widget.deckId)),
+        ),
+      );
     }
     if (!project.hasValue || !decks.hasValue || !cards.hasValue) {
       return const Scaffold();
@@ -159,7 +167,7 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     ].firstOrNull;
     final deck = deckSummary?.deck;
     if (loadedProject == null || deckSummary == null || deck == null) {
-      return const _Message(null);
+      return const _DeckNotFound();
     }
 
     final all = [
@@ -1431,36 +1439,27 @@ class _EmptyDeck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
-    return Padding(
+    return EmptyState(
       key: const Key('deckScreen.empty'),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-      child: Column(
-        children: [
-          Icon(Icons.style_outlined, size: 40, color: colors.textMuted),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            l10n.emptyCards,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge
-                ?.copyWith(color: colors.textMuted),
+      icon: Icons.style_outlined,
+      title: l10n.emptyCards,
+      // "Añadir tarjeta" is already right above, with the deck's actions.
+      actions: [
+        TextButton(
+          key: const Key('deckScreen.emptyImport'),
+          onPressed: () => view.importCards(context),
+          child: Text(l10n.emptyCardsImport),
+        ),
+        Consumer(
+          builder: (context, ref, _) => TextButton.icon(
+            key: const Key('deckScreen.emptyTemplate'),
+            onPressed: () => unawaited(saveCsvTemplate(context, ref)),
+            icon: const Icon(Icons.download_rounded),
+            label: Text(l10n.downloadTemplate),
           ),
-          TextButton(
-            key: const Key('deckScreen.emptyImport'),
-            onPressed: () => view.importCards(context),
-            child: Text(l10n.emptyCardsImport),
-          ),
-          Consumer(
-            builder: (context, ref, _) => TextButton.icon(
-              key: const Key('deckScreen.emptyTemplate'),
-              onPressed: () => unawaited(saveCsvTemplate(context, ref)),
-              icon: const Icon(Icons.download_rounded),
-              label: Text(l10n.downloadTemplate),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1472,24 +1471,16 @@ class _NoResults extends StatelessWidget {
   final String query;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) => EmptyState(
     key: const Key('deckScreen.noResults'),
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-    child: Text(
-      AppLocalizations.of(context).noCardResults(query.trim()),
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodyLarge
-          ?.copyWith(color: AppColors.of(context).textMuted),
-    ),
+    icon: Icons.search_off_rounded,
+    title: AppLocalizations.of(context).noCardResults(query.trim()),
   );
 }
 
-/// A screen with only a message: a load error, or a deck that no longer
-/// exists ([message] null), e.g. an old link or a deck in the trash.
-class _Message extends StatelessWidget {
-  const new(this.message);
-
-  final String? message;
+/// A deck that no longer exists, e.g. an old link or a deck in the trash.
+class _DeckNotFound extends StatelessWidget {
+  const new();
 
   @override
   Widget build(BuildContext context) {
@@ -1502,7 +1493,7 @@ class _Message extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message ?? l10n.deckNotFound,
+              l10n.deckNotFound,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.lg),

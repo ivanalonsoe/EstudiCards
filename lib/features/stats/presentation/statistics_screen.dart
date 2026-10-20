@@ -5,6 +5,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
@@ -32,12 +33,25 @@ class StatisticsScreen extends ConsumerWidget {
     final isDesktop =
         FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
         FormFactor.desktop;
+    final loads = [
+      ref.watch(statsOverviewProvider),
+      ref.watch(dailyAnswersProvider(null)),
+      ref.watch(statisticsProjectsProvider),
+    ];
     final overview = ref.watch(statsOverviewProvider).value;
     final series = ref.watch(dailyAnswersProvider(null)).value;
     final projects = ref.watch(statisticsProjectsProvider).value;
 
     final Widget content;
-    if (overview == null || series == null || projects == null) {
+    if (loads.any((load) => load.hasError && !load.hasValue)) {
+      // Never "no statistics" by mistake when they could not be read.
+      content = LoadErrorState(
+        onRetry: () => ref
+          ..invalidate(statsOverviewProvider)
+          ..invalidate(dailyAnswersProvider(null))
+          ..invalidate(statisticsProjectsProvider),
+      );
+    } else if (overview == null || series == null || projects == null) {
       content = const SizedBox.shrink();
     } else if (overview.streak.best == 0) {
       // No day has ever had an answer.

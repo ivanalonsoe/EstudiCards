@@ -4,6 +4,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/adaptive_actions_row.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/projects/presentation/project_providers.dart';
@@ -20,7 +21,8 @@ class ArchivedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final archived = ref.watch(archivedProjectsProvider).value;
+    final loaded = ref.watch(archivedProjectsProvider);
+    final archived = loaded.value;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.archived)),
       body: Align(
@@ -28,6 +30,10 @@ class ArchivedScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: switch (archived) {
+            // It could not be read: never an empty list by mistake.
+            null when loaded.hasError => LoadErrorState(
+              onRetry: () => ref.invalidate(archivedProjectsProvider),
+            ),
             null => const SizedBox.shrink(),
             [] => const _EmptyArchived(),
             _ => ListView(
@@ -166,29 +172,13 @@ class _EmptyArchived extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
     return Center(
       key: const Key('archived.empty'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.archive_outlined, size: 48, color: colors.textMuted),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              l10n.archivedEmptyTitle,
-              textAlign: TextAlign.center,
-              style: text.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              l10n.archivedEmptyBody,
-              textAlign: TextAlign.center,
-              style: text.bodyMedium?.copyWith(color: colors.textMuted),
-            ),
-          ],
+      child: SingleChildScrollView(
+        child: EmptyState(
+          icon: Icons.archive_outlined,
+          title: l10n.archivedEmptyTitle,
+          body: l10n.archivedEmptyBody,
         ),
       ),
     );

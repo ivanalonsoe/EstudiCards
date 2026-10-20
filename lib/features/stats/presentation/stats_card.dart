@@ -3,6 +3,7 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 
 /// A card with a [title], an optional [trailing] widget on the right of it
@@ -95,24 +96,10 @@ class NoStatistics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
-    return Column(
-      children: [
-        Icon(Icons.bar_chart_rounded, size: 40, color: colors.textMuted),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          l10n.noStatisticsTitle,
-          textAlign: TextAlign.center,
-          style: text.titleMedium,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          body ?? l10n.noStatisticsBody,
-          textAlign: TextAlign.center,
-          style: text.bodyMedium?.copyWith(color: colors.textMuted),
-        ),
-      ],
+    return EmptyState(
+      icon: Icons.bar_chart_rounded,
+      title: l10n.noStatisticsTitle,
+      body: body ?? l10n.noStatisticsBody,
     );
   }
 }

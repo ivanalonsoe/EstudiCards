@@ -8,6 +8,7 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
 import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -60,7 +61,17 @@ class CardEditorScreen extends ConsumerWidget {
         : ref.watch(cardProvider(id));
 
     if (project.hasError || deck.hasError || card.hasError) {
-      return _Message(l10n.loadError);
+      return Scaffold(
+        appBar: AppBar(),
+        body: LoadErrorState(
+          onRetry: () {
+            ref
+              ..invalidate(projectProvider(projectId))
+              ..invalidate(deckProvider(deckId));
+            if (id != null) ref.invalidate(cardProvider(id));
+          },
+        ),
+      );
     }
     if (!project.hasValue || !deck.hasValue || !card.hasValue) {
       return const Scaffold();
