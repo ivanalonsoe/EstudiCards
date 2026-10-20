@@ -176,8 +176,10 @@ class _TrashItemCard extends ConsumerWidget {
                 daysLeft: left,
                 urgent: isUrgent(left),
               ),
-              actions: Row(
-                mainAxisSize: MainAxisSize.min,
+              // A `Wrap`: with large text the button goes on a new line.
+              actions: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   IconButton(
                     key: Key('trashItem.${item.id}.delete'),

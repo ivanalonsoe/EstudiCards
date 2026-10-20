@@ -59,10 +59,14 @@ class AppSidebar extends ConsumerWidget {
               children: [
                 const BrandLogo(),
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  l10n.appTitle,
-                  style: text.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                Flexible(
+                  child: Text(
+                    l10n.appTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -101,12 +105,26 @@ class AppSidebar extends ConsumerWidget {
                 ],
               ),
             ),
-            const _SidebarGoal(),
-            for (final destination in menuDestinations)
-              NavTile(
-                destination: destination,
-                selected: location == destination.path,
+            // The goal and the menu keep their height while it fits, and
+            // scroll on their own when it does not (e.g. a short window or
+            // large system text). `flex: 2`: they may take up to 2/3 of the
+            // room left, the projects at least 1/3.
+            Flexible(
+              flex: 2,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _SidebarGoal(),
+                    for (final destination in menuDestinations)
+                      NavTile(
+                        destination: destination,
+                        selected: location == destination.path,
+                      ),
+                  ],
+                ),
               ),
+            ),
           ],
         ),
       ),

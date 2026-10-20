@@ -12,13 +12,15 @@ class AdaptiveActionsRow extends StatelessWidget {
   final Widget leading;
   final Widget actions;
 
-  /// Narrower than this, the actions go on their own line.
+  /// Narrower than this, the actions go on their own line. It grows with
+  /// the system text size, since the labels grow too.
   static const double _oneLineWidth = 360;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      if (constraints.maxWidth < _oneLineWidth) {
+      final oneLine = MediaQuery.textScalerOf(context).scale(_oneLineWidth);
+      if (constraints.maxWidth < oneLine) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

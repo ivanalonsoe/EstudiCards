@@ -109,8 +109,10 @@ class _ArchivedCard extends ConsumerWidget {
                       l10n.archivedOn(_shortDate(context, archivedAt)),
                       style: text.labelLarge?.copyWith(color: colors.textMuted),
                     ),
-              actions: Row(
-                mainAxisSize: MainAxisSize.min,
+              // A `Wrap`: with large text the button goes on a new line.
+              actions: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   IconButton(
                     key: Key('archivedItem.${project.id}.delete'),

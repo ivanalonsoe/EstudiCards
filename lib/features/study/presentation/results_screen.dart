@@ -297,22 +297,27 @@ class _ScoreRing extends StatelessWidget {
               color: colors.primary,
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  percent == null ? '—' : l10n.percent(percent),
-                  style: text.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: size / 4,
+          // With large system text the % shrinks to fit inside the ring.
+          Padding(
+            padding: EdgeInsets.all(size / 7),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    percent == null ? '—' : l10n.percent(percent),
+                    style: text.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: size / 4,
+                    ),
                   ),
-                ),
-                Text(
-                  l10n.resultsCorrectRateLabel,
-                  style: text.titleMedium?.copyWith(color: colors.textMuted),
-                ),
-              ],
+                  Text(
+                    l10n.resultsCorrectRateLabel,
+                    style: text.titleMedium?.copyWith(color: colors.textMuted),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -5,6 +5,7 @@ import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/dashed_border.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_form.dart';
@@ -234,36 +235,14 @@ class _Breadcrumb extends StatelessWidget {
   final Project project;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final style = Theme.of(context).textTheme.labelLarge;
-    return Row(
-      children: [
-        InkWell(
-          key: const Key('projectScreen.breadcrumbHome'),
-          onTap: () => context.go(AppRoutes.home),
-          borderRadius: BorderRadius.circular(AppSpacing.xs),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xs),
-            child: Text(
-              AppLocalizations.of(context).home,
-              style: style?.copyWith(color: colors.textMuted),
-            ),
-          ),
-        ),
-        Icon(Icons.chevron_right_rounded, size: 18, color: colors.textMuted),
-        const SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            project.name,
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Breadcrumb([
+    (
+      label: AppLocalizations.of(context).home,
+      location: AppRoutes.home,
+      key: const Key('projectScreen.breadcrumbHome'),
+    ),
+    (label: project.name, location: null, key: null),
+  ]);
 }
 
 /// Icon, name and description. On desktop the details also hold the counts,
@@ -533,10 +512,13 @@ class _NewDeckButton extends StatelessWidget {
             children: [
               Icon(Icons.add_rounded, color: colors.primaryStrong),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                AppLocalizations.of(context).newDeck,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: colors.primaryStrong),
+              Flexible(
+                child: Text(
+                  AppLocalizations.of(context).newDeck,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: colors.primaryStrong),
+                ),
               ),
             ],
           ),

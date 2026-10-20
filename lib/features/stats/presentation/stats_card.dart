@@ -37,7 +37,9 @@ class StatsCard extends StatelessWidget {
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
-                ?trailing,
+                // Shrinks, rather than pushing the title out, with large
+                // system text.
+                if (trailing case final trailing?) Flexible(child: trailing),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),

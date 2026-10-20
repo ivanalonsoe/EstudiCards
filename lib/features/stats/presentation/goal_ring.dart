@@ -39,26 +39,31 @@ class GoalRing extends StatelessWidget {
               backgroundColor: colors.surfaceVariant,
               color: colors.primary,
             ),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${progress.done}',
-                    style: text.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      height: 1,
-                    ),
-                  ),
-                  if (showGoal)
+            // With large system text the numbers shrink to fit the ring.
+            Padding(
+              padding: EdgeInsets.all(size / 7),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      l10n.goalOf(progress.goal),
-                      style: text.labelSmall?.copyWith(
-                        color: colors.textMuted,
-                        height: 1.1,
+                      '${progress.done}',
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        height: 1,
                       ),
                     ),
-                ],
+                    if (showGoal)
+                      Text(
+                        l10n.goalOf(progress.goal),
+                        style: text.labelSmall?.copyWith(
+                          color: colors.textMuted,
+                          height: 1.1,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ],

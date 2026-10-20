@@ -651,16 +651,19 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
       Row(
         children: [
           Expanded(child: FormLabel(l10n.optionsLabel)),
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Text(
-              l10n.optionsCounter(
-                _options.length,
-                CardInput.maxOptions,
-                correct,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Text(
+                l10n.optionsCounter(
+                  _options.length,
+                  CardInput.maxOptions,
+                  correct,
+                ),
+                textAlign: TextAlign.end,
+                style: Theme.of(context).textTheme.labelLarge
+                    ?.copyWith(color: colors.textMuted),
               ),
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: colors.textMuted),
             ),
           ),
         ],
@@ -1020,13 +1023,15 @@ class _DesktopPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        // The heading and the sides on one line when they fit; with large
+        // system text the sides go below.
+        OverflowBar(
+          alignment: MainAxisAlignment.spaceBetween,
+          overflowSpacing: AppSpacing.sm,
           children: [
-            Expanded(
-              child: Text(
-                l10n.previewLabel.toUpperCase(),
-                style: _previewHeadingStyle(context),
-              ),
+            Text(
+              l10n.previewLabel.toUpperCase(),
+              style: _previewHeadingStyle(context),
             ),
             SegmentedButton<CardFace>(
               showSelectedIcon: false,
@@ -1133,33 +1138,32 @@ class _DesktopFrame extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            Row(
+            // `OverflowBar`: the title and the buttons share one line when
+            // they fit, as in the design; with large system text the
+            // buttons go below the title, and below each other if needed.
+            OverflowBar(
+              alignment: MainAxisAlignment.spaceBetween,
+              overflowSpacing: AppSpacing.md,
               children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
+                Text(title, style: Theme.of(context).textTheme.displaySmall),
+                OverflowBar(
+                  spacing: AppSpacing.sm,
+                  overflowSpacing: AppSpacing.sm,
+                  overflowAlignment: OverflowBarAlignment.end,
+                  children: [
+                    if (actions.onResetStatistics != null)
+                      actions.resetStatisticsButton(context, compact: false),
+                    if (actions.onDelete != null)
+                      actions.deleteButton(context, compact: false),
+                    TextButton(
+                      key: const Key('cardEditor.cancel'),
+                      onPressed: onCancel,
+                      child: Text(l10n.cancel),
+                    ),
+                    if (!actions.isEditing) actions.saveAndAddButton(context),
+                    actions.saveButton(context),
+                  ],
                 ),
-                if (actions.onResetStatistics != null) ...[
-                  actions.resetStatisticsButton(context, compact: false),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                if (actions.onDelete != null) ...[
-                  actions.deleteButton(context, compact: false),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                TextButton(
-                  key: const Key('cardEditor.cancel'),
-                  onPressed: onCancel,
-                  child: Text(l10n.cancel),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                if (!actions.isEditing) ...[
-                  actions.saveAndAddButton(context),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                actions.saveButton(context),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),

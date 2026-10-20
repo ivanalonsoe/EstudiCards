@@ -7,10 +7,12 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
 import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
@@ -551,7 +553,10 @@ class _Toolbar extends StatelessWidget {
     final search = _SearchField(view: view, hint: l10n.searchCardsLong);
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= _oneRowWidth) {
+        // The labels grow with the system text, and so does the width the
+        // toolbar needs to fit in one row.
+        final oneRow = MediaQuery.textScalerOf(context).scale(_oneRowWidth);
+        if (constraints.maxWidth >= oneRow) {
           return Row(
             children: [
               // The buttons get most of the width (5:2), so they fit in one
@@ -642,54 +647,19 @@ class _Breadcrumb extends StatelessWidget {
   final _DeckView view;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final style = Theme.of(context).textTheme.labelLarge;
-    final muted = style?.copyWith(color: colors.textMuted);
-
-    Widget link(String label, String location, String key) => InkWell(
-      key: Key(key),
-      onTap: () => context.go(location),
-      borderRadius: BorderRadius.circular(AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        child: Text(label, style: muted),
-      ),
-    );
-
-    final chevron = Icon(
-      Icons.chevron_right_rounded,
-      size: 18,
-      color: colors.textMuted,
-    );
-    return Row(
-      children: [
-        link(
-          AppLocalizations.of(context).home,
-          AppRoutes.home,
-          'deckScreen.breadcrumbHome',
-        ),
-        chevron,
-        Flexible(
-          child: link(
-            view.project.name,
-            AppRoutes.project(view.project.id),
-            'deckScreen.breadcrumbProject',
-          ),
-        ),
-        chevron,
-        const SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            view.deck.name,
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Breadcrumb([
+    (
+      label: AppLocalizations.of(context).home,
+      location: AppRoutes.home,
+      key: const Key('deckScreen.breadcrumbHome'),
+    ),
+    (
+      label: view.project.name,
+      location: AppRoutes.project(view.project.id),
+      key: const Key('deckScreen.breadcrumbProject'),
+    ),
+    (label: view.deck.name, location: null, key: null),
+  ]);
 }
 
 class _ColorDot extends StatelessWidget {
@@ -841,10 +811,12 @@ class _CardTile extends StatelessWidget {
           children: [
             if (view.isSelecting)
               SizedBox(
-                width: 44,
+                width: minTouchTarget,
                 child: Checkbox(
                   key: Key('cardRow.${card.id}.select'),
                   value: isSelected,
+                  semanticLabel: AppLocalizations.of(context)
+                      .selectCard(withoutFormatMarks(card.question)),
                   onChanged: (_) => view.onToggle(card.id),
                 ),
               )
@@ -1073,8 +1045,9 @@ class _TableRow extends StatelessWidget {
     ),
     child: Row(
       children: [
-        SizedBox(width: 40, child: select),
-        const SizedBox(width: AppSpacing.sm),
+        // 48 dp wide, so the checkbox is easy to hit (brief §9).
+        SizedBox(width: minTouchTarget, child: select),
+        const SizedBox(width: AppSpacing.xs),
         Expanded(child: question),
         const SizedBox(width: AppSpacing.lg),
         SizedBox(width: 128, child: type),
@@ -1124,6 +1097,7 @@ class _CardTableRow extends StatelessWidget {
           select: Checkbox(
             key: Key('cardRow.${card.id}.select'),
             value: isSelected,
+            semanticLabel: l10n.selectCard(withoutFormatMarks(card.question)),
             onChanged: (_) => view.onToggle(card.id),
           ),
           question: _Question(card: card, maxLines: 1),

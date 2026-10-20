@@ -492,10 +492,14 @@ class _Hint extends StatelessWidget {
       children: [
         Icon(Icons.refresh_rounded, size: 16, color: muted),
         const SizedBox(width: AppSpacing.xs),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.labelMedium
-              ?.copyWith(color: muted),
+        // Wraps instead of overflowing with large system text.
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: muted),
+          ),
         ),
       ],
     );

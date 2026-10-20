@@ -619,6 +619,11 @@
       "count": { "type": "int" }
     }
   },
+  "selectCard": "Seleccionar «{question}»",
+  "@selectCard": {
+    "description": "What screen readers say for the checkbox of a card in the deck (T6.3).",
+    "placeholders": { "question": { "type": "String" } }
+  },
   "selectAll": "Seleccionar todas",
   "@selectAll": {
     "description": "Tooltip of the checkbox in the heading of the desktop card table."
