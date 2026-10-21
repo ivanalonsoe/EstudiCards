@@ -3,6 +3,8 @@ import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/core/widgets/breadcrumb.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
@@ -45,7 +47,12 @@ class SessionSetupScreen extends ConsumerWidget {
     if (project.hasError || decks.hasError || data.hasError) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text(AppLocalizations.of(context).loadError)),
+        body: LoadErrorState(
+          onRetry: () => ref
+            ..invalidate(projectProvider(projectId))
+            ..invalidate(deckSummariesProvider(projectId))
+            ..invalidate(sessionSetupDataProvider(projectId)),
+        ),
       );
     }
     final loadedProject = project.value;
@@ -354,31 +361,11 @@ class _Breadcrumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    final style = Theme.of(context).textTheme.labelLarge;
-    Widget link(String label, String location) => InkWell(
-      onTap: () => context.go(location),
-      borderRadius: BorderRadius.circular(AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        child: Text(label, style: style?.copyWith(color: colors.textMuted)),
-      ),
-    );
-    final separator = Icon(
-      Icons.chevron_right_rounded,
-      size: 18,
-      color: colors.textMuted,
-    );
-    return Row(
-      children: [
-        link(l10n.home, AppRoutes.home),
-        separator,
-        Flexible(child: link(project.name, AppRoutes.project(project.id))),
-        separator,
-        const SizedBox(width: AppSpacing.xs),
-        Text(l10n.newSession, style: style),
-      ],
-    );
+    return Breadcrumb([
+      (label: l10n.home, location: AppRoutes.home, key: null),
+      (label: project.name, location: AppRoutes.project(project.id), key: null),
+      (label: l10n.newSession, location: null, key: null),
+    ]);
   }
 }
 
@@ -753,24 +740,28 @@ class _SwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => onChanged(!value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+    // `MergeSemantics` makes the label and the switch one item for screen
+    // readers: "Priorizar las más falladas, interruptor, activado".
+    return MergeSemantics(
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-            Switch(key: switchKey, value: value, onChanged: onChanged),
-          ],
+              Switch(key: switchKey, value: value, onChanged: onChanged),
+            ],
+          ),
         ),
       ),
     );

@@ -52,62 +52,94 @@ class AppSidebar extends ConsumerWidget {
           border: Border(right: BorderSide(color: colors.border)),
         ),
         padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final height = constraints.maxHeight;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const BrandLogo(),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  l10n.appTitle,
-                  style: text.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                Row(
+                  children: [
+                    const BrandLogo(),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        l10n.appTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const ProjectSearchField(
+                  key: Key('sidebar.search'),
+                  dense: true,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                NavTile(
+                  destination: homeDestination,
+                  selected: location == homeDestination.path,
+                ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      if (favorites.isNotEmpty) ...[
+                        _SidebarHeading(l10n.favorites),
+                        for (final summary in favorites)
+                          _SidebarProjectTile(
+                            summary: summary,
+                            location: location,
+                          ),
+                      ],
+                      _SidebarHeading(
+                        l10n.projects,
+                        trailing: IconButton(
+                          key: const Key('sidebar.newProject'),
+                          tooltip: l10n.newProject,
+                          onPressed: () => showProjectForm(context, ref),
+                          icon: const Icon(Icons.add_rounded),
+                          iconSize: 18,
+                          color: colors.primaryStrong,
+                          style: IconButton.styleFrom(
+                            backgroundColor: colors.primarySoft,
+                          ),
+                        ),
+                      ),
+                      for (final summary in others)
+                        _SidebarProjectTile(
+                          summary: summary,
+                          location: location,
+                        ),
+                    ],
+                  ),
+                ),
+                // The goal and the menu stay at the bottom with their own
+                // height, but at most 60% of the sidebar: past that (a short
+                // window or large system text) they scroll on their own. The
+                // projects take the rest.
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: height * 0.6),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const _SidebarGoal(),
+                        for (final destination in menuDestinations)
+                          NavTile(
+                            destination: destination,
+                            selected: location == destination.path,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const ProjectSearchField(key: Key('sidebar.search'), dense: true),
-            const SizedBox(height: AppSpacing.md),
-            NavTile(
-              destination: homeDestination,
-              selected: location == homeDestination.path,
-            ),
-            Expanded(
-              child: ListView(
-                children: [
-                  if (favorites.isNotEmpty) ...[
-                    _SidebarHeading(l10n.favorites),
-                    for (final summary in favorites)
-                      _SidebarProjectTile(summary: summary, location: location),
-                  ],
-                  _SidebarHeading(
-                    l10n.projects,
-                    trailing: IconButton(
-                      key: const Key('sidebar.newProject'),
-                      tooltip: l10n.newProject,
-                      onPressed: () => showProjectForm(context, ref),
-                      icon: const Icon(Icons.add_rounded),
-                      iconSize: 18,
-                      color: colors.primaryStrong,
-                      style: IconButton.styleFrom(
-                        backgroundColor: colors.primarySoft,
-                      ),
-                    ),
-                  ),
-                  for (final summary in others)
-                    _SidebarProjectTile(summary: summary, location: location),
-                ],
-              ),
-            ),
-            const _SidebarGoal(),
-            for (final destination in menuDestinations)
-              NavTile(
-                destination: destination,
-                selected: location == destination.path,
-              ),
-          ],
+            );
+          },
         ),
       ),
     );

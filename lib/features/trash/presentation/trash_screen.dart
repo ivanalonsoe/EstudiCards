@@ -6,6 +6,7 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/adaptive_actions_row.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/projects/presentation/project_icon.dart';
 import 'package:estudicards/features/trash/domain/trash_item.dart';
 import 'package:estudicards/features/trash/domain/trash_rules.dart';
@@ -34,11 +35,22 @@ class _TrashScreenState extends ConsumerState<TrashScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final now = ref.watch(clockProvider).now();
+    final loaded = ref.watch(trashItemsProvider);
     // Expired items are hidden even before the purge finishes.
     final items = [
-      for (final item in ref.watch(trashItemsProvider).value ?? <TrashItem>[])
+      for (final item in loaded.value ?? <TrashItem>[])
         if (!isExpired(item.deletedAt, now: now)) item,
     ];
+    // Nothing yet, or it could not be read: never an empty trash by
+    // mistake.
+    if (!loaded.hasValue) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.trash)),
+        body: loaded.hasError
+            ? LoadErrorState(onRetry: () => ref.invalidate(trashItemsProvider))
+            : const SizedBox.shrink(),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.trash)),
@@ -176,8 +188,10 @@ class _TrashItemCard extends ConsumerWidget {
                 daysLeft: left,
                 urgent: isUrgent(left),
               ),
-              actions: Row(
-                mainAxisSize: MainAxisSize.min,
+              // A `Wrap`: with large text the button goes on a new line.
+              actions: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   IconButton(
                     key: Key('trashItem.${item.id}.delete'),
@@ -312,33 +326,13 @@ class _EmptyTrash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
     return Center(
       key: const Key('trash.emptyState'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.delete_outline_rounded,
-              size: 48,
-              color: colors.textMuted,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              l10n.trashEmptyTitle,
-              textAlign: TextAlign.center,
-              style: text.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              l10n.trashEmptyBody,
-              textAlign: TextAlign.center,
-              style: text.bodyMedium?.copyWith(color: colors.textMuted),
-            ),
-          ],
+      child: SingleChildScrollView(
+        child: EmptyState(
+          icon: Icons.delete_outline_rounded,
+          title: l10n.trashEmptyTitle,
+          body: l10n.trashEmptyBody,
         ),
       ),
     );

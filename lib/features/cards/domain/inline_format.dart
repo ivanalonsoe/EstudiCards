@@ -26,6 +26,13 @@ FormattedRun formattedRun(
   bool isMarker = false,
 }) => (text: text, bold: bold, italic: italic, isMarker: isMarker);
 
+/// [text] as it is shown, without the `**` and `*` marks of bold and
+/// italic: what is read aloud or by a screen reader.
+String withoutFormatMarks(String text) => [
+  for (final run in parseInlineFormat(text))
+    if (!run.isMarker) run.text,
+].join();
+
 /// Splits [text] into runs with their style. `**` turns bold on and off and
 /// `*` italic; `***` is both. A marker without its pair is plain text, so
 /// "5 * 3" stays as typed. Joining the runs' text gives [text] back.

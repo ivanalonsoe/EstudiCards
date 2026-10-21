@@ -191,6 +191,8 @@
       "query": { "type": "String" }
     }
   },
+  "retry": "Reintentar",
+  "@retry": { "description": "Under «No se han podido cargar los datos»: reads the screen's data again (T6.4)." },
   "loadError": "No se han podido cargar los datos",
   "@loadError": {
     "description": "Shown when reading the database fails."
@@ -618,6 +620,11 @@
     "placeholders": {
       "count": { "type": "int" }
     }
+  },
+  "selectCard": "Seleccionar «{question}»",
+  "@selectCard": {
+    "description": "What screen readers say for the checkbox of a card in the deck (T6.3).",
+    "placeholders": { "question": { "type": "String" } }
   },
   "selectAll": "Seleccionar todas",
   "@selectAll": {

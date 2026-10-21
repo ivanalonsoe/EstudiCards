@@ -93,6 +93,7 @@ class ProjectCard extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
+                    flex: 3,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadii.chip),
                       child: LinearProgressIndicator(
@@ -105,9 +106,15 @@ class ProjectCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
-                  Text(
-                    l10n.correctRate(rateText(l10n, summary.answers.rate)),
-                    style: text.titleSmall,
+                  // Up to 2/5 of the row; with large system text it wraps
+                  // onto a second line instead of overflowing.
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      l10n.correctRate(rateText(l10n, summary.answers.rate)),
+                      textAlign: TextAlign.end,
+                      style: text.titleSmall,
+                    ),
                   ),
                 ],
               ),

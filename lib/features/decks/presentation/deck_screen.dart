@@ -7,10 +7,13 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
+import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
 import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
@@ -135,7 +138,6 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final project = ref.watch(projectProvider(widget.projectId));
     // The project's deck list is watched, so the screen follows edits to
     // the deck (name, colour, type) and notices when it goes to the trash.
@@ -145,7 +147,15 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final pending = ref.watch(pendingCardDeletionsProvider);
 
     if (project.hasError || decks.hasError || cards.hasError) {
-      return _Message(l10n.loadError);
+      return Scaffold(
+        appBar: AppBar(),
+        body: LoadErrorState(
+          onRetry: () => ref
+            ..invalidate(projectProvider(widget.projectId))
+            ..invalidate(deckSummariesProvider(widget.projectId))
+            ..invalidate(deckCardsProvider(widget.deckId)),
+        ),
+      );
     }
     if (!project.hasValue || !decks.hasValue || !cards.hasValue) {
       return const Scaffold();
@@ -157,7 +167,7 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     ].firstOrNull;
     final deck = deckSummary?.deck;
     if (loadedProject == null || deckSummary == null || deck == null) {
-      return const _Message(null);
+      return const _DeckNotFound();
     }
 
     final all = [
@@ -551,7 +561,10 @@ class _Toolbar extends StatelessWidget {
     final search = _SearchField(view: view, hint: l10n.searchCardsLong);
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= _oneRowWidth) {
+        // The labels grow with the system text, and so does the width the
+        // toolbar needs to fit in one row.
+        final oneRow = MediaQuery.textScalerOf(context).scale(_oneRowWidth);
+        if (constraints.maxWidth >= oneRow) {
           return Row(
             children: [
               // The buttons get most of the width (5:2), so they fit in one
@@ -642,54 +655,19 @@ class _Breadcrumb extends StatelessWidget {
   final _DeckView view;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final style = Theme.of(context).textTheme.labelLarge;
-    final muted = style?.copyWith(color: colors.textMuted);
-
-    Widget link(String label, String location, String key) => InkWell(
-      key: Key(key),
-      onTap: () => context.go(location),
-      borderRadius: BorderRadius.circular(AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        child: Text(label, style: muted),
-      ),
-    );
-
-    final chevron = Icon(
-      Icons.chevron_right_rounded,
-      size: 18,
-      color: colors.textMuted,
-    );
-    return Row(
-      children: [
-        link(
-          AppLocalizations.of(context).home,
-          AppRoutes.home,
-          'deckScreen.breadcrumbHome',
-        ),
-        chevron,
-        Flexible(
-          child: link(
-            view.project.name,
-            AppRoutes.project(view.project.id),
-            'deckScreen.breadcrumbProject',
-          ),
-        ),
-        chevron,
-        const SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            view.deck.name,
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Breadcrumb([
+    (
+      label: AppLocalizations.of(context).home,
+      location: AppRoutes.home,
+      key: const Key('deckScreen.breadcrumbHome'),
+    ),
+    (
+      label: view.project.name,
+      location: AppRoutes.project(view.project.id),
+      key: const Key('deckScreen.breadcrumbProject'),
+    ),
+    (label: view.deck.name, location: null, key: null),
+  ]);
 }
 
 class _ColorDot extends StatelessWidget {
@@ -841,10 +819,12 @@ class _CardTile extends StatelessWidget {
           children: [
             if (view.isSelecting)
               SizedBox(
-                width: 44,
+                width: minTouchTarget,
                 child: Checkbox(
                   key: Key('cardRow.${card.id}.select'),
                   value: isSelected,
+                  semanticLabel: AppLocalizations.of(context)
+                      .selectCard(withoutFormatMarks(card.question)),
                   onChanged: (_) => view.onToggle(card.id),
                 ),
               )
@@ -1073,8 +1053,9 @@ class _TableRow extends StatelessWidget {
     ),
     child: Row(
       children: [
-        SizedBox(width: 40, child: select),
-        const SizedBox(width: AppSpacing.sm),
+        // 48 dp wide, so the checkbox is easy to hit (brief §9).
+        SizedBox(width: minTouchTarget, child: select),
+        const SizedBox(width: AppSpacing.xs),
         Expanded(child: question),
         const SizedBox(width: AppSpacing.lg),
         SizedBox(width: 128, child: type),
@@ -1124,6 +1105,7 @@ class _CardTableRow extends StatelessWidget {
           select: Checkbox(
             key: Key('cardRow.${card.id}.select'),
             value: isSelected,
+            semanticLabel: l10n.selectCard(withoutFormatMarks(card.question)),
             onChanged: (_) => view.onToggle(card.id),
           ),
           question: _Question(card: card, maxLines: 1),
@@ -1457,36 +1439,27 @@ class _EmptyDeck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
-    return Padding(
+    return EmptyState(
       key: const Key('deckScreen.empty'),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-      child: Column(
-        children: [
-          Icon(Icons.style_outlined, size: 40, color: colors.textMuted),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            l10n.emptyCards,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge
-                ?.copyWith(color: colors.textMuted),
+      icon: Icons.style_outlined,
+      title: l10n.emptyCards,
+      // "Añadir tarjeta" is already right above, with the deck's actions.
+      actions: [
+        TextButton(
+          key: const Key('deckScreen.emptyImport'),
+          onPressed: () => view.importCards(context),
+          child: Text(l10n.emptyCardsImport),
+        ),
+        Consumer(
+          builder: (context, ref, _) => TextButton.icon(
+            key: const Key('deckScreen.emptyTemplate'),
+            onPressed: () => unawaited(saveCsvTemplate(context, ref)),
+            icon: const Icon(Icons.download_rounded),
+            label: Text(l10n.downloadTemplate),
           ),
-          TextButton(
-            key: const Key('deckScreen.emptyImport'),
-            onPressed: () => view.importCards(context),
-            child: Text(l10n.emptyCardsImport),
-          ),
-          Consumer(
-            builder: (context, ref, _) => TextButton.icon(
-              key: const Key('deckScreen.emptyTemplate'),
-              onPressed: () => unawaited(saveCsvTemplate(context, ref)),
-              icon: const Icon(Icons.download_rounded),
-              label: Text(l10n.downloadTemplate),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1498,24 +1471,16 @@ class _NoResults extends StatelessWidget {
   final String query;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) => EmptyState(
     key: const Key('deckScreen.noResults'),
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-    child: Text(
-      AppLocalizations.of(context).noCardResults(query.trim()),
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodyLarge
-          ?.copyWith(color: AppColors.of(context).textMuted),
-    ),
+    icon: Icons.search_off_rounded,
+    title: AppLocalizations.of(context).noCardResults(query.trim()),
   );
 }
 
-/// A screen with only a message: a load error, or a deck that no longer
-/// exists ([message] null), e.g. an old link or a deck in the trash.
-class _Message extends StatelessWidget {
-  const new(this.message);
-
-  final String? message;
+/// A deck that no longer exists, e.g. an old link or a deck in the trash.
+class _DeckNotFound extends StatelessWidget {
+  const new();
 
   @override
   Widget build(BuildContext context) {
@@ -1528,7 +1493,7 @@ class _Message extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message ?? l10n.deckNotFound,
+              l10n.deckNotFound,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.lg),

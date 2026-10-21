@@ -35,13 +35,6 @@ Speech? speechFor(Flashcard card, SpeechPart part, SpeechLanguages languages) {
           : (card.answer, languages.target),
     SpeechPart.example => (card.example, languages.source),
   };
-  final plain = text == null ? '' : _withoutMarks(text).trim();
+  final plain = text == null ? '' : withoutFormatMarks(text).trim();
   return plain.isEmpty ? null : (text: plain, language: language);
 }
-
-/// [text] as it is shown: the `**` and `*` marks of bold and italic are not
-/// read aloud.
-String _withoutMarks(String text) => [
-  for (final run in parseInlineFormat(text))
-    if (!run.isMarker) run.text,
-].join();

@@ -1,4 +1,4 @@
-﻿import 'package:estudicards/features/cards/domain/inline_format.dart';
+import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -52,6 +52,14 @@ void main() {
       const text = 'a **b** *c* ***d*** **e *f***  *';
       expect(parseInlineFormat(text).map((r) => r.text).join(), text);
     });
+  });
+
+  test('withoutFormatMarks leaves the text as it is shown', () {
+    expect(
+      withoutFormatMarks('Can you **bring** me *some* water?'),
+      'Can you bring me some water?',
+    );
+    expect(withoutFormatMarks('5 * 3'), '5 * 3');
   });
 
   group('toggleInlineStyle', () {

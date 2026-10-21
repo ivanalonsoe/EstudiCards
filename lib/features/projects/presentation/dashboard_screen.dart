@@ -7,6 +7,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/dashed_border.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/features/projects/domain/greeting.dart';
 import 'package:estudicards/features/projects/domain/project_summary.dart';
 import 'package:estudicards/features/projects/presentation/project_card.dart';
@@ -38,8 +39,9 @@ class DashboardScreen extends ConsumerWidget {
         .watch(projectSummariesProvider)
         .when(
           loading: () => const SizedBox.shrink(),
-          error: (error, stackTrace) =>
-              Center(child: Text(AppLocalizations.of(context).loadError)),
+          error: (error, stackTrace) => LoadErrorState(
+            onRetry: () => ref.invalidate(projectSummariesProvider),
+          ),
           data: (all) {
             if (all.isEmpty) return const _EmptyDashboard();
             final visible = ref.watch(visibleProjectsProvider).value ?? all;
@@ -591,16 +593,11 @@ class _NoResults extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
     key: const Key('dashboard.noResults'),
-    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-    child: Text(
-      AppLocalizations.of(context)
-          .noSearchResults(ref.watch(projectSearchQueryProvider).trim()),
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodyLarge
-          ?.copyWith(color: AppColors.of(context).textMuted),
-    ),
+    icon: Icons.search_off_rounded,
+    title: AppLocalizations.of(context)
+        .noSearchResults(ref.watch(projectSearchQueryProvider).trim()),
   );
 }
 
@@ -613,59 +610,39 @@ class _EmptyDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
     return Center(
       key: const Key('dashboard.empty'),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
-            children: [
-              Container(
-                width: 112,
-                height: 112,
-                decoration: BoxDecoration(
-                  color: colors.primarySoft,
-                  borderRadius: BorderRadius.circular(AppSpacing.xxl),
-                ),
-                alignment: Alignment.center,
-                child: const BrandLogo(size: 72),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              Text(
-                l10n.emptyProjectsTitle,
-                style: text.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                l10n.emptyProjectsBody,
-                style: text.bodyLarge?.copyWith(color: colors.textMuted),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  key: const Key('dashboard.newProject'),
-                  onPressed: () => showProjectForm(context, ref),
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text(l10n.newProject),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  key: const Key('dashboard.importEmpty'),
-                  onPressed: () => context.go(AppRoutes.importCards()),
-                  icon: const Icon(Icons.upload_rounded),
-                  label: Text(l10n.importProject),
-                ),
-              ),
-            ],
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: EmptyState(
+          large: true,
+          icon: Icons.style_rounded,
+          illustration: Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              color: colors.primarySoft,
+              borderRadius: BorderRadius.circular(AppSpacing.xxl),
+            ),
+            alignment: Alignment.center,
+            child: const BrandLogo(size: 72),
           ),
+          title: l10n.emptyProjectsTitle,
+          body: l10n.emptyProjectsBody,
+          actions: [
+            FilledButton.icon(
+              key: const Key('dashboard.newProject'),
+              onPressed: () => showProjectForm(context, ref),
+              icon: const Icon(Icons.add_rounded),
+              label: Text(l10n.newProject),
+            ),
+            OutlinedButton.icon(
+              key: const Key('dashboard.importEmpty'),
+              onPressed: () => context.go(AppRoutes.importCards()),
+              icon: const Icon(Icons.upload_rounded),
+              label: Text(l10n.importProject),
+            ),
+          ],
         ),
       ),
     );

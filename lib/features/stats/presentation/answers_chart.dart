@@ -286,7 +286,7 @@ class _LegendItem extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Icon(icon, size: 16, color: AppColors.of(context).text),
         const SizedBox(width: AppSpacing.xs),
-        Text(text, style: style),
+        Flexible(child: Text(text, style: style)),
       ],
     );
   }

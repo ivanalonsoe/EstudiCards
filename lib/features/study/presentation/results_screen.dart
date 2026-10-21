@@ -4,6 +4,7 @@ import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/motion.dart';
+import 'package:estudicards/core/widgets/empty_state.dart';
 import 'package:estudicards/core/widgets/play_once.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
@@ -35,7 +36,9 @@ class ResultsScreen extends ConsumerWidget {
           loading: () => const Scaffold(),
           error: (error, stackTrace) => Scaffold(
             appBar: AppBar(),
-            body: Center(child: Text(AppLocalizations.of(context).loadError)),
+            body: LoadErrorState(
+              onRetry: () => ref.invalidate(sessionResultsProvider(sessionId)),
+            ),
           ),
           data: (results) {
             if (results == null) return const _SessionNotFound();
@@ -297,22 +300,27 @@ class _ScoreRing extends StatelessWidget {
               color: colors.primary,
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  percent == null ? '—' : l10n.percent(percent),
-                  style: text.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: size / 4,
+          // With large system text the % shrinks to fit inside the ring.
+          Padding(
+            padding: EdgeInsets.all(size / 7),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    percent == null ? '—' : l10n.percent(percent),
+                    style: text.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: size / 4,
+                    ),
                   ),
-                ),
-                Text(
-                  l10n.resultsCorrectRateLabel,
-                  style: text.titleMedium?.copyWith(color: colors.textMuted),
-                ),
-              ],
+                  Text(
+                    l10n.resultsCorrectRateLabel,
+                    style: text.titleMedium?.copyWith(color: colors.textMuted),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
