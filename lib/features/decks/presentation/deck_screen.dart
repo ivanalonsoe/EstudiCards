@@ -321,14 +321,7 @@ class _MobileDeck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
-    final details = [
-      view.project.name,
-      ?view.languagePair(l10n),
-      ...view.counts(l10n),
-    ].join(l10n.detailsSeparator);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(view.deck.name),
@@ -346,84 +339,40 @@ class _MobileDeck extends StatelessWidget {
         child: ConstrainedBox(
           // On tablets the list keeps a comfortable reading width.
           constraints: const BoxConstraints(maxWidth: 640),
-          child: ListView(
-            // While selecting, room for the selection bar below the list.
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              view.isSelecting ? 120 : AppSpacing.xxxl,
-            ),
-            children: [
-              Row(
-                children: [
-                  _ColorDot(colorKey: view.deck.color),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      details,
-                      style: Theme.of(context).textTheme.titleSmall
-                          ?.copyWith(color: colors.textMuted),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      key: const Key('deckScreen.addCard'),
-                      onPressed: () => view.addCard(context),
-                      icon: const Icon(Icons.add_rounded),
-                      label: Text(l10n.addCard),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(child: _StudyButton(view: view)),
-                ],
-              ),
-              if (view.errorCount > 0) ...[
-                const SizedBox(height: AppSpacing.md),
-                _ReviewErrors(view: view, expanded: true),
-              ],
-              const SizedBox(height: AppSpacing.md),
-              // The file actions in a row that scrolls sideways, as in the
-              // design.
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _ImportButton(view: view),
-                    const SizedBox(width: AppSpacing.sm),
-                    const _TemplateButton(),
-                    const SizedBox(width: AppSpacing.sm),
-                    const _AiPromptButton(),
+          // A `CustomScrollView` joins several scrolling pieces ("slivers")
+          // in one scroll: the deck's details, then the cards. The cards are
+          // a `SliverList.builder`, which only builds the ones on screen, so
+          // a deck with 5,000 cards opens as fast as one with 5 (T6.5).
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                // While selecting, room for the selection bar below the
+                // list.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  view.isSelecting ? 120 : AppSpacing.xxxl,
+                ),
+                sliver: SliverMainAxisGroup(
+                  slivers: [
+                    SliverToBoxAdapter(child: _MobileHeader(view: view)),
+                    if (view.shownCards.isNotEmpty)
+                      SliverList.builder(
+                        itemCount: view.shownCards.length,
+                        itemBuilder: (context, index) => Column(
+                          children: [
+                            _CardTile(
+                              view: view,
+                              summary: view.shownCards[index],
+                            ),
+                            Divider(height: 1, color: colors.border),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              if (view.allCards.isEmpty)
-                _EmptyDeck(view: view)
-              else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SearchField(view: view, hint: l10n.searchCards),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _SortMenu(view: view),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                if (view.shownCards.isEmpty)
-                  _NoResults(query: view.query)
-                else
-                  for (final summary in view.shownCards) ...[
-                    _CardTile(view: view, summary: summary),
-                    Divider(height: 1, color: colors.border),
-                  ],
-              ],
             ],
           ),
         ),
@@ -432,9 +381,135 @@ class _MobileDeck extends StatelessWidget {
   }
 }
 
+/// Everything above the cards in the mobile deck: the details, the buttons,
+/// the search and sorting, or the empty state.
+class _MobileHeader extends StatelessWidget {
+  const new({required this.view});
+
+  final _DeckView view;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final details = [
+      view.project.name,
+      ?view.languagePair(l10n),
+      ...view.counts(l10n),
+    ].join(l10n.detailsSeparator);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            _ColorDot(colorKey: view.deck.color),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                details,
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(color: colors.textMuted),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                key: const Key('deckScreen.addCard'),
+                onPressed: () => view.addCard(context),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(l10n.addCard),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: _StudyButton(view: view)),
+          ],
+        ),
+        if (view.errorCount > 0) ...[
+          const SizedBox(height: AppSpacing.md),
+          _ReviewErrors(view: view, expanded: true),
+        ],
+        const SizedBox(height: AppSpacing.md),
+        // The file actions in a row that scrolls sideways, as in the
+        // design.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _ImportButton(view: view),
+              const SizedBox(width: AppSpacing.sm),
+              const _TemplateButton(),
+              const SizedBox(width: AppSpacing.sm),
+              const _AiPromptButton(),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        if (view.allCards.isEmpty)
+          _EmptyDeck(view: view)
+        else ...[
+          Row(
+            children: [
+              Expanded(
+                child: _SearchField(view: view, hint: l10n.searchCards),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _SortMenu(view: view),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (view.shownCards.isEmpty) _NoResults(query: view.query),
+        ],
+      ],
+    );
+  }
+}
+
 /// Desktop: breadcrumb, header with the actions, and the cards in a table.
 class _DesktopDeck extends StatelessWidget {
   const new(this.view);
+
+  final _DeckView view;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: view.isSelecting
+          ? _SelectionBar(view: view, compact: false)
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // The header, then the table, which only builds the rows on screen
+      // (see `_MobileDeck`).
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              40,
+              AppSpacing.xl,
+              40,
+              view.isSelecting ? 120 : AppSpacing.xl,
+            ),
+            sliver: SliverMainAxisGroup(
+              slivers: [
+                SliverToBoxAdapter(child: _DesktopHeader(view: view)),
+                if (view.shownCards.isNotEmpty) _CardTable(view: view),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Everything above the table in the desktop deck: breadcrumb, title,
+/// actions and toolbar, or the empty state.
+class _DesktopHeader extends StatelessWidget {
+  const new({required this.view});
 
   final _DeckView view;
 
@@ -449,76 +524,57 @@ class _DesktopDeck extends StatelessWidget {
       if (view.errorCount > 0) l10n.pendingErrors(view.errorCount),
     ].join(l10n.detailsSeparator);
 
-    return Scaffold(
-      floatingActionButton: view.isSelecting
-          ? _SelectionBar(view: view, compact: false)
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          40,
-          AppSpacing.xl,
-          40,
-          view.isSelecting ? 120 : AppSpacing.xl,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Breadcrumb(view: view),
+        const SizedBox(height: AppSpacing.xl),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _Breadcrumb(view: view),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(view.deck.name, style: text.displaySmall),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        details,
-                        style: text.titleSmall?.copyWith(
-                          color: colors.textMuted,
-                        ),
-                      ),
-                    ],
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(view.deck.name, style: text.displaySmall),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    details,
+                    style: text.titleSmall?.copyWith(color: colors.textMuted),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.lg),
-                // The file actions next to the title, as in the design. In
-                // a narrow window they go onto more lines instead of
-                // overflowing.
-                Flexible(
-                  flex: 3,
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _ImportButton(view: view),
-                      const _TemplateButton(),
-                      const _AiPromptButton(),
-                      _ShareButton(view: view),
-                      _DeckMenu(view: view),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            _Toolbar(view: view),
-            const SizedBox(height: AppSpacing.lg),
-            if (view.allCards.isEmpty)
-              _EmptyDeck(view: view)
-            else if (view.shownCards.isEmpty)
-              _NoResults(query: view.query)
-            else
-              _CardTable(view: view),
+            const SizedBox(width: AppSpacing.lg),
+            // The file actions next to the title, as in the design. In a
+            // narrow window they go onto more lines instead of overflowing.
+            Flexible(
+              flex: 3,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _ImportButton(view: view),
+                  const _TemplateButton(),
+                  const _AiPromptButton(),
+                  _ShareButton(view: view),
+                  _DeckMenu(view: view),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.xl),
+        _Toolbar(view: view),
+        const SizedBox(height: AppSpacing.lg),
+        if (view.allCards.isEmpty)
+          _EmptyDeck(view: view)
+        else if (view.shownCards.isEmpty)
+          _NoResults(query: view.query),
+      ],
     );
   }
 }
@@ -966,49 +1022,84 @@ class _CardTable extends ConsumerWidget {
         .where((s) => view.selected.contains(s.card.id))
         .length;
 
+    const radius = Radius.circular(AppRadii.listCard);
+    final shown = view.shownCards;
+
     // A narrow desktop window has no room for every column: the correct and
     // wrong counts and the last review go, the question and the % stay.
-    return LayoutBuilder(
+    // `SliverLayoutBuilder` is the `LayoutBuilder` of slivers.
+    return SliverLayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < _fullTableWidth;
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _TableRow(
-                compact: compact,
-                // All, none, or some (a dash) of the cards shown are selected.
-                select: Checkbox(
-                  key: const Key('deckScreen.selectAll'),
-                  tristate: true,
-                  value: switch (selectedShown) {
-                    0 => false,
-                    _ when selectedShown == view.shownCards.length => true,
-                    _ => null,
-                  },
-                  semanticLabel: l10n.selectAll,
-                  onChanged: (_) => view.onSelectShown(
-                    selectedShown != view.shownCards.length,
-                  ),
-                ),
-                question: heading(l10n.columnQuestion),
-                type: heading(l10n.columnType),
-                correct: heading(l10n.columnCorrect, align: TextAlign.end),
-                wrong: heading(l10n.columnWrong, align: TextAlign.end),
-                rate: heading(l10n.columnRate),
-                review: heading(l10n.columnLastReview),
-                menu: const SizedBox.shrink(),
-              ),
-              for (final summary in view.shownCards) ...[
-                Divider(height: 1, color: colors.border),
-                _CardTableRow(
-                  view: view,
-                  summary: summary,
-                  now: now,
-                  compact: compact,
-                ),
-              ],
-            ],
+        final compact = constraints.crossAxisExtent < _fullTableWidth;
+        // The look of a `Card` (background, border and rounded corners)
+        // drawn behind a list that only builds the rows on screen.
+        return DecoratedSliver(
+          decoration: ShapeDecoration(
+            color: colors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: const BorderRadius.all(radius),
+              side: BorderSide(color: colors.border),
+            ),
+          ),
+          sliver: SliverPadding(
+            // The rows stay inside the border.
+            padding: const EdgeInsets.all(1),
+            sliver: SliverList.builder(
+              itemCount: shown.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _TableRow(
+                    compact: compact,
+                    // All, none, or some (a dash) of the cards shown are
+                    // selected.
+                    select: Checkbox(
+                      key: const Key('deckScreen.selectAll'),
+                      tristate: true,
+                      value: switch (selectedShown) {
+                        0 => false,
+                        _ when selectedShown == shown.length => true,
+                        _ => null,
+                      },
+                      semanticLabel: l10n.selectAll,
+                      onChanged: (_) =>
+                          view.onSelectShown(selectedShown != shown.length),
+                    ),
+                    question: heading(l10n.columnQuestion),
+                    type: heading(l10n.columnType),
+                    correct: heading(l10n.columnCorrect, align: TextAlign.end),
+                    wrong: heading(l10n.columnWrong, align: TextAlign.end),
+                    rate: heading(l10n.columnRate),
+                    review: heading(l10n.columnLastReview),
+                    menu: const SizedBox.shrink(),
+                  );
+                }
+                final row = Column(
+                  children: [
+                    Divider(height: 1, color: colors.border),
+                    // A transparent `Material` of its own, so the tap ripple
+                    // and the selected colour show above the background.
+                    Material(
+                      type: MaterialType.transparency,
+                      child: _CardTableRow(
+                        view: view,
+                        summary: shown[index - 1],
+                        now: now,
+                        compact: compact,
+                      ),
+                    ),
+                  ],
+                );
+                // The last row keeps the rounded corners of the table.
+                return index == shown.length
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: radius,
+                        ),
+                        child: row,
+                      )
+                    : row;
+              },
+            ),
           ),
         );
       },

@@ -48,13 +48,17 @@ final launchedSessionsProvider =
 /// the chosen decks (R 7.2), saves the session and leaves its queue for the
 /// session screen. Returns its ID. Used by "Empezar" (P08) and "Repetir
 /// sesión" (US-20 AC2).
+///
+/// The setup passes the [candidates] it has already read, so starting does
+/// not read every card again (T6.5); without them they are read here.
 Future<String> launchSession(
   WidgetRef ref,
   String projectId,
-  SessionConfig config,
-) async {
+  SessionConfig config, {
+  List<StudyCandidate>? candidates,
+}) async {
   final repository = ref.read(studyRepositoryProvider);
-  final candidates = await repository.candidates(projectId);
+  candidates ??= await repository.candidates(projectId);
   final cards = selectCards(
     candidates.where((c) => config.deckIds.contains(c.card.deckId)),
     mode: config.mode,
