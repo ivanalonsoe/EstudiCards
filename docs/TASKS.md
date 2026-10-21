@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.8 | ⏳ 4 / 8 |
+| 6. Polish and release | T6.1 – T6.8 | ⏳ 5 / 8 |
 
 ---
 
@@ -500,7 +500,7 @@ Goal: a project that starts, with automated quality from day one.
 - [x] **T6.4 Empty and error states** · SPEC §5.3
   - **Tests first:** 🧩 each empty state in the list is shown with its text and action.
 
-- [ ] **T6.5 Performance** · SPEC §9
+- [x] **T6.5 Performance** · SPEC §9
   - **Tests first:** 🔗 a deck with 5,000 cards loads and scrolls without errors; starting a session takes less than 300 ms.
 
 - [ ] **T6.6 Full visual review**

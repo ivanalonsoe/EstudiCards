@@ -16,6 +16,7 @@ import 'package:integration_test/integration_test.dart';
 import 'app_flow.dart';
 import 'flows/backup_flow.dart';
 import 'flows/cards_flow.dart';
+import 'flows/performance_flow.dart';
 import 'flows/projects_flow.dart';
 import 'flows/study_flow.dart';
 
@@ -47,4 +48,5 @@ void main() {
   group('cards', cardsFlowTests);
   group('study', studyFlowTests);
   group('backup', backupFlowTests);
+  group('performance', performanceFlowTests);
 }

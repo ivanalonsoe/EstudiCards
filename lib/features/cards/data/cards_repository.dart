@@ -182,14 +182,18 @@ class CardsRepository {
     CardSort sort,
   ) async {
     final rows = await _dao.cardsWithResults(deckId);
-    final options = await _dao.optionsOf([for (final row in rows) row.card.id]);
+    // Grouped by card once: looking through every option for each card
+    // took longer than the query itself with 5,000 cards (T6.5).
+    final options = <String, List<CardOptionRow>>{};
+    for (final option in await _dao.optionsOf([
+      for (final row in rows) row.card.id,
+    ])) {
+      (options[option.cardId] ??= []).add(option);
+    }
     final summaries = [
       for (final row in rows)
         CardSummary(
-          card: flashcardFromRows(row.card, [
-            for (final option in options)
-              if (option.cardId == row.card.id) option,
-          ]),
+          card: flashcardFromRows(row.card, options[row.card.id] ?? const []),
           correctCount: row.correctCount,
           wrongCount: row.wrongCount,
           lastReviewedAt: row.lastAttemptAt,

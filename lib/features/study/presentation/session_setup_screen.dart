@@ -123,6 +123,7 @@ class _SetupFormState extends ConsumerState<_SetupForm> {
       ref,
       widget.project.id,
       _form.toConfig(_decks),
+      candidates: widget.candidates,
     );
     if (mounted) context.go(AppRoutes.session(sessionId));
   }
