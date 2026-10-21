@@ -7,6 +7,7 @@
 // 300 ms limit is only checked in profile (or release) mode. In debug the
 // test still loads, scrolls and starts the session, and prints the times.
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
@@ -24,9 +25,9 @@ import 'package:estudicards/features/projects/domain/project_input.dart';
 import 'package:estudicards/features/study/presentation/study_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
 
 import '../app_flow.dart';
 
@@ -154,10 +155,53 @@ Future<Duration> _timeUntil(
 void _report(String what, Duration time) =>
     debugPrint('[performance] $what: ${time.inMilliseconds} ms');
 
+/// The frames drawn while [action] runs, with how long each took to build
+/// and to draw (raster).
+///
+/// Flutter's `watchPerformance` does the same but also connects to the Dart
+/// VM service, which an app on the Android emulator cannot reach. The
+/// engine hands over frame timings in batches, so this waits for the last
+/// ones before stopping.
+Future<List<FrameTiming>> _framesDuring(Future<void> Function() action) async {
+  final frames = <FrameTiming>[];
+  final scheduler = SchedulerBinding.instance;
+  // Timings of frames drawn before the action arrive first; skip them.
+  await Future<void>.delayed(const Duration(seconds: 2));
+  final TimingsCallback collect = frames.addAll;
+  scheduler.addTimingsCallback(collect);
+  await action();
+  await Future<void>.delayed(const Duration(seconds: 2));
+  scheduler.removeTimingsCallback(collect);
+  return frames;
+}
+
+/// Prints the average and worst build and raster times of [frames], and
+/// how many missed the 60 fps budget (16 ms) in either.
+void _reportFrames(String what, List<FrameTiming> frames) {
+  const budget = Duration(milliseconds: 16);
+  String ms(Duration time) =>
+      '${(time.inMicroseconds / 1000).toStringAsFixed(1)} ms';
+  Duration average(Iterable<Duration> times) => times.isEmpty
+      ? Duration.zero
+      : times.reduce((a, b) => a + b) ~/ times.length;
+  Duration worst(Iterable<Duration> times) =>
+      times.fold(Duration.zero, (a, b) => a > b ? a : b);
+  final build = [for (final frame in frames) frame.buildDuration];
+  final raster = [for (final frame in frames) frame.rasterDuration];
+  final slow = frames.where(
+    (frame) => frame.buildDuration > budget || frame.rasterDuration > budget,
+  );
+  debugPrint(
+    '[performance] $what: ${frames.length} frames, '
+    '${slow.length} over 16 ms; '
+    'build ${ms(average(build))} average, ${ms(worst(build))} worst; '
+    'raster ${ms(average(raster))} average, ${ms(worst(raster))} worst',
+  );
+}
+
 void performanceFlowTests() {
   testWidgets('a deck with $_cardCount cards loads and scrolls without '
       'errors, and a session starts in less than 300 ms', (tester) async {
-    final binding = IntegrationTestWidgetsFlutterBinding.instance;
     // A database file opened in the background, as the app opens it (an
     // in-memory database would answer on the screen's thread).
     final folder = await Directory.systemTemp.createTemp('estudicards_perf');
@@ -210,27 +254,22 @@ void performanceFlowTests() {
 
     // Scroll: ten flings down the list, timing every frame drawn.
     final list = find.byType(Scrollable).first;
-    await binding.watchPerformance(() async {
+    final frames = await _framesDuring(() async {
       for (var i = 0; i < 10; i++) {
         await tester.fling(list, const Offset(0, -1500), 3000);
         await tester.pumpAndSettle();
       }
-    }, reportKey: 'deck_scrolling');
-    final frames =
-        binding.reportData!['deck_scrolling'] as Map<String, dynamic>;
-    for (final key in [
-      'average_frame_build_time_millis',
-      'worst_frame_build_time_millis',
-      'average_frame_rasterizer_time_millis',
-      'worst_frame_rasterizer_time_millis',
-      'missed_frame_build_budget_count',
-      'frame_count',
-    ]) {
-      debugPrint('[performance] scrolling $key: ${frames[key]}');
-    }
+    });
+    _reportFrames('scrolling', frames);
 
     // Session: from "Empezar" until the first card can be answered, with
-    // every card of the deck.
+    // every card of the deck. "Estudiar" is in the header, which the list
+    // no longer builds after scrolling down, so scroll back up to it first.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('deckScreen.study')),
+      -3000,
+      scrollable: list,
+    );
     await tapKey(tester, 'deckScreen.study');
     await expectSoon(
       tester,
