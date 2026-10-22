@@ -64,7 +64,16 @@ class StatisticsScreen extends ConsumerWidget {
       );
     } else {
       final data = _Data(overview, series, projects);
-      content = isDesktop ? _DesktopContent(data) : _MobileContent(data);
+      // A narrow desktop window has no room for five cards in a row: it
+      // shows the tablet layout.
+      content = isDesktop
+          ? LayoutBuilder(
+              builder: (context, constraints) =>
+                  constraints.maxWidth >= _desktopContentWidth
+                  ? _DesktopContent(data)
+                  : _MobileContent(data),
+            )
+          : _MobileContent(data);
     }
 
     if (isDesktop) {
@@ -118,6 +127,9 @@ class _Data {
   final DailySeries series;
   final List<ProjectSummary> projects;
 }
+
+/// From this width the five cards of the desktop fit in one row.
+const double _desktopContentWidth = 720;
 
 /// Mobile and tablet: the streak and record side by side, the three
 /// counts, the chart and the projects.

@@ -10,6 +10,7 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/app_version.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/text_search.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/cards/presentation/speaker_button.dart';
 import 'package:estudicards/features/import_export/data/auto_backup_files.dart';
 import 'package:estudicards/features/import_export/presentation/backup.dart';
@@ -80,14 +81,14 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   SettingsActionTile(
                     key: const Key('settings.exportAll'),
-                    icon: Icons.download_rounded,
+                    icon: Icons.file_download_outlined,
                     title: l10n.exportAll,
                     subtitle: l10n.exportAllHint,
                     onTap: () => unawaited(exportAll(context, ref)),
                   ),
                   SettingsActionTile(
                     key: const Key('settings.restore'),
-                    icon: Icons.upload_rounded,
+                    icon: Icons.file_upload_outlined,
                     title: l10n.restoreBackup,
                     onTap: () => unawaited(restoreBackupFile(context, ref)),
                   ),
@@ -134,7 +135,6 @@ class _ThemeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -143,31 +143,21 @@ class _ThemeTile extends StatelessWidget {
         children: [
           Text(l10n.settingsTheme, style: text.titleMedium),
           const SizedBox(height: AppSpacing.md),
-          SegmentedButton<AppThemeMode>(
-            segments: [
+          PillSelector<AppThemeMode>(
+            options: [
               for (final (mode, label) in [
                 (AppThemeMode.system, l10n.themeSystem),
                 (AppThemeMode.light, l10n.themeLight),
                 (AppThemeMode.dark, l10n.themeDark),
               ])
-                ButtonSegment(
+                (
                   value: mode,
-                  label: Text(label, key: Key('settings.theme.${mode.name}')),
+                  label: label,
+                  key: Key('settings.theme.${mode.name}'),
                 ),
             ],
-            selected: {selected},
-            showSelectedIcon: false,
-            // As wide as the panel.
-            expandedInsets: EdgeInsets.zero,
-            style: SegmentedButton.styleFrom(
-              backgroundColor: colors.surfaceVariant,
-              foregroundColor: colors.textMuted,
-              selectedBackgroundColor: colors.surface,
-              selectedForegroundColor: colors.text,
-              side: BorderSide(color: colors.border),
-              textStyle: text.labelLarge,
-            ),
-            onSelectionChanged: (selection) => onChanged(selection.single),
+            selected: selected,
+            onChanged: onChanged,
           ),
         ],
       ),
@@ -311,7 +301,7 @@ class _DailyGoalTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    l10n.cardsPerDay,
+                    l10n.dailyGoalCards,
                     style: text.bodyLarge?.copyWith(color: colors.textMuted),
                   ),
                 ),

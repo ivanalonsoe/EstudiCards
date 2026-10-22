@@ -42,10 +42,12 @@ class ReviewErrorsButton extends StatelessWidget {
         AppRoutes.sessionSetup(projectId, deckId: deckId, reviewErrors: true),
       ),
       icon: const Icon(Icons.refresh_rounded),
-      // In a narrow place the label ends in "…" instead of overflowing.
+      // In a narrow place the label takes two lines, as in the design, and
+      // only then ends in "…".
       label: Text(
         AppLocalizations.of(context).reviewErrors(count),
-        maxLines: 1,
+        maxLines: 2,
+        textAlign: TextAlign.center,
         overflow: TextOverflow.ellipsis,
       ),
     );

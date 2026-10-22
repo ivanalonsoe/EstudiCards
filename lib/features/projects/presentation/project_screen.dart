@@ -4,6 +4,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
+import 'package:estudicards/app/theme/button_styles.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/dashed_border.dart';
@@ -168,26 +169,45 @@ class _DesktopProject extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
-                // The header and "Repasar errores" share the width 3:2 (see
-                // the deck screen).
+                // The header and the actions share the width 3:2 (see the
+                // deck screen).
                 Expanded(
                   flex: 3,
                   child: _ProjectHeader(project: project, large: true),
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 // Share and import are icons next to the ⋮ menu, as in the
-                // design.
-                _ShareButton(project: project),
-                IconButton(
-                  key: const Key('projectScreen.importDeck'),
-                  tooltip: l10n.importDeck,
-                  onPressed: () =>
-                      context.go(AppRoutes.importCards(projectId: project.id)),
-                  icon: const Icon(Icons.upload_rounded),
+                // design, together with "Repasar errores" at the right, next
+                // to "Estudiar". Any width they do not use is left before
+                // them.
+                // A `Wrap`: in a narrow window they go onto more lines
+                // instead of overflowing.
+                Flexible(
+                  flex: 2,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        _ShareButton(project: project),
+                        IconButton(
+                          key: const Key('projectScreen.importDeck'),
+                          tooltip: l10n.importDeck,
+                          style: boxedIconButtonStyle(context),
+                          onPressed: () => context.go(
+                            AppRoutes.importCards(projectId: project.id),
+                          ),
+                          icon: const Icon(Icons.file_upload_outlined),
+                        ),
+                        _ProjectMenu(project: project),
+                        _ReviewErrors(project: project, expanded: false),
+                      ],
+                    ),
+                  ),
                 ),
-                _ProjectMenu(project: project),
-                const SizedBox(width: AppSpacing.sm),
-                _ReviewErrors(project: project, expanded: false),
                 _StudyButton(project: project, expanded: false),
               ],
             ),
@@ -319,7 +339,7 @@ class _StudyButton extends StatelessWidget {
             )
           : null,
       onPressed: () => context.go(AppRoutes.sessionSetup(project.id)),
-      icon: const Icon(Icons.play_arrow_rounded),
+      icon: const Icon(Icons.play_arrow_outlined),
       label: Text(AppLocalizations.of(context).study),
     );
   }
@@ -348,12 +368,12 @@ class _ReviewErrors extends ConsumerWidget {
             padding: const EdgeInsets.only(top: AppSpacing.md),
             child: button,
           )
-        // A `Flexible` can be returned here because this widget sits
-        // directly in the header `Row`.
-        : Flexible(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.sm),
+        // At most 180 px on desktop: a longer label takes two lines, as in
+        // the design.
+        : Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
               child: button,
             ),
           );
@@ -624,10 +644,16 @@ class _ShareButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => IconButton(
     key: const Key('projectScreen.share'),
     tooltip: AppLocalizations.of(context).shareProject,
+    // In a box on desktop, as in the design; plain in the mobile top bar.
+    style: _isDesktop(context) ? boxedIconButtonStyle(context) : null,
     onPressed: () => unawaited(shareProject(context, ref, project)),
-    icon: const Icon(Icons.ios_share_rounded),
+    icon: const Icon(Icons.ios_share_outlined),
   );
 }
+
+bool _isDesktop(BuildContext context) =>
+    FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
+    FormFactor.desktop;
 
 /// The ⋮ menu of the project. On mobile it also has "Importar baraja",
 /// which desktop shows as an icon.
@@ -645,6 +671,7 @@ class _ProjectMenu extends ConsumerWidget {
     return PopupMenuButton<VoidCallback>(
       key: const Key('projectScreen.menu'),
       tooltip: l10n.projectOptions,
+      style: isDesktop ? boxedIconButtonStyle(context) : null,
       icon: const Icon(Icons.more_vert_rounded),
       // Each item's value is the action to run when it is chosen.
       onSelected: (action) => action(),

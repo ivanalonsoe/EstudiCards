@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:estudicards/app/router.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/cards/data/cards_dao.dart';
 import 'package:estudicards/features/cards/data/cards_repository.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
@@ -99,8 +100,15 @@ Future<void> miss(
 FilterChip deckChip(WidgetTester tester, Deck deck) =>
     tester.widget(find.byKey(Key('sessionSetup.deck.${deck.id}')));
 
-Set<T> segmentOf<T>(WidgetTester tester, String key) =>
-    tester.widget<SegmentedButton<T>>(find.byKey(Key(key))).selected;
+/// A text shown as [text]: the pill selector keeps what is in parentheses
+/// on one line with non-breaking spaces, which read as plain spaces.
+Finder findShownText(String text) => find.byWidgetPredicate(
+  (widget) => widget is Text && widget.data?.replaceAll(' ', ' ') == text,
+);
+
+Set<T> segmentOf<T>(WidgetTester tester, String key) => {
+  tester.widget<PillSelector<T>>(find.byKey(Key(key))).selected,
+};
 
 String availableText(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('sessionSetup.available'))).data!;
@@ -218,8 +226,8 @@ void main() {
 
       expect(find.byKey(const Key('sessionSetup.direction')), findsOneWidget);
       // Both language decks are English → Spanish, so the pair is named.
-      expect(find.text('Inglés (R. U.) → Español'), findsWidgets);
-      expect(find.text('Español → Inglés (R. U.)'), findsOneWidget);
+      expect(findShownText('Inglés (R. U.) → Español'), findsWidgets);
+      expect(findShownText('Español → Inglés (R. U.)'), findsOneWidget);
 
       await tapVisible(
         tester,
@@ -256,7 +264,7 @@ void main() {
 
     expect(find.text('Normal'), findsWidgets);
     expect(find.text('Inverso'), findsOneWidget);
-    expect(find.text('Español → Inglés (R. U.)'), findsNothing);
+    expect(findShownText('Español → Inglés (R. U.)'), findsNothing);
   });
 
   for (final (name, size) in [('mobile', mobile), ('desktop', desktop)]) {

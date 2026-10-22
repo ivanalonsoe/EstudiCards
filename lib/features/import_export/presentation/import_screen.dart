@@ -342,7 +342,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.upload_rounded),
+                    : const Icon(Icons.file_upload_outlined),
                 label: Text(
                   _reading ? l10n.importReading : l10n.importChooseFile,
                 ),
@@ -536,7 +536,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 FilledButton.icon(
                   key: const Key('import.confirm'),
                   onPressed: _busy || count == 0 ? null : _import,
-                  icon: const Icon(Icons.upload_rounded),
+                  icon: const Icon(Icons.file_upload_outlined),
                   label: Text(l10n.importConfirm(count)),
                 )
               else
@@ -794,7 +794,7 @@ class _FileIcon extends StatelessWidget {
         color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(AppRadii.control),
       ),
-      child: Icon(Icons.upload_rounded, color: colors.textMuted),
+      child: Icon(Icons.file_upload_outlined, color: colors.textMuted),
     );
   }
 }

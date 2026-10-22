@@ -36,7 +36,9 @@ class SpeakerButton extends ConsumerWidget {
             )
           : null,
       icon: Icon(
-        available == false ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+        available == false
+            ? Icons.volume_off_outlined
+            : Icons.volume_up_outlined,
         size: 20,
       ),
     );

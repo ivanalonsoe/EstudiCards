@@ -45,7 +45,7 @@ class AppMenuDrawer extends ConsumerWidget {
             ),
             ListTile(
               key: const Key('nav.exportAll'),
-              leading: const Icon(Icons.download_rounded),
+              leading: const Icon(Icons.file_download_outlined),
               title: Text(l10n.exportAll),
               iconColor: colors.text,
               textColor: colors.text,

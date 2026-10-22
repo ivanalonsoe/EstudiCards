@@ -181,7 +181,7 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                     OutlinedButton.icon(
                       key: const Key('dataFolder.change'),
                       onPressed: _busy ? null : _change,
-                      icon: const Icon(Icons.folder_open_rounded),
+                      icon: const Icon(Icons.folder_open_outlined),
                       label: Text(l10n.dataFolderChange),
                     ),
                     const SizedBox(width: AppSpacing.md),

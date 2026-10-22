@@ -200,12 +200,16 @@ class _TrashItemCard extends ConsumerWidget {
                     onPressed: () => _deletePermanently(context, ref),
                     icon: const Icon(Icons.delete_outline_rounded),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
                   FilledButton.icon(
                     key: Key('trashItem.${item.id}.restore'),
                     style: FilledButton.styleFrom(
                       backgroundColor: colors.primarySoft,
                       foregroundColor: colors.primaryStrong,
+                      // Compact, so the days left and the buttons fit on one
+                      // row on most phones (from about 395 px wide).
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                     ),
                     onPressed: () => unawaited(_restore(ref)),
                     icon: const Icon(Icons.refresh_rounded),
@@ -257,8 +261,9 @@ class DaysLeftChip extends StatelessWidget {
     final colors = AppColors.of(context);
     final foreground = urgent ? colors.warning : colors.textMuted;
     return Container(
+      // Compact, so it fits on one row with the buttons on most phones.
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
+        horizontal: AppSpacing.sm,
         vertical: AppSpacing.xs + 2,
       ),
       decoration: BoxDecoration(
@@ -270,7 +275,7 @@ class DaysLeftChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule_rounded, size: 16, color: foreground),
+          Icon(Icons.schedule_outlined, size: 16, color: foreground),
           const SizedBox(width: AppSpacing.xs),
           Flexible(
             child: Text(

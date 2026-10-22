@@ -467,7 +467,8 @@ void main() {
       final small = tester.getTopLeft(find.text('traer')).dy;
       final big = tester.getTopLeft(find.text('to bring')).dy;
       expect(small, lessThan(big));
-      expect(tester.widget<Text>(find.text('to bring')).style?.fontSize, 26);
+      // A short solution is large (T6.6).
+      expect(tester.widget<Text>(find.text('to bring')).style?.fontSize, 40);
     });
   });
 }

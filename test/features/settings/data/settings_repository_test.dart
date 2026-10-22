@@ -32,7 +32,7 @@ void main() {
 
     expect(read.themeMode, AppThemeMode.system);
     expect(read.cardTextScale, 1.0);
-    expect(read.dailyGoal, isNull);
+    expect(read.dailyGoal, 20);
   });
 
   test('saves each setting in the settings table, where backups take them '

@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.8 | ⏳ 5 / 8 |
+| 6. Polish and release | T6.1 – T6.8 | ⏳ 6 / 8 |
 
 ---
 
@@ -503,7 +503,7 @@ Goal: a project that starts, with automated quality from day one.
 - [x] **T6.5 Performance** · SPEC §9
   - **Tests first:** 🔗 a deck with 5,000 cards loads and scrolls without errors; starting a session takes less than 300 ms.
 
-- [ ] **T6.6 Full visual review**
+- [x] **T6.6 Full visual review**
   - Compare each screen with `docs/design/` on mobile and desktop, light and dark. Note and fix differences.
   - Turn the daily goal on by default (asked by the owner after T6.2): a new install starts with "Objetivo diario" on, at 20 cards. Decided with the owner: it also applies to anyone who never touched the setting (nobody has installed the app yet); someone who turned it off keeps it off. Update SPEC §4.2 (`daily_goal` default) and the decision log.
 

@@ -1,5 +1,6 @@
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/app/theme/ring_slider_thumb.dart';
 import 'package:flutter/material.dart';
 
 /// Builds the light and dark `ThemeData` from the colour tokens.
@@ -65,6 +66,44 @@ abstract final class AppTheme {
       fontFamily: fontFamily,
       textTheme: _textTheme(colors),
       dividerColor: colors.border,
+      // The mobile top bar is part of the page, in its background colour
+      // (design `movil-claro/*.png`), also when the content scrolls under
+      // it.
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.background,
+        foregroundColor: colors.text,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+      ),
+      // "‹" instead of Material's "←" for going back, as in the design.
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (context) =>
+            const Icon(Icons.chevron_left_rounded, size: 30),
+      ),
+      // Dialog titles are a subtitle (17), as in `movil-claro/dialogos.png`.
+      dialogTheme: DialogThemeData(
+        titleTextStyle: _textTheme(colors).titleMedium,
+      ),
+      // Switches as in the design: orange with a white thumb when on, a grey
+      // track with a white thumb when off, with no outline.
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStatePropertyAll(colors.surface),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colors.primaryStrong
+              : colors.border,
+        ),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+        // With an icon (even an empty one) Material draws the thumb at its
+        // full size in both positions, as the design does.
+        thumbIcon: const WidgetStatePropertyAll(Icon(null)),
+      ),
+      sliderTheme: SliderThemeData(
+        thumbColor: colors.primaryStrong,
+        activeTrackColor: colors.primaryStrong,
+        inactiveTrackColor: colors.surfaceVariant,
+        thumbShape: RingSliderThumbShape(fill: colors.surface),
+      ),
       extensions: [colors],
       filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -76,7 +115,12 @@ abstract final class AppTheme {
       textButtonTheme: TextButtonThemeData(style: buttonStyle),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colors.surfaceVariant,
+        // Grey, and white (the cards' colour) while typing in it.
+        fillColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.focused)
+              ? colors.surface
+              : colors.surfaceVariant,
+        ),
         hintStyle: TextStyle(color: colors.textMuted),
         border: fieldBorder(Colors.transparent),
         enabledBorder: fieldBorder(Colors.transparent),

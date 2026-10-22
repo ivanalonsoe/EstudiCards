@@ -9,6 +9,8 @@ import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/core/widgets/empty_state.dart';
+import 'package:estudicards/core/widgets/heading_row.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/cards/domain/card_input.dart';
 import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -659,25 +661,17 @@ class _CardEditorState extends ConsumerState<_CardEditor> {
     final canRemove = _options.length > CardInput.minOptions;
 
     return [
-      Row(
-        children: [
-          Expanded(child: FormLabel(l10n.optionsLabel)),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Text(
-                l10n.optionsCounter(
-                  _options.length,
-                  CardInput.maxOptions,
-                  correct,
-                ),
-                textAlign: TextAlign.end,
-                style: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(color: colors.textMuted),
-              ),
-            ),
+      HeadingRow(
+        title: FormLabel(l10n.optionsLabel),
+        trailing: Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Text(
+            l10n.optionsCounter(_options.length, CardInput.maxOptions, correct),
+            textAlign: TextAlign.end,
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: colors.textMuted),
           ),
-        ],
+        ),
       ),
       for (final (i, option) in _options.indexed)
         Padding(
@@ -1030,7 +1024,6 @@ class _DesktopPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1044,36 +1037,22 @@ class _DesktopPreview extends StatelessWidget {
               l10n.previewLabel.toUpperCase(),
               style: _previewHeadingStyle(context),
             ),
-            SegmentedButton<CardFace>(
-              showSelectedIcon: false,
-              // As in the design: the chosen side is a light "pill" on a
-              // grey track, not an orange fill.
-              style: SegmentedButton.styleFrom(
-                backgroundColor: colors.surfaceVariant,
-                selectedBackgroundColor: colors.surface,
-                foregroundColor: colors.textMuted,
-                selectedForegroundColor: colors.text,
-                side: BorderSide(color: colors.border),
-              ),
-              segments: [
-                ButtonSegment(
+            PillSelector<CardFace>(
+              expand: false,
+              options: [
+                (
                   value: CardFace.front,
-                  label: Text(
-                    l10n.previewFront,
-                    key: const Key('cardEditor.preview.front'),
-                  ),
+                  label: l10n.previewFront,
+                  key: const Key('cardEditor.preview.front'),
                 ),
-                ButtonSegment(
+                (
                   value: CardFace.back,
-                  label: Text(
-                    l10n.previewBack,
-                    key: const Key('cardEditor.preview.back'),
-                  ),
+                  label: l10n.previewBack,
+                  key: const Key('cardEditor.preview.back'),
                 ),
               ],
-              selected: {face},
-              onSelectionChanged: (selection) =>
-                  onFaceChanged(selection.single),
+              selected: face,
+              onChanged: onFaceChanged,
             ),
           ],
         ),
@@ -1089,6 +1068,10 @@ class _DesktopPreview extends StatelessWidget {
     );
   }
 }
+
+/// From this width the form (at least 320 px) and the 380 px preview fit
+/// side by side.
+const double _sideBySideWidth = 320 + 40 + 380;
 
 /// Desktop: breadcrumb, title with the buttons, and the fields.
 class _DesktopFrame extends StatelessWidget {
@@ -1178,19 +1161,34 @@ class _DesktopFrame extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            // The form on the left and the preview on the right.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+            // The form on the left and the preview on the right. In a
+            // narrow desktop window there is no room for both side by
+            // side, so the preview goes under the form.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final form = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: fields,
+                );
+                if (constraints.maxWidth < _sideBySideWidth) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: fields,
-                  ),
-                ),
-                const SizedBox(width: 40),
-                SizedBox(width: 380, child: preview),
-              ],
+                    children: [
+                      form,
+                      const SizedBox(height: AppSpacing.xxl),
+                      Center(child: SizedBox(width: 380, child: preview)),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: form),
+                    const SizedBox(width: 40),
+                    SizedBox(width: 380, child: preview),
+                  ],
+                );
+              },
             ),
           ],
         ),

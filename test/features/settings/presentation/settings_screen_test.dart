@@ -105,27 +105,32 @@ void main() {
   });
 
   group('daily goal', () {
-    testWidgets('is off by default; turning it on sets 20 cards, and "+" and '
-        '"−" change it by 5', (tester) async {
+    testWidgets('is on at 20 cards by default, and "+" and "−" change it by '
+        '5', (tester) async {
       await openSettings(tester);
 
-      expect(_key('settings.dailyGoal.value'), findsNothing);
-      expect(tester.widget<Switch>(_key('settings.dailyGoal')).value, isFalse);
-
-      await tapAndSettle(tester, _key('settings.dailyGoal'));
+      expect(tester.widget<Switch>(_key('settings.dailyGoal')).value, isTrue);
       expect(find.text('Tarjetas al día'), findsOneWidget);
       expect(tester.widget<Text>(_key('settings.dailyGoal.value')).data, '20');
-      expect((await stored())['daily_goal'], '20');
 
       await tapAndSettle(tester, _key('settings.dailyGoal.increase'));
       expect(tester.widget<Text>(_key('settings.dailyGoal.value')).data, '25');
       await tapAndSettle(tester, _key('settings.dailyGoal.decrease'));
       await tapAndSettle(tester, _key('settings.dailyGoal.decrease'));
       expect((await stored())['daily_goal'], '15');
+    });
+
+    testWidgets('turning it off stores the key with no value; turning it on '
+        'again starts at 20', (tester) async {
+      await openSettings(tester);
 
       await tapAndSettle(tester, _key('settings.dailyGoal'));
       expect(_key('settings.dailyGoal.value'), findsNothing);
-      expect((await stored())['daily_goal'], isNull);
+      expect(await stored(), containsPair('daily_goal', null));
+
+      await tapAndSettle(tester, _key('settings.dailyGoal'));
+      expect(tester.widget<Text>(_key('settings.dailyGoal.value')).data, '20');
+      expect((await stored())['daily_goal'], '20');
     });
   });
 
@@ -232,6 +237,8 @@ void main() {
 
     expect(_brightness(tester), Brightness.dark);
     expect(find.text('160%'), findsOneWidget);
-    expect(tester.widget<Text>(_key('settings.dailyGoal.value')).data, '20');
+    // Turned off, the goal stays off: it does not go back to 20.
+    expect(tester.widget<Switch>(_key('settings.dailyGoal')).value, isFalse);
+    expect(_key('settings.dailyGoal.value'), findsNothing);
   });
 }

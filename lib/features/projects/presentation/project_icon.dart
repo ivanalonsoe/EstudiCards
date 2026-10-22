@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 /// The icons a user can pick for a project (`docs/design/movil-claro/
 /// nuevo-proyecto.png`). The database stores the [key] (`projects.icon`).
 enum ProjectIcon {
-  globe(Icons.language_rounded),
-  scales(Icons.balance_rounded),
+  globe(Icons.language_outlined),
+  scales(Icons.balance_outlined),
   flask(Icons.science_outlined),
   book(Icons.menu_book_outlined),
   cards(Icons.filter_none_rounded),

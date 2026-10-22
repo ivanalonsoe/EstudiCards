@@ -566,19 +566,23 @@ class _TopBar extends ConsumerWidget {
       (_, true) => OutlinedButton.icon(
         key: const Key('session.pause'),
         onPressed: onPause,
-        icon: const Icon(Icons.pause_rounded),
+        icon: const Icon(Icons.pause_outlined),
         label: Text(l10n.pauseSession),
       ),
       (_, false) => IconButton(
         key: const Key('session.pause'),
         tooltip: l10n.pauseSession,
         onPressed: onPause,
-        icon: const Icon(Icons.pause_rounded),
+        icon: const Icon(Icons.pause_outlined),
       ),
     };
 
     return DecoratedBox(
+      key: const Key('session.topBar'),
+      // On desktop a bar in the cards' colour across the window, as in
+      // `escritorio-claro/sesion.png`; on a phone part of the page.
       decoration: BoxDecoration(
+        color: isDesktop ? colors.surface : null,
         border: isDesktop
             ? Border(bottom: BorderSide(color: colors.border))
             : null,
@@ -687,7 +691,7 @@ class _TimerChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule_rounded, size: 16, color: color),
+          Icon(Icons.schedule_outlined, size: 16, color: color),
           const SizedBox(width: AppSpacing.xs),
           Text(
             time,
@@ -797,7 +801,7 @@ class _PausePanel extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.pause_rounded,
+                      Icons.pause_outlined,
                       size: 32,
                       color: colors.primary,
                     ),
@@ -826,7 +830,7 @@ class _PausePanel extends StatelessWidget {
                     ),
                   ),
                   onPressed: onResume,
-                  icon: const Icon(Icons.play_arrow_rounded),
+                  icon: const Icon(Icons.play_arrow_outlined),
                   label: Text(l10n.resumeSession),
                 ),
                 const SizedBox(height: AppSpacing.sm),

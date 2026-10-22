@@ -205,13 +205,24 @@ void main() {
     expect((overview.streak.current, overview.streak.best), (2, 2));
     expect(overview.answeredToday, 1);
     expect(overview.answeredLast7Days, 2);
-    expect(overview.dailyGoal, isNull);
+    expect(overview.dailyGoal?.goal, 20);
   });
 
   group('daily goal', () {
-    test('is off until the user sets one', () async {
-      expect(await stats.dailyGoal(), isNull);
+    test('is 20 cards until the user changes it', () async {
+      expect((await stats.dailyGoal())?.goal, 20);
     });
+
+    test(
+      'turned off in Settings (stored with no value), there is none',
+      () async {
+        await db
+            .into(db.settings)
+            .insert(SettingsCompanion.insert(key: 'daily_goal'));
+
+        expect(await stats.dailyGoal(), isNull);
+      },
+    );
 
     test("shows today's answers against the goal", () async {
       await db
@@ -249,7 +260,7 @@ void main() {
               ),
             );
 
-        expect(await goals, [null, 30]);
+        expect(await goals, [20, 30]);
       },
     );
   });

@@ -183,10 +183,10 @@ class _ShareDialogState extends State<_ShareDialog> {
               color: colors.primarySoft,
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
-            child: Icon(Icons.ios_share_rounded, color: colors.primaryStrong),
+            child: Icon(Icons.ios_share_outlined, color: colors.primaryStrong),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(l10n.shareTitle(widget.title), style: text.titleLarge),
+          Text(l10n.shareTitle(widget.title), style: text.titleMedium),
         ],
       ),
       content: Column(
@@ -209,7 +209,7 @@ class _ShareDialogState extends State<_ShareDialog> {
           const SizedBox(height: AppSpacing.sm),
           ChoiceTile(
             key: const Key('shareDialog.csv'),
-            icon: Icons.download_rounded,
+            icon: Icons.file_download_outlined,
             title: l10n.shareCsv,
             hint: l10n.shareCsvHint,
             selected: _format == ShareFormat.csv,
@@ -226,7 +226,7 @@ class _ShareDialogState extends State<_ShareDialog> {
         FilledButton.icon(
           key: const Key('shareDialog.confirm'),
           onPressed: () => Navigator.of(context).pop(_format),
-          icon: const Icon(Icons.ios_share_rounded),
+          icon: const Icon(Icons.ios_share_outlined),
           label: Text(l10n.share),
         ),
       ],

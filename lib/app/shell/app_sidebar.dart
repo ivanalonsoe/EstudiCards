@@ -60,7 +60,8 @@ class AppSidebar extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const BrandLogo(),
+                    // As large as in the design.
+                    const BrandLogo(size: 36),
                     const SizedBox(width: AppSpacing.sm),
                     Flexible(
                       child: Text(
@@ -68,6 +69,7 @@ class AppSidebar extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: text.titleMedium?.copyWith(
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
                       ),

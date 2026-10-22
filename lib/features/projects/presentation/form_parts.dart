@@ -19,8 +19,16 @@ Future<T?> showFormSheet<T>(BuildContext context, Widget form) {
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
-          showDragHandle: true,
-          builder: (context) => form,
+          // Material's handle takes 48 px; this one leaves the title close
+          // to it, as in `movil-claro/nuevo-proyecto.png`. The sheet can
+          // still be dragged down to close it.
+          builder: (context) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const _SheetHandle(),
+              Flexible(child: form),
+            ],
+          ),
         )
       : showDialog<T>(
           context: context,
@@ -31,6 +39,24 @@ Future<T?> showFormSheet<T>(BuildContext context, Widget form) {
             ),
           ),
         );
+}
+
+/// The small grey bar at the top of a bottom sheet.
+class _SheetHandle extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.md),
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: AppColors.of(context).border,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 }
 
 /// The frame of a form: title with a close button, the scrollable [fields],

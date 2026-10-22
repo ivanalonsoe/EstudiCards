@@ -56,10 +56,12 @@ class DashboardScreen extends ConsumerWidget {
     if (isDesktop) return Scaffold(body: content);
     return Scaffold(
       appBar: AppBar(
+        // The logo close to the menu button, as in the design.
+        titleSpacing: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const BrandLogo(),
+            const BrandLogo(size: 32),
             const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Text(
@@ -180,7 +182,7 @@ class _DesktopDashboard extends ConsumerWidget {
                   OutlinedButton.icon(
                     key: const Key('dashboard.import'),
                     onPressed: () => context.go(AppRoutes.importCards()),
-                    icon: const Icon(Icons.upload_rounded),
+                    icon: const Icon(Icons.file_upload_outlined),
                     label: Text(l10n.importButton),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -396,12 +398,10 @@ class _GoalCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    // The theme's card: rounded, with a border.
     return Card(
       key: const Key('dashboard.goal'),
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.listCard),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
@@ -534,9 +534,6 @@ class _LastWeekCard extends ConsumerWidget {
     return Card(
       key: const Key('dashboard.lastWeek'),
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.listCard),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
@@ -616,7 +613,7 @@ class _EmptyDashboard extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: EmptyState(
           large: true,
-          icon: Icons.style_rounded,
+          icon: Icons.style_outlined,
           illustration: Container(
             width: 112,
             height: 112,
@@ -639,7 +636,7 @@ class _EmptyDashboard extends ConsumerWidget {
             OutlinedButton.icon(
               key: const Key('dashboard.importEmpty'),
               onPressed: () => context.go(AppRoutes.importCards()),
-              icon: const Icon(Icons.upload_rounded),
+              icon: const Icon(Icons.file_upload_outlined),
               label: Text(l10n.importProject),
             ),
           ],
