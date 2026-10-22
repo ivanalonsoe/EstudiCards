@@ -1069,6 +1069,10 @@ class _DesktopPreview extends StatelessWidget {
   }
 }
 
+/// From this width the form (at least 320 px) and the 380 px preview fit
+/// side by side.
+const double _sideBySideWidth = 320 + 40 + 380;
+
 /// Desktop: breadcrumb, title with the buttons, and the fields.
 class _DesktopFrame extends StatelessWidget {
   const new({
@@ -1157,19 +1161,34 @@ class _DesktopFrame extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            // The form on the left and the preview on the right.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+            // The form on the left and the preview on the right. In a
+            // narrow desktop window there is no room for both side by
+            // side, so the preview goes under the form.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final form = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: fields,
+                );
+                if (constraints.maxWidth < _sideBySideWidth) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: fields,
-                  ),
-                ),
-                const SizedBox(width: 40),
-                SizedBox(width: 380, child: preview),
-              ],
+                    children: [
+                      form,
+                      const SizedBox(height: AppSpacing.xxl),
+                      Center(child: SizedBox(width: 380, child: preview)),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: form),
+                    const SizedBox(width: 40),
+                    SizedBox(width: 380, child: preview),
+                  ],
+                );
+              },
             ),
           ],
         ),

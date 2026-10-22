@@ -130,6 +130,33 @@ void main() {
     );
   });
 
+  testWidgets('desktop project: the header fits a narrow window (CI)', (
+    tester,
+  ) async {
+    // The CI Windows window is narrower than a usual desktop. An overflow
+    // is reported by Flutter and fails the test.
+    await pumpSampleScreen(
+      tester,
+      _screen('project'),
+      size: const Size(900, 800),
+    );
+
+    expect(_key('projectScreen.reviewErrors'), findsOneWidget);
+    expect(
+      tester.getSize(_key('projectScreen.reviewErrors')).width,
+      greaterThan(100),
+    );
+  });
+
+  for (final screen in mainScreens) {
+    testWidgets('${screen.name} fits the narrowest desktop window (CI)', (
+      tester,
+    ) async {
+      // Flutter reports an overflow, which fails the test.
+      await pumpSampleScreen(tester, screen, size: const Size(840, 700));
+    });
+  }
+
   testWidgets('desktop deck: "100%" fits on one line', (tester) async {
     await pumpSampleScreen(tester, _screen('deck'), size: desktop);
 

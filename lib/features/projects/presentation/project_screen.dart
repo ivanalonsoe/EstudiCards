@@ -180,15 +180,19 @@ class _DesktopProject extends StatelessWidget {
                 // design, together with "Repasar errores" at the right, next
                 // to "Estudiar". Any width they do not use is left before
                 // them.
+                // A `Wrap`: in a narrow window they go onto more lines
+                // instead of overflowing.
                 Flexible(
                   flex: 2,
                   child: Align(
                     alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
                       children: [
                         _ShareButton(project: project),
-                        const SizedBox(width: AppSpacing.sm),
                         IconButton(
                           key: const Key('projectScreen.importDeck'),
                           tooltip: l10n.importDeck,
@@ -198,9 +202,7 @@ class _DesktopProject extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.file_upload_outlined),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
                         _ProjectMenu(project: project),
-                        const SizedBox(width: AppSpacing.sm),
                         _ReviewErrors(project: project, expanded: false),
                       ],
                     ),
@@ -366,11 +368,12 @@ class _ReviewErrors extends ConsumerWidget {
             padding: const EdgeInsets.only(top: AppSpacing.md),
             child: button,
           )
-        // A `Flexible` can be returned here because this widget sits
-        // directly in a `Row` of the header.
-        : Flexible(
-            child: Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.sm),
+        // At most 180 px on desktop: a longer label takes two lines, as in
+        // the design.
+        : Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
               child: button,
             ),
           );
