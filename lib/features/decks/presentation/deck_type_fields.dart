@@ -3,6 +3,7 @@
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/languages.dart';
 import 'package:estudicards/features/projects/presentation/form_parts.dart';
@@ -27,29 +28,21 @@ class DeckTypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    return SegmentedButton<DeckType>(
-      segments: [
-        ButtonSegment(
+    return PillSelector<DeckType>(
+      options: [
+        (
           value: DeckType.general,
-          label: Text(l10n.typeGeneral, key: Key('$keyPrefix.type.general')),
+          label: l10n.typeGeneral,
+          key: Key('$keyPrefix.type.general'),
         ),
-        ButtonSegment(
+        (
           value: DeckType.language,
-          label: Text(l10n.typeLanguage, key: Key('$keyPrefix.type.language')),
+          label: l10n.typeLanguage,
+          key: Key('$keyPrefix.type.language'),
         ),
       ],
-      selected: {selected},
-      showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(
-        backgroundColor: colors.surfaceVariant,
-        foregroundColor: colors.textMuted,
-        selectedBackgroundColor: colors.surface,
-        selectedForegroundColor: colors.text,
-        side: BorderSide(color: colors.border),
-        textStyle: Theme.of(context).textTheme.labelLarge,
-      ),
-      onSelectionChanged: (selection) => onChanged(selection.single),
+      selected: selected,
+      onChanged: onChanged,
     );
   }
 }

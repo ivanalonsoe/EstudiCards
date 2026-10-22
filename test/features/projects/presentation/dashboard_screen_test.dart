@@ -319,8 +319,9 @@ void main() {
         find.descendant(of: week, matching: find.text('tarjetas en 7 días')),
         findsOneWidget,
       );
+      // After the daily goal's sentence (on by default).
       expect(
-        find.text('Tienes 4 errores pendientes en 2 proyectos.'),
+        find.textContaining('Tienes 4 errores pendientes en 2 proyectos.'),
         findsOneWidget,
       );
     });

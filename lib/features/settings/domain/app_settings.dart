@@ -26,8 +26,8 @@ abstract final class SettingKeys {
 const minCardTextScale = 0.8;
 const maxCardTextScale = 1.6;
 
-/// The goal "Objetivo diario" starts at when turned on, and how "+" and
-/// "−" move it (decided in T6.2).
+/// The goal "Objetivo diario" starts at, on a new install and when turned
+/// on again, and how "+" and "−" move it (decided in T6.2 and T6.6).
 const defaultDailyGoal = 20;
 const dailyGoalStep = 5;
 const minDailyGoal = 5;
@@ -43,11 +43,10 @@ class AppSettings {
   /// The settings stored under their keys; missing keys get the default.
   factory fromStored(Map<String, String?> stored) {
     final scale = double.tryParse(stored[SettingKeys.cardTextScale] ?? '');
-    final goal = int.tryParse(stored[SettingKeys.dailyGoal] ?? '');
     return AppSettings(
       themeMode: AppThemeMode.fromStored(stored[SettingKeys.themeMode]),
       cardTextScale: scale == null ? 1.0 : roundCardTextScale(scale),
-      dailyGoal: goal == null || goal <= 0 ? null : goal,
+      dailyGoal: dailyGoalFromStored(stored),
     );
   }
 
@@ -56,8 +55,20 @@ class AppSettings {
   /// How much bigger (or smaller) the study card's text is: 1.0 is 100%.
   final double cardTextScale;
 
-  /// Cards to answer each day, or null when the goal is off (the default).
+  /// Cards to answer each day, or null when the goal is off.
   final int? dailyGoal;
+}
+
+/// The daily goal in the [stored] settings (T6.6): 20 cards until the user
+/// changes it. Turning it off stores the key with no value, so a goal
+/// turned off stays off, while a missing or damaged value gets the 20.
+int? dailyGoalFromStored(Map<String, String?> stored) {
+  if (!stored.containsKey(SettingKeys.dailyGoal)) return defaultDailyGoal;
+  final value = stored[SettingKeys.dailyGoal];
+  if (value == null) return null;
+  final goal = int.tryParse(value);
+  if (goal == null) return defaultDailyGoal;
+  return goal <= 0 ? null : goal;
 }
 
 /// [scale] within 80–160%, rounded to the nearest 10%.

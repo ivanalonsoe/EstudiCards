@@ -144,15 +144,30 @@ class _MobileResults extends StatelessWidget {
                   _ReviewMissedButton(results: results, expanded: true),
                   const SizedBox(height: AppSpacing.md),
                 ],
-                _RepeatSessionButton(results: results, expanded: true),
-                const SizedBox(height: AppSpacing.sm),
-                TextButton(
-                  key: const Key('results.back'),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size.fromHeight(minTouchTarget),
-                  ),
-                  onPressed: () => _backToProject(context, results),
-                  child: Text(l10n.back),
+                // "Repetir sesión" and "Volver" share a row, as in the
+                // design.
+                Row(
+                  children: [
+                    Expanded(
+                      child: _RepeatSessionButton(
+                        results: results,
+                        expanded: true,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: TextButton(
+                        key: const Key('results.back'),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size.fromHeight(
+                            minTouchTarget + AppSpacing.sm,
+                          ),
+                        ),
+                        onPressed: () => _backToProject(context, results),
+                        child: Text(l10n.back),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -440,21 +455,46 @@ class _CountTiles extends StatelessWidget {
           color: colors.text,
         ),
     ];
+    // `IntrinsicHeight` gives every tile the height of the tallest one, as
+    // in the design, also when a label takes two lines ("sin responder").
     if (withTime) {
-      return Wrap(
-        spacing: AppSpacing.md,
-        runSpacing: AppSpacing.md,
-        children: [for (final tile in tiles) SizedBox(width: 120, child: tile)],
+      const tileWidth = 120.0;
+      const rowWidth =
+          tileWidth * 4 + AppSpacing.md * 3; // The four tiles in one row.
+      return LayoutBuilder(
+        builder: (context, constraints) => constraints.maxWidth >= rowWidth
+            ? IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (index, tile) in tiles.indexed) ...[
+                      if (index > 0) const SizedBox(width: AppSpacing.md),
+                      SizedBox(width: tileWidth, child: tile),
+                    ],
+                  ],
+                ),
+              )
+            // A narrow window: they wrap onto more lines.
+            : Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.md,
+                children: [
+                  for (final tile in tiles)
+                    SizedBox(width: tileWidth, child: tile),
+                ],
+              ),
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final (index, tile) in tiles.indexed) ...[
-          if (index > 0) const SizedBox(width: AppSpacing.md),
-          Expanded(child: tile),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, tile) in tiles.indexed) ...[
+            if (index > 0) const SizedBox(width: AppSpacing.md),
+            Expanded(child: tile),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -637,7 +677,7 @@ class _ReviewMissedButton extends StatelessWidget {
   Widget build(BuildContext context) => _StartSessionButton(
     key: const Key('results.reviewMissed'),
     label: AppLocalizations.of(context).reviewMissedNow,
-    icon: expanded ? Icons.refresh_rounded : Icons.play_arrow_rounded,
+    icon: expanded ? Icons.refresh_rounded : Icons.play_arrow_outlined,
     filled: true,
     expanded: expanded,
     start: (ref) => startReviewOfMissed(ref, results),

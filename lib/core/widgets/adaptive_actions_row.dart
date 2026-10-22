@@ -2,42 +2,23 @@ import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:flutter/material.dart';
 
 /// The bottom row of a Trash or Archived card: [leading] (a label) on the
-/// left and [actions] on the right. On a phone they do not fit on one line,
-/// so [leading] goes above and [actions] below, aligned right.
+/// left and [actions] on the right, on one row as in the design. When they
+/// do not fit (e.g. with large system text) they go on two lines, aligned
+/// right.
 ///
-/// `LayoutBuilder` tells how wide the card is before choosing the layout.
+/// `OverflowBar` lays its children out in a row when they fit, and one
+/// under the other when they do not.
 class AdaptiveActionsRow extends StatelessWidget {
   const new({required this.leading, required this.actions, super.key});
 
   final Widget leading;
   final Widget actions;
 
-  /// Narrower than this, the actions go on their own line. It grows with
-  /// the system text size, since the labels grow too.
-  static const double _oneLineWidth = 360;
-
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final oneLine = MediaQuery.textScalerOf(context).scale(_oneLineWidth);
-      if (constraints.maxWidth < oneLine) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(alignment: Alignment.centerLeft, child: leading),
-            const SizedBox(height: AppSpacing.sm),
-            Align(alignment: Alignment.centerRight, child: actions),
-          ],
-        );
-      }
-      return Row(
-        children: [
-          Expanded(
-            child: Align(alignment: Alignment.centerLeft, child: leading),
-          ),
-          actions,
-        ],
-      );
-    },
+  Widget build(BuildContext context) => OverflowBar(
+    alignment: MainAxisAlignment.spaceBetween,
+    overflowAlignment: OverflowBarAlignment.end,
+    overflowSpacing: AppSpacing.sm,
+    children: [leading, actions],
   );
 }

@@ -2,6 +2,7 @@
 // for what a repository does). The DAO counts in SQL; the rules in
 // `domain/metrics.dart` turn the counts into streaks and progress.
 import 'package:estudicards/core/clock.dart';
+import 'package:estudicards/features/settings/domain/app_settings.dart';
 import 'package:estudicards/features/stats/data/stats_dao.dart';
 import 'package:estudicards/features/stats/domain/metrics.dart';
 import 'package:estudicards/features/stats/domain/project_statistics.dart';
@@ -32,10 +33,12 @@ class StatsRepository {
     return _dao.answeredBetween(dayKey(first), dayKey(today));
   }
 
-  /// Today's progress towards the daily goal, or null while there is none
-  /// (`daily_goal` in `settings`, set from Settings in T6.2).
+  /// Today's progress towards the daily goal, or null when it is turned off
+  /// (`daily_goal` in `settings`, read with the same rule as Settings).
   Future<DailyGoalProgress?> dailyGoal() async {
-    final goal = int.tryParse(await _dao.readSetting(_dailyGoalKey) ?? '');
+    final goal = dailyGoalFromStored(
+      await _dao.readSetting(SettingKeys.dailyGoal),
+    );
     if (goal == null) return null;
     return dailyGoalProgress(goal: goal, answeredToday: await answeredToday());
   }
@@ -158,6 +161,4 @@ class StatsRepository {
     answeredLast7Days: await answeredInLastDays(7),
     dailyGoal: await dailyGoal(),
   );
-
-  static const _dailyGoalKey = 'daily_goal';
 }

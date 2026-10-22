@@ -34,7 +34,7 @@ final homeDestination = NavDestination(
 final importDestination = NavDestination(
   id: 'import',
   path: AppRoutes.importCards(),
-  icon: Icons.upload_rounded,
+  icon: Icons.file_upload_outlined,
   label: (l10n) => l10n.importButton,
 );
 
@@ -43,7 +43,7 @@ final menuDestinations = [
   NavDestination(
     id: 'statistics',
     path: AppRoutes.statistics,
-    icon: Icons.bar_chart_rounded,
+    icon: Icons.bar_chart_outlined,
     label: (l10n) => l10n.statistics,
   ),
   NavDestination(

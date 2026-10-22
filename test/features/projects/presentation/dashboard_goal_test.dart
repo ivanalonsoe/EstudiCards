@@ -21,8 +21,13 @@ void main() {
   late AppDatabase db;
 
   /// A project with one card answered [answered] times today (the test
-  /// clock's day, 6 October 2026) and, if given, a daily [goal].
-  Future<void> prepare({required int answered, int? goal}) async {
+  /// clock's day, 6 October 2026) and, if given, a daily [goal]. With
+  /// [goalOff] the goal was turned off in Settings (stored with no value).
+  Future<void> prepare({
+    required int answered,
+    int? goal,
+    bool goalOff = false,
+  }) async {
     db = createTestDatabase();
     final clock = FakeClock(DateTime.utc(2026, 10, 6, 12));
     final project = await ProjectsRepository(ProjectsDao(db), clock).create(
@@ -46,10 +51,36 @@ void main() {
             SettingsCompanion.insert(key: 'daily_goal', value: Value('$goal')),
           );
     }
+    if (goalOff) {
+      await db
+          .into(db.settings)
+          .insert(SettingsCompanion.insert(key: 'daily_goal'));
+    }
   }
 
-  testWidgets('without a goal, there is no goal ring or card', (tester) async {
+  testWidgets('a new install shows a goal of 20 cards', (tester) async {
     await prepare(answered: 3);
+
+    await pumpTestApp(tester, size: mobile, db: db);
+    expect(
+      find.descendant(of: _key('dashboard.goal'), matching: find.text('de 20')),
+      findsOneWidget,
+    );
+
+    await pumpTestApp(tester, size: desktop, db: db);
+    expect(
+      find.descendant(
+        of: _key('sidebar.goal'),
+        matching: find.text('3 de 20 hoy'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('with the goal turned off, there is no goal ring or card', (
+    tester,
+  ) async {
+    await prepare(answered: 3, goalOff: true);
 
     await pumpTestApp(tester, size: mobile, db: db);
     expect(_key('dashboard.goal'), findsNothing);

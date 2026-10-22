@@ -182,11 +182,14 @@ class StatsDao extends DatabaseAccessor<AppDatabase> with _$StatsDaoMixin {
     ]),
   );
 
-  Future<String?> readSetting(String key) async {
+  /// The setting stored under [key], as key → value; empty if it was never
+  /// stored (a key stored with no value is not the same, see
+  /// `dailyGoalFromStored`).
+  Future<Map<String, String?>> readSetting(String key) async {
     final row = await (select(
       settings,
     )..where((s) => s.key.equals(key))).getSingleOrNull();
-    return row?.value;
+    return {if (row != null) row.key: row.value};
   }
 
   /// Joins each attempt to its card, deck and project, to leave out those

@@ -10,6 +10,7 @@ import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/confirm_dialog.dart';
 import 'package:estudicards/core/widgets/empty_state.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/cards/domain/card_list.dart';
 import 'package:estudicards/features/cards/domain/card_transfer.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
@@ -621,26 +622,30 @@ class _Toolbar extends StatelessWidget {
         // toolbar needs to fit in one row.
         final oneRow = MediaQuery.textScalerOf(context).scale(_oneRowWidth);
         if (constraints.maxWidth >= oneRow) {
+          // The search takes 30% of the row, enough for its whole hint as
+          // in the design; "Repasar errores" takes two lines when it is
+          // long, and if the buttons still do not fit they wrap instead of
+          // overflowing.
+          final searchWidth = (constraints.maxWidth * 0.3).clamp(240.0, 360.0);
           return Row(
             children: [
-              // The buttons get most of the width (5:2), so they fit in one
-              // line on a usual desktop; if not, they wrap instead of
-              // overflowing.
-              Flexible(
-                flex: 2,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
-                  child: search,
-                ),
-              ),
+              SizedBox(width: searchWidth, child: search),
               const SizedBox(width: AppSpacing.md),
               _SortSelector(view: view),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                flex: 5,
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: wrap(actions),
+                  child: wrap([
+                    for (final action in actions)
+                      if (action is _ReviewErrors)
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 160),
+                          child: action,
+                        )
+                      else
+                        action,
+                  ]),
                 ),
               ),
             ],
@@ -680,7 +685,7 @@ class _StudyButton extends StatelessWidget {
       onPressed: () => context.go(
         AppRoutes.sessionSetup(view.project.id, deckId: view.deck.id),
       ),
-      icon: const Icon(Icons.play_arrow_rounded),
+      icon: const Icon(Icons.play_arrow_outlined),
       label: Text(AppLocalizations.of(context).study),
     );
   }
@@ -820,30 +825,19 @@ class _SortSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    return SegmentedButton<CardSort>(
-      segments: [
+    // Each order as wide as its label, as in the design.
+    return PillSelector<CardSort>(
+      expand: false,
+      options: [
         for (final sort in CardSort.values)
-          ButtonSegment(
+          (
             value: sort,
-            label: Text(
-              _sortLabel(l10n, sort),
-              key: Key('deckScreen.sort.${sort.name}'),
-            ),
+            label: _sortLabel(l10n, sort),
+            key: Key('deckScreen.sort.${sort.name}'),
           ),
       ],
-      selected: {view.sort},
-      showSelectedIcon: false,
-      // The same grey track as the type selector of the forms.
-      style: SegmentedButton.styleFrom(
-        backgroundColor: colors.surfaceVariant,
-        foregroundColor: colors.textMuted,
-        selectedBackgroundColor: colors.surface,
-        selectedForegroundColor: colors.text,
-        side: BorderSide(color: colors.border),
-        textStyle: Theme.of(context).textTheme.labelLarge,
-      ),
-      onSelectionChanged: (selection) => view.onSortChanged(selection.single),
+      selected: view.sort,
+      onChanged: view.onSortChanged,
     );
   }
 }
@@ -1218,8 +1212,9 @@ class _CardTableRow extends StatelessWidget {
             children: [
               Expanded(child: _RateBar(rate: summary.correctRate)),
               const SizedBox(width: AppSpacing.md),
+              // Room for "100%" on one line.
               SizedBox(
-                width: 40,
+                width: 48,
                 child: Text(
                   rateText(l10n, summary.correctRate),
                   style: text.titleSmall,
@@ -1377,7 +1372,7 @@ class _SelectionBar extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             action(
               'deckScreen.copyTo',
-              Icons.copy_rounded,
+              Icons.copy_outlined,
               l10n.copyTo,
               () => view.onCopy(ids),
             ),
@@ -1420,7 +1415,7 @@ class _ShareButton extends ConsumerWidget {
     onPressed: () => unawaited(
       shareDeck(context, ref, project: view.project, deck: view.deck),
     ),
-    icon: const Icon(Icons.ios_share_rounded),
+    icon: const Icon(Icons.ios_share_outlined),
   );
 }
 
@@ -1490,7 +1485,7 @@ class _ImportButton extends StatelessWidget {
   Widget build(BuildContext context) => OutlinedButton.icon(
     key: const Key('deckScreen.import'),
     onPressed: () => view.importCards(context),
-    icon: const Icon(Icons.upload_rounded),
+    icon: const Icon(Icons.file_upload_outlined),
     label: Text(AppLocalizations.of(context).importCsv),
   );
 }
@@ -1503,7 +1498,7 @@ class _TemplateButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => OutlinedButton.icon(
     key: const Key('deckScreen.template'),
     onPressed: () => unawaited(saveCsvTemplate(context, ref)),
-    icon: const Icon(Icons.download_rounded),
+    icon: const Icon(Icons.file_download_outlined),
     label: Text(AppLocalizations.of(context).template),
   );
 }
@@ -1546,7 +1541,7 @@ class _EmptyDeck extends StatelessWidget {
           builder: (context, ref, _) => TextButton.icon(
             key: const Key('deckScreen.emptyTemplate'),
             onPressed: () => unawaited(saveCsvTemplate(context, ref)),
-            icon: const Icon(Icons.download_rounded),
+            icon: const Icon(Icons.file_download_outlined),
             label: Text(l10n.downloadTemplate),
           ),
         ),

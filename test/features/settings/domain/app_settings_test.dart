@@ -3,13 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('reading the stored settings (SPEC §4.2)', () {
-    test('with nothing stored, the defaults: system theme, 100% and no '
-        'daily goal', () {
+    test('with nothing stored, the defaults: system theme, 100% and a '
+        'daily goal of 20 cards', () {
       final settings = AppSettings.fromStored(const {});
 
       expect(settings.themeMode, AppThemeMode.system);
       expect(settings.cardTextScale, 1.0);
-      expect(settings.dailyGoal, isNull);
+      expect(settings.dailyGoal, 20);
     });
 
     test('reads every stored value', () {
@@ -33,10 +33,10 @@ void main() {
 
       expect(settings.themeMode, AppThemeMode.system);
       expect(settings.cardTextScale, 1.0);
-      expect(settings.dailyGoal, isNull);
+      expect(settings.dailyGoal, 20);
     });
 
-    test('a goal of 0 or less, or a null value, means no goal', () {
+    test('a goal turned off is stored with no value, and stays off', () {
       expect(AppSettings.fromStored(const {'daily_goal': '0'}).dailyGoal, null);
       expect(
         AppSettings.fromStored(const {'daily_goal': '-5'}).dailyGoal,

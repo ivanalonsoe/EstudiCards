@@ -135,12 +135,16 @@ class _ArchivedCard extends ConsumerWidget {
                     ),
                     icon: const Icon(Icons.delete_outline_rounded),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
                   FilledButton.icon(
                     key: Key('archivedItem.${project.id}.unarchive'),
                     style: FilledButton.styleFrom(
                       backgroundColor: colors.primarySoft,
                       foregroundColor: colors.primaryStrong,
+                      // Compact, so the date and the buttons fit on one row
+                      // on a phone.
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
                     ),
                     onPressed: () => unawaited(
                       ref

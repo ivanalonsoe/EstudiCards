@@ -39,7 +39,7 @@ Future<bool> showConfirmDialog(
               child: Icon(icon, color: accent),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(title, style: text.titleLarge),
+            Text(title, style: text.titleMedium),
           ],
         ),
         content: Text(

@@ -127,10 +127,13 @@ class _BackupTooLargeDialogState extends State<_BackupTooLargeDialog> {
               color: colors.primarySoft,
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
-            child: Icon(Icons.download_rounded, color: colors.primaryStrong),
+            child: Icon(
+              Icons.file_download_outlined,
+              color: colors.primaryStrong,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(l10n.backupTooLargeTitle, style: text.titleLarge),
+          Text(l10n.backupTooLargeTitle, style: text.titleMedium),
         ],
       ),
       content: Column(
@@ -154,7 +157,7 @@ class _BackupTooLargeDialogState extends State<_BackupTooLargeDialog> {
           const SizedBox(height: AppSpacing.sm),
           ChoiceTile(
             key: const Key('backupTooLarge.deckByDeck'),
-            icon: Icons.ios_share_rounded,
+            icon: Icons.ios_share_outlined,
             title: l10n.backupDeckByDeck,
             hint: l10n.backupDeckByDeckHint,
             selected: _choice == _TooLargeChoice.deckByDeck,
@@ -356,10 +359,13 @@ class _RestoreDialogState extends State<_RestoreDialog> {
               color: colors.primarySoft,
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
-            child: Icon(Icons.upload_rounded, color: colors.primaryStrong),
+            child: Icon(
+              Icons.file_upload_outlined,
+              color: colors.primaryStrong,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(l10n.restoreDialogTitle, style: text.titleLarge),
+          Text(l10n.restoreDialogTitle, style: text.titleMedium),
         ],
       ),
       content: Column(

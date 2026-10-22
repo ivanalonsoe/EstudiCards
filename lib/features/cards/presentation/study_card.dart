@@ -7,6 +7,7 @@ import 'package:estudicards/app/theme/motion.dart';
 import 'package:estudicards/app/theme/project_palette.dart';
 import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
+import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
 import 'package:flutter/material.dart';
 
@@ -531,10 +532,39 @@ class _Scrolling extends StatelessWidget {
   );
 }
 
-/// Large text of the front and the answer.
-TextStyle? _bigText(BuildContext context) =>
-    Theme.of(context).textTheme.headlineSmall
-        ?.copyWith(fontSize: 26, fontWeight: FontWeight.w800);
+/// The large text of the front and the answer: the shorter, the larger, as
+/// in the design (`movil-claro/estudio.png`, T6.6). A short text is on one
+/// line and shrinks if it does not fit the card's width (e.g. one long
+/// word); longer texts wrap.
+class _BigText extends StatelessWidget {
+  const new(this.text);
+
+  final String text;
+
+  /// Up to this many characters a text counts as short or medium.
+  static const _short = 20;
+  static const _medium = 60;
+
+  @override
+  Widget build(BuildContext context) {
+    final length = withoutFormatMarks(text).length;
+    final size = length <= _short
+        ? 40.0
+        : length <= _medium
+        ? 30.0
+        : 26.0;
+    final formatted = FormattedText(
+      text,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.headlineSmall
+          ?.copyWith(fontSize: size, fontWeight: FontWeight.w800),
+    );
+    if (length > _short) return formatted;
+    // `FittedBox` lays the text out on one line and scales it down only
+    // when it is wider than the card.
+    return FittedBox(fit: BoxFit.scaleDown, child: formatted);
+  }
+}
 
 /// A card image (variant 8): up to 160 px high, whole and centred on a
 /// `surface-variant` box. A missing file shows an icon instead.
@@ -585,11 +615,7 @@ class _SimpleFront extends StatelessWidget {
           image,
           semanticLabel: AppLocalizations.of(context).questionImageLabel,
         ),
-      FormattedText(
-        text,
-        textAlign: TextAlign.center,
-        style: _bigText(context),
-      ),
+      _BigText(text),
       if (speaker case final speaker?) ...[
         const SizedBox(height: AppSpacing.md),
         Center(child: speaker),
@@ -678,16 +704,16 @@ class _SimpleBack extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         if (image case final image?)
           _CardImage(image, semanticLabel: l10n.answerImageLabel),
-        FormattedText(
-          answer,
-          textAlign: isLong ? TextAlign.start : TextAlign.center,
-          style: isLong
-              ? text.titleMedium?.copyWith(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                )
-              : _bigText(context),
-        ),
+        if (isLong)
+          FormattedText(
+            answer,
+            style: text.titleMedium?.copyWith(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+            ),
+          )
+        else
+          _BigText(answer),
         if (solutionSpeaker case final speaker?) ...[
           const SizedBox(height: AppSpacing.sm),
           Center(child: speaker),

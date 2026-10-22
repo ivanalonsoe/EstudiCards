@@ -5,6 +5,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/breadcrumb.dart';
 import 'package:estudicards/core/widgets/empty_state.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/decks/domain/deck_summary.dart';
 import 'package:estudicards/features/decks/presentation/deck_providers.dart';
@@ -504,7 +505,7 @@ class _Segmented<T> extends StatelessWidget {
     required this.onChanged,
   });
 
-  /// The key of the [SegmentedButton] itself, so tests can read `selected`.
+  /// The key of the [PillSelector] itself, so tests can read `selected`.
   final Key buttonKey;
 
   /// Each option's value, label and key.
@@ -512,42 +513,17 @@ class _Segmented<T> extends StatelessWidget {
   final T selected;
   final ValueChanged<T> onChanged;
 
+  // Long pairs ("Inglés (R. U.) → Español") take two lines.
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return SegmentedButton<T>(
-      key: buttonKey,
-      segments: [
-        for (final (value, label, key) in options)
-          ButtonSegment(
-            value: value,
-            // Long pairs ("Inglés (R. U.) → Español") take two lines.
-            label: Text(
-              label,
-              key: key,
-              maxLines: 2,
-              textAlign: TextAlign.center,
-            ),
-          ),
-      ],
-      selected: {selected},
-      showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(
-        backgroundColor: colors.surfaceVariant,
-        foregroundColor: colors.textMuted,
-        selectedBackgroundColor: colors.surface,
-        selectedForegroundColor: colors.text,
-        side: BorderSide(color: colors.border),
-        textStyle: Theme.of(context).textTheme.labelLarge,
-        // Less padding than the default, so "Todas" fits in five segments.
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs,
-          vertical: AppSpacing.sm,
-        ),
-      ),
-      onSelectionChanged: (selection) => onChanged(selection.single),
-    );
-  }
+  Widget build(BuildContext context) => PillSelector<T>(
+    key: buttonKey,
+    options: [
+      for (final (value, label, key) in options)
+        (value: value, label: label, key: key),
+    ],
+    selected: selected,
+    onChanged: onChanged,
+  );
 }
 
 /// "Número de tarjetas": 10, 20, 50, "Todas" or "Otro" with its − / + row.
@@ -967,7 +943,7 @@ class _StartButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(minTouchTarget + AppSpacing.sm),
       ),
       onPressed: view.onStart,
-      icon: const Icon(Icons.play_arrow_rounded),
+      icon: const Icon(Icons.play_arrow_outlined),
       label: Text(AppLocalizations.of(context).startSession),
     );
   }

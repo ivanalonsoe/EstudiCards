@@ -4,6 +4,7 @@ import 'package:estudicards/app/l10n/generated/app_localizations.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/widgets/empty_state.dart';
+import 'package:estudicards/core/widgets/heading_row.dart';
 import 'package:flutter/material.dart';
 
 /// A card with a [title], an optional [trailing] widget on the right of it
@@ -29,19 +30,13 @@ class StatsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                // Shrinks, rather than pushing the title out, with large
-                // system text.
-                if (trailing case final trailing?) Flexible(child: trailing),
-              ],
+            HeadingRow(
+              title: Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              trailing: trailing,
             ),
             const SizedBox(height: AppSpacing.lg),
             child,
@@ -61,6 +56,7 @@ class StatsCaption extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
+    textAlign: TextAlign.end,
     style: Theme.of(context).textTheme.labelMedium
         ?.copyWith(color: AppColors.of(context).textMuted),
   );
@@ -97,7 +93,7 @@ class NoStatistics extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyState(
-      icon: Icons.bar_chart_rounded,
+      icon: Icons.bar_chart_outlined,
       title: l10n.noStatisticsTitle,
       body: body ?? l10n.noStatisticsBody,
     );
