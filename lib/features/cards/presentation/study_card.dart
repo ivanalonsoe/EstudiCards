@@ -712,8 +712,10 @@ class _SimpleBack extends StatelessWidget {
     );
 
     return _Scrolling(
-      // The large question starts at the top, with the answer under it.
-      centered: isLong,
+      // The question and the answer alone sit in the middle of the card;
+      // with an example or notes they start at the top, so the answer does
+      // not move down as they grow.
+      centered: isLong || (example == null && notes == null),
       children: [
         if (isLong)
           _withSpeaker(

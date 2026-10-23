@@ -185,10 +185,15 @@ void main() {
         WidgetTester tester, {
         String question = 'Narrow',
         String answer = 'Estrecho',
+        String? example,
       }) => pumpComponent(
         tester,
         StudyCard(
-          card: simpleCard(question: question, answer: answer),
+          card: simpleCard(
+            question: question,
+            answer: answer,
+            example: example,
+          ),
           label: 'Inglés · Vocabulary 01',
           color: 'green',
           face: CardFace.back,
@@ -201,8 +206,11 @@ void main() {
       Text textOf(WidgetTester tester, String text) =>
           tester.widget<Text>(find.text(text));
 
-      testWidgets('is large, muted, centred and at the top, with its speaker '
-          'under it', (tester) async {
+      Rect rectOf(WidgetTester tester, Finder finder) => tester.getRect(finder);
+
+      testWidgets('is large, muted and centred, with its speaker under it', (
+        tester,
+      ) async {
         await pumpBack(tester);
 
         final question = textOf(tester, 'Narrow');
@@ -212,9 +220,6 @@ void main() {
         final card = tester.getRect(find.byKey(const Key('studyCard.back')));
         final rect = tester.getRect(find.text('Narrow'));
         expect(rect.center.dx, moreOrLessEquals(card.center.dx, epsilon: 1));
-        // Right under the header, not in the middle of the card.
-        final header = tester.getRect(find.text('Inglés → Español'));
-        expect(rect.top - header.bottom, lessThan(AppSpacing.xl));
 
         final speaker = tester.getRect(
           find.byKey(const Key('studyCard.back.speak.question')),
@@ -225,6 +230,33 @@ void main() {
           tester.getRect(find.text('Estrecho')).top,
           greaterThan(speaker.bottom),
         );
+      });
+
+      testWidgets('with only the question and the answer, they sit in the '
+          'middle of the card', (tester) async {
+        await pumpBack(tester);
+
+        final header = rectOf(tester, find.text('Inglés → Español'));
+        final hint = rectOf(tester, find.text('Toca para volver'));
+        final top = rectOf(tester, find.text('Narrow')).top;
+        final bottom = rectOf(
+          tester,
+          find.byKey(const Key('studyCard.back.speak.answer')),
+        ).bottom;
+        // The same space above and below (the header and the hint are a
+        // few points apart from the content).
+        expect(
+          top - header.bottom,
+          moreOrLessEquals(hint.top - bottom, epsilon: AppSpacing.sm),
+        );
+      });
+
+      testWidgets('with an example, they start at the top', (tester) async {
+        await pumpBack(tester, example: 'The water is **narrow** here.');
+
+        final header = rectOf(tester, find.text('Inglés → Español'));
+        final question = rectOf(tester, find.text('Narrow'));
+        expect(question.top - header.bottom, lessThan(AppSpacing.xl));
       });
 
       testWidgets('is one size smaller on a phone', (tester) async {
