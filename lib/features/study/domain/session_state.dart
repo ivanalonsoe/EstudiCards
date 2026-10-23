@@ -81,8 +81,8 @@ sealed class CardStep {
   const new();
 }
 
-/// Not answered yet: "Girar" or "Comprobar", "Ver respuesta" and "Dejar
-/// para el final".
+/// Not answered yet: "¡Sé la respuesta!" or "Comprobar", "No sé la
+/// respuesta" and "Dejar para el final".
 final class Answering extends CardStep {
   const new({this.selectedOptionIds = const {}});
 

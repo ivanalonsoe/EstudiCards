@@ -83,6 +83,25 @@ void main() {
     expect(used, isEmpty);
   });
 
+  test('sharing uses the usual share icon (three joined dots), easier to '
+      'recognise than the iOS box with an arrow', () {
+    final used = {
+      for (final file in Directory('lib').listSync(recursive: true))
+        if (file is File && file.path.endsWith('.dart'))
+          if (RegExp(r'Icons\.ios_share').hasMatch(file.readAsStringSync()))
+            file.path,
+    };
+    expect(used, isEmpty);
+  });
+
+  for (final (name, size) in [('project', desktop), ('deck', desktop)]) {
+    testWidgets('the $name share button shows the share icon', (tester) async {
+      await pumpSampleScreen(tester, _screen(name), size: size);
+
+      expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+    });
+  }
+
   for (final (name, form, size) in [
     ('settings', 'mobile', mobile),
     ('session setup', 'mobile', mobile),

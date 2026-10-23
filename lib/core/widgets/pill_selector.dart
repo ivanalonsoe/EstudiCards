@@ -12,7 +12,8 @@ typedef PillOption<T> = ({T value, String label, Key? key});
 /// option on a white "pill".
 ///
 /// With [expand] the options share the width equally; without it each takes
-/// what its label needs. A long label takes two lines. Each option is at
+/// what its label needs. A long label takes as many lines as it needs, so
+/// none is cut with large text. Each option is at
 /// least 48 dp high, so it is easy to tap (brief §9), and screen readers
 /// hear it as a button, selected or not.
 class PillSelector<T> extends StatelessWidget {
@@ -132,7 +133,6 @@ class _Segment extends StatelessWidget {
                 child: Text(
                   _keepParenthesesTogether(label),
                   key: labelKey,
-                  maxLines: 2,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: isSelected ? colors.text : colors.textMuted,

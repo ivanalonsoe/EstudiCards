@@ -41,27 +41,104 @@ void main() {
   });
 
   group('the AI prompt', () {
-    test("contains the template's exact header row", () {
-      expect(aiPrompt, contains('\n  ${csvColumns.join(';')}\n'));
+    const languages = (source: 'en-GB', target: 'es-ES');
+
+    String prompt(
+      AiPromptMode mode,
+      AiPromptLanguage language, {
+      String deckName = 'Verbos irregulares',
+      DeckLanguages? deckLanguages,
+    }) => aiPrompt(
+      mode: mode,
+      language: language,
+      deckName: deckName,
+      deckLanguages: deckLanguages,
+    );
+
+    final every = [
+      for (final mode in AiPromptMode.values)
+        for (final language in AiPromptLanguage.values)
+          for (final deckLanguages in [null, languages])
+            (mode, language, deckLanguages),
+    ];
+
+    test("every prompt contains the template's exact header row and asks "
+        'for a file named after the deck', () {
+      for (final (mode, language, deckLanguages) in every) {
+        final text = prompt(mode, language, deckLanguages: deckLanguages);
+        final which = '$mode $language $deckLanguages';
+        expect(text, contains('\n  ${csvColumns.join(';')}\n'), reason: which);
+        expect(text, contains('"Verbos irregulares.csv"'), reason: which);
+      }
     });
 
-    test('is the text of SPEC §8.5, with the brackets to fill in', () {
+    test('the file name drops what a file name cannot have', () {
       expect(
-        aiPrompt,
+        prompt(.fromData, .english, deckName: 'Tema 1/2: Célula?'),
+        contains('"Tema 12 Célula.csv"'),
+      );
+    });
+
+    test('with new content, the AI writes the cards about a topic, with the '
+        'brackets to fill in', () {
+      final english = prompt(.newContent, .english);
+      expect(
+        english,
         startsWith(
           'Generate [NUMBER] flashcards about [TOPIC] in CSV format to '
           'import into the EstudiCards app.\n',
         ),
       );
       for (final placeholder in ['[LANGUAGE]', '[PERCENTAGE]', '[LEVEL]']) {
-        expect(aiPrompt, contains(placeholder));
+        expect(english, contains(placeholder));
       }
+
+      final spanish = prompt(.newContent, .spanish);
       expect(
-        aiPrompt,
-        endsWith(
-          'Return only the CSV, with no explanations and no code blocks.',
+        spanish,
+        startsWith(
+          'Genera [NÚMERO] tarjetas sobre [TEMA] en formato CSV para '
+          'importarlas en la app EstudiCards.\n',
         ),
       );
+      for (final placeholder in ['[IDIOMA]', '[PORCENTAJE]', '[NIVEL]']) {
+        expect(spanish, contains(placeholder));
+      }
+    });
+
+    test('from data, the AI only uses the data pasted at the end', () {
+      final english = prompt(.fromData, .english);
+      expect(english, contains('using only the information I give you'));
+      expect(english, isNot(contains('[TOPIC]')));
+      expect(english, endsWith('My data:\n[PASTE YOUR DATA HERE]'));
+
+      final spanish = prompt(.fromData, .spanish);
+      expect(spanish, contains('usando solo la información que te doy'));
+      expect(spanish, isNot(contains('[TEMA]')));
+      expect(spanish, endsWith('Mis datos:\n[PEGA AQUÍ TUS DATOS]'));
+    });
+
+    test('it says whether the deck is general or of languages, and which', () {
+      for (final mode in AiPromptMode.values) {
+        expect(prompt(mode, .english), contains('This is a general deck'));
+        expect(
+          prompt(mode, .english, deckLanguages: languages),
+          allOf(
+            contains('This is a language deck'),
+            contains('en-GB'),
+            contains('es-ES'),
+          ),
+        );
+        expect(prompt(mode, .spanish), contains('Es una baraja general'));
+        expect(
+          prompt(mode, .spanish, deckLanguages: languages),
+          allOf(
+            contains('Es una baraja de idiomas'),
+            contains('en-GB'),
+            contains('es-ES'),
+          ),
+        );
+      }
     });
   });
 }

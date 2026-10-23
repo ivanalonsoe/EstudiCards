@@ -445,7 +445,7 @@ class _MobileHeader extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               const _TemplateButton(),
               const SizedBox(width: AppSpacing.sm),
-              const _AiPromptButton(),
+              _AiPromptButton(deck: view.deck),
             ],
           ),
         ),
@@ -560,7 +560,7 @@ class _DesktopHeader extends StatelessWidget {
                 children: [
                   _ImportButton(view: view),
                   const _TemplateButton(),
-                  const _AiPromptButton(),
+                  _AiPromptButton(deck: view.deck),
                   _ShareButton(view: view),
                   _DeckMenu(view: view),
                 ],
@@ -1415,7 +1415,7 @@ class _ShareButton extends ConsumerWidget {
     onPressed: () => unawaited(
       shareDeck(context, ref, project: view.project, deck: view.deck),
     ),
-    icon: const Icon(Icons.ios_share_outlined),
+    icon: const Icon(Icons.share_outlined),
   );
 }
 
@@ -1503,14 +1503,17 @@ class _TemplateButton extends ConsumerWidget {
   );
 }
 
-/// "Prompt para IA": copies the prompt of SPEC §8.5 (US-28).
+/// "Prompt para IA": opens the window that copies a prompt of SPEC §8.5
+/// for this deck (US-28).
 class _AiPromptButton extends StatelessWidget {
-  const new();
+  const new({required this.deck});
+
+  final Deck deck;
 
   @override
   Widget build(BuildContext context) => OutlinedButton.icon(
     key: const Key('deckScreen.aiPrompt'),
-    onPressed: () => unawaited(copyAiPrompt(context)),
+    onPressed: () => unawaited(showAiPromptDialog(context, deck: deck)),
     icon: const Icon(Icons.auto_awesome_outlined),
     label: Text(AppLocalizations.of(context).aiPrompt),
   );

@@ -1,3 +1,5 @@
+import 'package:estudicards/app/theme/app_colors.dart';
+import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:flutter/material.dart';
@@ -114,6 +116,24 @@ void main() {
       expect(find.text('Toca para volver'), findsOneWidget);
     });
 
+    testWidgets('the front can show another hint (the study session)', (
+      tester,
+    ) async {
+      await pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(),
+          label: 'Biología',
+          color: 'green',
+          face: CardFace.front,
+          frontHint: '¡Sé la respuesta! Toca para girar',
+        ),
+      );
+
+      expect(find.text('¡Sé la respuesta! Toca para girar'), findsOneWidget);
+      expect(find.text('Toca para girar'), findsNothing);
+    });
+
     testWidgets('bold text is drawn bold, without the asterisks', (
       tester,
     ) async {
@@ -158,6 +178,115 @@ void main() {
 
       expect(find.text('EJEMPLO'), findsNothing);
       expect(find.text('NOTAS'), findsNothing);
+    });
+
+    group('the question on the back', () {
+      Future<void> pumpBack(
+        WidgetTester tester, {
+        String question = 'Narrow',
+        String answer = 'Estrecho',
+        String? example,
+      }) => pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(
+            question: question,
+            answer: answer,
+            example: example,
+          ),
+          label: 'Inglés · Vocabulary 01',
+          color: 'green',
+          face: CardFace.back,
+          languagePair: 'Inglés → Español',
+          speechLanguages: (source: 'en-GB', target: 'es-ES'),
+          speaker: (speech) => Text('🔊 ${speech.language}'),
+        ),
+      );
+
+      Text textOf(WidgetTester tester, String text) =>
+          tester.widget<Text>(find.text(text));
+
+      Rect rectOf(WidgetTester tester, Finder finder) => tester.getRect(finder);
+
+      testWidgets('is large, muted and centred, with its speaker under it', (
+        tester,
+      ) async {
+        await pumpBack(tester);
+
+        final question = textOf(tester, 'Narrow');
+        expect(question.style?.fontSize, 40);
+        expect(question.style?.color, AppColors.light.textMuted);
+
+        final card = tester.getRect(find.byKey(const Key('studyCard.back')));
+        final rect = tester.getRect(find.text('Narrow'));
+        expect(rect.center.dx, moreOrLessEquals(card.center.dx, epsilon: 1));
+
+        final speaker = tester.getRect(
+          find.byKey(const Key('studyCard.back.speak.question')),
+        );
+        expect(speaker.top, greaterThanOrEqualTo(rect.bottom));
+        expect(speaker.center.dx, moreOrLessEquals(card.center.dx, epsilon: 1));
+        expect(
+          tester.getRect(find.text('Estrecho')).top,
+          greaterThan(speaker.bottom),
+        );
+      });
+
+      testWidgets('with only the question and the answer, they sit in the '
+          'middle of the card', (tester) async {
+        await pumpBack(tester);
+
+        final header = rectOf(tester, find.text('Inglés → Español'));
+        final hint = rectOf(tester, find.text('Toca para volver'));
+        final top = rectOf(tester, find.text('Narrow')).top;
+        final bottom = rectOf(
+          tester,
+          find.byKey(const Key('studyCard.back.speak.answer')),
+        ).bottom;
+        // The same space above and below (the header and the hint are a
+        // few points apart from the content).
+        expect(
+          top - header.bottom,
+          moreOrLessEquals(hint.top - bottom, epsilon: AppSpacing.sm),
+        );
+      });
+
+      testWidgets('with an example, they start at the top', (tester) async {
+        await pumpBack(tester, example: 'The water is **narrow** here.');
+
+        final header = rectOf(tester, find.text('Inglés → Español'));
+        final question = rectOf(tester, find.text('Narrow'));
+        expect(question.top - header.bottom, lessThan(AppSpacing.xl));
+      });
+
+      testWidgets('is one size smaller on a phone', (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await pumpBack(
+          tester,
+          question: 'What is the opposite of wide in English?',
+        );
+
+        // 30 on a wider window (between 21 and 60 characters).
+        expect(
+          textOf(
+            tester,
+            'What is the opposite of wide in English?',
+          ).style?.fontSize,
+          26,
+        );
+        // The answer keeps its size.
+        expect(textOf(tester, 'Estrecho').style?.fontSize, 40);
+      });
+
+      testWidgets('stays small above a long answer', (tester) async {
+        await pumpBack(tester, answer: 'Que tiene poca anchura. ' * 6);
+
+        final question = textOf(tester, 'Narrow');
+        expect(question.style?.fontSize, lessThan(20));
+        expect(question.textAlign, TextAlign.start);
+      });
     });
 
     testWidgets('a long answer scrolls inside the card', (tester) async {

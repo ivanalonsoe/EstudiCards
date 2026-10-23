@@ -157,7 +157,7 @@ class _BackupTooLargeDialogState extends State<_BackupTooLargeDialog> {
           const SizedBox(height: AppSpacing.sm),
           ChoiceTile(
             key: const Key('backupTooLarge.deckByDeck'),
-            icon: Icons.ios_share_outlined,
+            icon: Icons.share_outlined,
             title: l10n.backupDeckByDeck,
             hint: l10n.backupDeckByDeckHint,
             selected: _choice == _TooLargeChoice.deckByDeck,

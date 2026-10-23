@@ -647,7 +647,7 @@ class _ShareButton extends ConsumerWidget {
     // In a box on desktop, as in the design; plain in the mobile top bar.
     style: _isDesktop(context) ? boxedIconButtonStyle(context) : null,
     onPressed: () => unawaited(shareProject(context, ref, project)),
-    icon: const Icon(Icons.ios_share_outlined),
+    icon: const Icon(Icons.share_outlined),
   );
 }
 

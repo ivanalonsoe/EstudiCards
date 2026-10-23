@@ -907,6 +907,7 @@ class _SessionCard extends ConsumerWidget {
           : attempt.result == AttemptResult.correct,
       reversed: reversed,
       showFlipHint: !isTest && step is Answering,
+      frontHint: l10n.knowItTapToFlip,
       onTap: !isTest && step is Answering ? onFlip : null,
       onOptionTap: isTest && step is Answering ? onOptionTap : null,
       questionImage: _imageFor(ref, card.questionImage),
@@ -1241,22 +1242,34 @@ class _Actions extends StatelessWidget {
               child: Text(l10n.checkAnswer),
             )
           else
+            // "¡Sé la respuesta!" in green and "No sé la respuesta" in red,
+            // like "Acerté" and "Fallé" after turning the card.
             FilledButton.icon(
               key: const Key('session.flip'),
-              style: FilledButton.styleFrom(minimumSize: tall),
+              style: FilledButton.styleFrom(
+                minimumSize: tall,
+                backgroundColor: colors.success,
+                foregroundColor: colors.onSuccess,
+              ),
               onPressed: onFlip,
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const Icon(Icons.check_rounded),
               label: Text(l10n.flipCard),
             ),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: FilledButton.icon(
                   key: const Key('session.reveal'),
-                  style: secondary,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    backgroundColor: colors.error,
+                    foregroundColor: colors.onError,
+                  ),
                   onPressed: onReveal,
-                  icon: const Icon(Icons.visibility_outlined),
+                  icon: const Icon(Icons.close_rounded),
                   label: Text(l10n.revealAnswer),
                 ),
               ),

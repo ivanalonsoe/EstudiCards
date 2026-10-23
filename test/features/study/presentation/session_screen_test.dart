@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:estudicards/app/app.dart';
 import 'package:estudicards/app/router.dart';
+import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/features/cards/data/cards_dao.dart';
@@ -155,8 +156,10 @@ Future<List<AttemptRow>> attempts(AppDatabase db) =>
 
 void main() {
   for (final (name, size) in [('mobile', mobile), ('desktop', desktop)]) {
-    testWidgets('unflipped shows "Girar", "Ver respuesta" and "Dejar para el '
-        'final"; flipped shows "Acerté" and "Fallé" ($name)', (tester) async {
+    testWidgets('unflipped shows "¡Sé la respuesta!", "No sé la respuesta" and '
+        '"Dejar para el final"; flipped shows "Acerté" and "Fallé" ($name)', (
+      tester,
+    ) async {
       await openSession(
         tester,
         size: size,
@@ -180,6 +183,52 @@ void main() {
       }
     });
   }
+
+  Color? backgroundOf(WidgetTester tester, String key) => tester
+      .widget<ButtonStyleButton>(byKey(key))
+      .style
+      ?.backgroundColor
+      ?.resolve({});
+
+  testWidgets('an unflipped simple card asks whether the user knows the '
+      'answer: "¡Sé la respuesta!" in green, "No sé la respuesta" in red', (
+    tester,
+  ) async {
+    await openSession(tester, cards: [simple('to bring', 'traer')]);
+
+    expect(
+      find.descendant(
+        of: byKey('session.flip'),
+        matching: find.text('¡Sé la respuesta!'),
+      ),
+      findsOneWidget,
+    );
+    expect(backgroundOf(tester, 'session.flip'), AppColors.light.success);
+    expect(
+      find.descendant(
+        of: byKey('session.reveal'),
+        matching: find.text('No sé la respuesta'),
+      ),
+      findsOneWidget,
+    );
+    expect(backgroundOf(tester, 'session.reveal'), AppColors.light.error);
+    expect(find.text('¡Sé la respuesta! Toca para girar'), findsOneWidget);
+  });
+
+  testWidgets('a test card also offers "No sé la respuesta" in red', (
+    tester,
+  ) async {
+    await openSession(tester, cards: [capitalQuestion]);
+
+    expect(
+      find.descendant(
+        of: byKey('session.reveal'),
+        matching: find.text('No sé la respuesta'),
+      ),
+      findsOneWidget,
+    );
+    expect(backgroundOf(tester, 'session.reveal'), AppColors.light.error);
+  });
 
   testWidgets('tapping a simple card flips it', (tester) async {
     await openSession(tester, cards: [simple('to bring', 'traer')]);
@@ -291,7 +340,7 @@ void main() {
     expect(textOf(tester, 'session.repeats'), '+1 repaso');
   });
 
-  testWidgets('"Ver respuesta" shows the solution and waits for '
+  testWidgets('"No sé la respuesta" shows the solution and waits for '
       '"Siguiente"', (tester) async {
     final session = await openSession(
       tester,
@@ -504,7 +553,7 @@ void main() {
 
     expect(scaleOf(find.text('to bring')), 1.5);
     expect(scaleOf(byKey('session.progress')), 1);
-    expect(scaleOf(find.text('Girar')), 1);
+    expect(scaleOf(find.text('¡Sé la respuesta!')), 1);
   });
 
   group('animations (brief §8)', () {
