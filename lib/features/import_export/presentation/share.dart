@@ -7,6 +7,7 @@ import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/providers.dart';
 import 'package:estudicards/core/widgets/choice_tile.dart';
+import 'package:estudicards/core/widgets/pill_selector.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
 import 'package:estudicards/features/import_export/domain/cards_csv.dart';
 import 'package:estudicards/features/import_export/domain/csv_template.dart';
@@ -118,11 +119,27 @@ Future<void> saveCsvTemplate(BuildContext context, WidgetRef ref) async {
   }
 }
 
-/// "Prompt para IA" (US-28): copies the prompt of SPEC §8.5.
-Future<void> copyAiPrompt(BuildContext context) async {
+/// "Prompt para IA" (US-28): a window to choose the prompt of SPEC §8.5
+/// for [deck] and the language it is written in; it copies the prompt.
+Future<void> showAiPromptDialog(
+  BuildContext context, {
+  required Deck deck,
+}) async {
   final message = AppLocalizations.of(context).aiPromptCopied;
   final messenger = ScaffoldMessenger.of(context);
-  await Clipboard.setData(ClipboardData(text: aiPrompt));
+  final source = deck.sourceLang;
+  final target = deck.targetLang;
+  final prompt = await showDialog<String>(
+    context: context,
+    builder: (context) => _AiPromptDialog(
+      deckName: deck.name,
+      deckLanguages: deck.isLanguage && source != null && target != null
+          ? (source: source, target: target)
+          : null,
+    ),
+  );
+  if (prompt == null) return;
+  await Clipboard.setData(ClipboardData(text: prompt));
   messenger.showSnackBar(SnackBar(content: Text(message)));
 }
 
@@ -228,6 +245,109 @@ class _ShareDialogState extends State<_ShareDialog> {
           onPressed: () => Navigator.of(context).pop(_format),
           icon: const Icon(Icons.ios_share_outlined),
           label: Text(l10n.share),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Prompt para IA": "A partir de datos" (chosen at first) or "Con nueva
+/// información", what that prompt does, and a button to copy it in Spanish
+/// or in English. It closes with the chosen prompt's text.
+class _AiPromptDialog extends StatefulWidget {
+  const new({required this.deckName, required this.deckLanguages});
+
+  final String deckName;
+  final DeckLanguages? deckLanguages;
+
+  @override
+  State<_AiPromptDialog> createState() => _AiPromptDialogState();
+}
+
+class _AiPromptDialogState extends State<_AiPromptDialog> {
+  AiPromptMode _mode = AiPromptMode.fromData;
+
+  void _copy(AiPromptLanguage language) => Navigator.of(context).pop(
+    aiPrompt(
+      mode: _mode,
+      language: language,
+      deckName: widget.deckName,
+      deckLanguages: widget.deckLanguages,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return AlertDialog(
+      key: const Key('aiPromptDialog'),
+      // Scrolls if it does not fit: a small phone or large text.
+      scrollable: true,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.primarySoft,
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Icon(
+              Icons.auto_awesome_outlined,
+              color: colors.primaryStrong,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(l10n.aiPrompt, style: text.titleMedium),
+        ],
+      ),
+      // On desktop the description would otherwise stretch the window
+      // across the screen.
+      constraints: const BoxConstraints(minWidth: 280, maxWidth: 480),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PillSelector<AiPromptMode>(
+            options: [
+              (
+                value: AiPromptMode.fromData,
+                label: l10n.aiPromptFromData,
+                key: const Key('aiPromptDialog.fromData'),
+              ),
+              (
+                value: AiPromptMode.newContent,
+                label: l10n.aiPromptNewContent,
+                key: const Key('aiPromptDialog.newContent'),
+              ),
+            ],
+            selected: _mode,
+            onChanged: (mode) => setState(() => _mode = mode),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            switch (_mode) {
+              .fromData => l10n.aiPromptFromDataHint,
+              .newContent => l10n.aiPromptNewContentHint,
+            },
+            key: Key('aiPromptDialog.${_mode.name}Hint'),
+            style: text.bodyMedium?.copyWith(color: colors.textMuted),
+          ),
+        ],
+      ),
+      actions: [
+        FilledButton(
+          key: const Key('aiPromptDialog.spanish'),
+          onPressed: () => _copy(AiPromptLanguage.spanish),
+          child: Text(l10n.aiPromptSpanish),
+        ),
+        FilledButton(
+          key: const Key('aiPromptDialog.english'),
+          onPressed: () => _copy(AiPromptLanguage.english),
+          child: Text(l10n.aiPromptEnglish),
         ),
       ],
     );

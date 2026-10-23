@@ -525,7 +525,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 **US-25 — Restore backup.** If there is data, asks "Reemplazar todo" or "Fusionar". See [8.4](#84-import-rules).
 **US-26 — Share project or deck.** Choose JSON (for the app) or CSV (for Excel/Sheets). No statistics.
 **US-27 — Import.** As a new project (dashboard), as a new deck (project) or adding to an existing deck (deck). Always with a preview.
-**US-28 — Template and AI prompt.** "Descargar plantilla" saves a sample CSV. "Copiar prompt para IA" copies the prompt in [8.5](#85-ai-prompt) to the clipboard.
+**US-28 — Template and AI prompt.** "Descargar plantilla" saves a sample CSV. "Prompt para IA" copies a prompt of [8.5](#85-ai-prompt) to the clipboard.
 
 ---
 
@@ -826,11 +826,17 @@ to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irr
 
 ### 8.5 AI prompt
 
-Text copied by the "Copiar prompt para IA" button. It is in English so that it works with any AI; the user replaces the square brackets:
+The deck's "Prompt para IA" button opens a window (since assumption 69) titled "Prompt para IA" with:
+
+- A selector of the prompt: **"A partir de datos"** (chosen when it opens): the AI makes the cards using only the data the user pastes at the end of the prompt (e.g. an English–Spanish vocabulary list to turn into a CSV), adding nothing; or **"Con nueva información"**: the AI writes new cards about a topic.
+- Under it, a sentence saying what the chosen prompt does.
+- "Exportar en castellano" and "Exportar en inglés": copy the prompt written in that language, close the window and show "Prompt copiado. Pégalo en tu IA y cambia lo que va entre corchetes.".
+
+Both prompts say whether the deck is general (leave "example" and "notes" empty) or a language deck (with its two language codes, e.g. `en-GB` and `es-ES`), and ask for a file named after the deck (`[deck name].csv`, without the characters a file name cannot have), or only the CSV if the AI cannot create files. The column names stay in English in both languages. The exact texts are in `lib/features/import_export/domain/csv_template.dart`; this is "Con nueva información" in English for a general deck called "Biología":
 
 ```text
 Generate [NUMBER] flashcards about [TOPIC] in CSV format to import into the EstudiCards app.
-Write the content of the cards in [LANGUAGE].
+This is a general deck: write the cards in [LANGUAGE] and leave "example" and "notes" empty.
 
 Format rules:
 - Separator: semicolon (;). Encoding: UTF-8.
@@ -838,13 +844,14 @@ Format rules:
   question;answer;option1;option2;option3;option4;option5;option6;correct;explanation;example;notes
 - Simple card: fill in "question" and "answer"; leave the options and "correct" empty.
 - Multiple-choice card: fill in "question", 2 to 6 options, and in "correct" the number(s) of the correct options separated by | (for example: 2 or 1|3). Leave "answer" empty. "explanation" is optional.
-- "example" and "notes" are optional (useful for language learning).
 - If a text contains a semicolon or a line break, wrap it in double quotes.
 - You may use **bold** and *italic*.
 
 I want about [PERCENTAGE]% multiple-choice cards. Level: [LEVEL].
-Return only the CSV, with no explanations and no code blocks.
+Return a file named "Biología.csv" with only the CSV. If you cannot create files, return only the CSV, with no explanations and no code blocks.
 ```
+
+"A partir de datos" starts with "Create flashcards in CSV format to import into the EstudiCards app, using only the information I give you at the end of this message." and "Do not add anything that is not in my data. Make one card for each item.", asks for simple cards unless the data has options to choose from, and ends with "My data:" and "[PASTE YOUR DATA HERE]".
 
 ---
 
@@ -1374,7 +1381,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - CSV: see §8.3 "Writing". Images do not travel in a CSV; the JSON keeps them.
 56. **Template and AI prompt (T5.6):**
     - `csvTemplate()` (`domain/csv_template.dart`) writes the three sample rows of §8.3 with the same writer as a shared deck (BOM, `;`, CRLF), so it opens well in Spanish Excel; a test imports it with no errors. The file is `estudicards_template.csv`, shared or saved like a shared deck (`FileExporter`).
-    - `aiPrompt` is the text of §8.5, line by line; a test checks that it contains the template's exact header row. "Prompt para IA" copies it to the clipboard and shows "Prompt copiado. Pégalo en tu IA y cambia lo que va entre corchetes.". It is not in the ARB file: like the column names, it is part of the file format and stays in English (§13.1, "Languages").
+    - `aiPrompt` is the text of §8.5, line by line; a test checks that it contains the template's exact header row. "Prompt para IA" copies it to the clipboard and shows "Prompt copiado. Pégalo en tu IA y cambia lo que va entre corchetes.". It is not in the ARB file: like the column names, it is part of the file format and stays in English (§13.1, "Languages"). Since assumption 69 there are two prompts, each in Spanish and in English, chosen in a window.
     - Where: on mobile, "Importar CSV", "Plantilla" and "Prompt para IA" share a row that scrolls sideways, under "Añadir tarjeta" and "Estudiar", as in the design; on desktop they are next to the deck's title with the share icon. An empty deck also offers "Descargar plantilla" (§5.3).
 57. **Export all (T5.7):**
     - `ExchangeRepository.exportBackup` writes every table (§8.2 `kind: backup`): every project, archived or in the trash, with all its decks (also those in the trash), cards with their images, options with their IDs (attempts point at them), dates and the favourite, archived and trash state, plus the sessions, the decks of each session, the attempts (`selectedOptionIds` as a list, `localDay` as stored), `card_stats` and `settings`. Rows go in the order they were inserted (`rowid`), so a restore inserts them in the same order.
@@ -1458,3 +1465,4 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The back of a simple card shows the question (or, in reverse, what was shown) at the top, centred and large in the muted text colour, with its speaker under it, and the answer under them. It uses the sizes of the front (assumption 68), one step smaller on a phone (30, 26 and 22) so the answer still fits. Above an answer of over 120 characters (shown as a paragraph) the question stays small and aligned to the left, as before.
     - Study session, before answering: the button that turns a simple card is "¡Sé la respuesta!" in green with ✓ (it was "Girar"), and "Ver respuesta" is "No sé la respuesta" in red with ✗, also on test cards; they do the same as before. The front of a simple card in a session says "¡Sé la respuesta! Toca para girar"; the editor preview keeps "Toca para girar".
     - The Settings footer says "Sin cuentas ni conexión. Los datos de tus barajas solo salen si los exportas o los compartes." (it was "… Tus datos solo salen si los exportas.").
+    - "Prompt para IA" opens a window instead of copying the prompt at once (§8.5): "A partir de datos" (new: cards only from the data the user pastes) or "Con nueva información" (the old prompt), and "Exportar en castellano" or "Exportar en inglés". Both prompts now say the deck type and its languages, and ask for a file named after the deck. There is now a Spanish prompt too, so the prompt is no longer English only; the column names still are. The window is at most 480 px wide. Every `PillSelector` label now takes as many lines as it needs (it was cut at two), so no word is lost with large text.
