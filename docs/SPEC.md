@@ -88,7 +88,8 @@ The app UI is in **Spanish**. This document quotes UI labels in Spanish, exactly
 | Girar | Flip |
 | Acerté / Fallé | Got it / Missed it |
 | Comprobar / Siguiente | Check / Next |
-| Ver respuesta | Show answer |
+| ¡Sé la respuesta! | I know the answer (turns a simple card; "Girar" until assumption 69) |
+| No sé la respuesta | I don't know the answer (shows it; "Ver respuesta" until assumption 69) |
 | Dejar para el final | Leave for later (move to the end of the queue) |
 | Solo errores | Errors only |
 | Priorizar las más falladas | Prioritise the most missed |
@@ -484,7 +485,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 - AC3. If the requested number exceeds the available cards, all of them are used and this is indicated.
 
 **US-15 — Study a simple card.**
-- AC1. The front is shown. Tapping the card or "Girar" flips it with a 3D animation.
+- AC1. The front is shown. Tapping the card or "¡Sé la respuesta!" flips it with a 3D animation.
 - AC2. On the back, "Acerté" and "Fallé" appear. On mobile the user can also swipe right (correct) or left (wrong), with haptic feedback.
 
 **US-16 — Study a test card.**
@@ -493,7 +494,7 @@ Format: **US-XX — As a user, I want… so that…**, followed by its acceptanc
 - AC3. It is correct only if the ticked set matches the correct set exactly.
 - AC4. "Siguiente" (next) button.
 
-**US-17 — "Ver respuesta" and "Dejar para el final".** See [7.3](#73-study-session).
+**US-17 — "No sé la respuesta" and "Dejar para el final".** See [7.3](#73-study-session).
 
 **US-18 — Timers.** See [7.5](#75-timers).
 
@@ -558,10 +559,10 @@ Buttons shown depending on the card state (no keyboard shortcuts in v1):
 
 | State | Simple card | Test card |
 |---|---|---|
-| Unanswered | Girar · Ver respuesta · Dejar para el final | Comprobar (enabled when something is selected) · Ver respuesta · Dejar para el final |
+| Unanswered | ¡Sé la respuesta! · No sé la respuesta · Dejar para el final | Comprobar (enabled when something is selected) · No sé la respuesta · Dejar para el final |
 | Answered / flipped | Acerté · Fallé | Siguiente |
 
-- **Ver respuesta (show answer):** flips the card (or reveals the correct options in a test) and records a **wrong** answer (`source = revealed`). Then "Siguiente".
+- **No sé la respuesta (I don't know the answer; "Ver respuesta" until assumption 69):** flips the card (or reveals the correct options in a test) and records a **wrong** answer (`source = revealed`). Then "Siguiente".
 - **Dejar para el final (leave for later):** moves the card to the end of the queue without recording anything. It can be repeated. When shown again, its per-question timer restarts from zero.
 - **Repetir falladas al final** (if on): each missed card is added again at the end of the queue until it is answered correctly. These repeats are recorded with `is_first_attempt = false` and do not count in statistics or the error list.
 - **Progress:** "n / total" counts resolved original cards. Pending repeats are shown separately ("+3 repasos").
@@ -590,7 +591,7 @@ They are **mutually exclusive**: no timer, per question or global.
 | Global | 1–120 min | The session ends (`status = time_up`). Unresolved cards are recorded as `unanswered` and appear under "No respondidas". |
 
 - The timer freezes while paused and while the app is in the background.
-- The per-question timer stops when a simple card is flipped, on "Comprobar" and on "Ver respuesta": it limits the time to think of the answer. The response time keeps counting until "Acerté" or "Fallé".
+- The per-question timer stops when a simple card is flipped, on "Comprobar" and on "No sé la respuesta": it limits the time to think of the answer. The response time keeps counting until "Acerté" or "Fallé".
 - Visual warning in the last 5 s (per question) or the last minute (global).
 
 ### 7.6 Percentages and metrics
@@ -1455,3 +1456,4 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
     - The narrowest desktop window (840 px) is checked on every main screen, since the CI Windows window is narrower than a usual desktop: the desktop project header puts its icons and "Repasar errores" (at most 180 px, on two lines if needed) in a `Wrap`; the card editor shows the preview under the form when both do not fit side by side; the global statistics use the tablet layout when the five cards do not fit in a row.
 69. **Visual adjustments after T6.6 (asked by the owner while reviewing the app):**
     - The back of a simple card shows the question (or, in reverse, what was shown) at the top, centred and large in the muted text colour, with its speaker under it, and the answer under them. It uses the sizes of the front (assumption 68), one step smaller on a phone (30, 26 and 22) so the answer still fits. Above an answer of over 120 characters (shown as a paragraph) the question stays small and aligned to the left, as before.
+    - Study session, before answering: the button that turns a simple card is "¡Sé la respuesta!" in green with ✓ (it was "Girar"), and "Ver respuesta" is "No sé la respuesta" in red with ✗, also on test cards; they do the same as before. The front of a simple card in a session says "¡Sé la respuesta! Toca para girar"; the editor preview keeps "Toca para girar".

@@ -900,6 +900,10 @@
   "@tapToFlip": {
     "description": "Hint at the bottom of the front of a card."
   },
+  "knowItTapToFlip": "¡Sé la respuesta! Toca para girar",
+  "@knowItTapToFlip": {
+    "description": "Hint at the bottom of the front of a simple card in a study session."
+  },
   "tapToFlipBack": "Toca para volver",
   "@tapToFlipBack": {
     "description": "Hint at the bottom of the back of a card."
@@ -1248,9 +1252,9 @@
     "placeholders": { "project": { "type": "String" } }
   },
 
-  "flipCard": "Girar",
+  "flipCard": "¡Sé la respuesta!",
   "@flipCard": { "description": "Study session button that turns a simple card over (P09)." },
-  "revealAnswer": "Ver respuesta",
+  "revealAnswer": "No sé la respuesta",
   "@revealAnswer": { "description": "Study session button that shows the solution and records a wrong answer (R 7.3)." },
   "leaveForLater": "Dejar para el final",
   "@leaveForLater": { "description": "Study session button that moves the card to the end of the queue (R 7.3)." },

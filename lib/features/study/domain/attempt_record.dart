@@ -25,7 +25,7 @@ enum AttemptSource {
   /// The per-question timer ran out (R 7.5).
   timeout('timeout'),
 
-  /// "Ver respuesta" (R 7.3).
+  /// "No sé la respuesta" (R 7.3).
   revealed('revealed'),
 
   /// The session ended with the card still unresolved (R 7.3).

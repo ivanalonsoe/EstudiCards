@@ -33,6 +33,7 @@ class StudyCard extends StatelessWidget {
     this.checked = false,
     this.answeredCorrectly,
     this.showFlipHint = true,
+    this.frontHint,
     this.onTap,
     this.questionImage,
     this.answerImage,
@@ -103,6 +104,10 @@ class StudyCard extends StatelessWidget {
 
   /// "Toca para girar" / "Toca para volver" at the bottom.
   final bool showFlipHint;
+
+  /// The hint on the front instead of "Toca para girar"; the study session
+  /// shows "¡Sé la respuesta! Toca para girar".
+  final String? frontHint;
   final VoidCallback? onTap;
 
   /// The speaker for [part] of the card on [face], or null when there is
@@ -199,7 +204,9 @@ class StudyCard extends StatelessWidget {
 
   String _hint(BuildContext context, CardFace face) {
     final l10n = AppLocalizations.of(context);
-    return face == CardFace.front ? l10n.tapToFlip : l10n.tapToFlipBack;
+    return face == CardFace.front
+        ? frontHint ?? l10n.tapToFlip
+        : l10n.tapToFlipBack;
   }
 
   /// A checked test card is framed in green or red (variants 4 and 5).

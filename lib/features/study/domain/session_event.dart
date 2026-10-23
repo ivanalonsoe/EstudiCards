@@ -14,7 +14,7 @@ sealed class CardEvent extends SessionEvent {
   final int turn;
 }
 
-/// "Girar" or a tap on a simple card.
+/// "¡Sé la respuesta!" or a tap on a simple card.
 final class Flip extends CardEvent {
   const new({required super.turn});
 }
@@ -38,7 +38,7 @@ final class SelfGrade extends CardEvent {
   final bool correct;
 }
 
-/// "Ver respuesta".
+/// "No sé la respuesta".
 final class RevealAnswer extends CardEvent {
   const new({required super.turn});
 }

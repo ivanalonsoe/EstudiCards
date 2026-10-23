@@ -112,8 +112,8 @@ final Finder _anyCardRow = find.byWidgetPredicate(
           .hasMatch((widget.key! as ValueKey<String>).value),
 );
 
-/// The first card of a session: "Girar" for a simple card, "Comprobar" for
-/// a test card.
+/// The first card of a session: "¡Sé la respuesta!" for a simple card,
+/// "Comprobar" for a test card.
 final Finder _sessionCard = find.byWidgetPredicate(
   (widget) =>
       widget.key == const Key('session.flip') ||

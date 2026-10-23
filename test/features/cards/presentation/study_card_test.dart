@@ -116,6 +116,24 @@ void main() {
       expect(find.text('Toca para volver'), findsOneWidget);
     });
 
+    testWidgets('the front can show another hint (the study session)', (
+      tester,
+    ) async {
+      await pumpComponent(
+        tester,
+        StudyCard(
+          card: simpleCard(),
+          label: 'Biología',
+          color: 'green',
+          face: CardFace.front,
+          frontHint: '¡Sé la respuesta! Toca para girar',
+        ),
+      );
+
+      expect(find.text('¡Sé la respuesta! Toca para girar'), findsOneWidget);
+      expect(find.text('Toca para girar'), findsNothing);
+    });
+
     testWidgets('bold text is drawn bold, without the asterisks', (
       tester,
     ) async {

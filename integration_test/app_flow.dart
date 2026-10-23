@@ -299,9 +299,9 @@ Future<void> startSession(WidgetTester tester) async {
   await waitFor(tester, find.byKey(const Key('screen.session')));
 }
 
-/// Answers the card on screen correctly: "Girar" and "Acerté" for a simple
-/// card, or ticking the option in [correctOptions] and "Comprobar" and
-/// "Siguiente" for a test card.
+/// Answers the card on screen correctly: "¡Sé la respuesta!" and "Acerté"
+/// for a simple card, or ticking the option in [correctOptions] and
+/// "Comprobar" and "Siguiente" for a test card.
 Future<void> answerCorrectly(
   WidgetTester tester, {
   Set<String> correctOptions = const {},

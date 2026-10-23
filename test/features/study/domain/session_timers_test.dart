@@ -141,7 +141,7 @@ void main() {
       });
     });
 
-    test('stops on "Comprobar" and on "Ver respuesta"', () {
+    test('stops on "Comprobar" and on "No sé la respuesta"', () {
       fakeAsync((async) {
         final run = Run(async, ['test', 'simple'], perQuestion(10));
 
