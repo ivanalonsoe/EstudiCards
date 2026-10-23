@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:estudicards/app/l10n/generated/app_localizations.dart';
+import 'package:estudicards/app/layout/breakpoints.dart';
 import 'package:estudicards/app/theme/app_colors.dart';
 import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/app/theme/motion.dart';
@@ -537,27 +538,40 @@ class _Scrolling extends StatelessWidget {
 /// line and shrinks if it does not fit the card's width (e.g. one long
 /// word); longer texts wrap.
 class _BigText extends StatelessWidget {
-  const new(this.text);
+  const new(this.text, {this.color, this.smaller = false});
 
   final String text;
+
+  /// The theme's text colour when null.
+  final Color? color;
+
+  /// One size smaller: the question above the answer on a phone, so the
+  /// answer still fits.
+  final bool smaller;
 
   /// Up to this many characters a text counts as short or medium.
   static const _short = 20;
   static const _medium = 60;
 
+  /// Sizes for short, medium and long texts, and one more for [smaller].
+  static const _sizes = [40.0, 30.0, 26.0, 22.0];
+
   @override
   Widget build(BuildContext context) {
     final length = withoutFormatMarks(text).length;
-    final size = length <= _short
-        ? 40.0
+    final step = length <= _short
+        ? 0
         : length <= _medium
-        ? 30.0
-        : 26.0;
+        ? 1
+        : 2;
     final formatted = FormattedText(
       text,
       textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.headlineSmall
-          ?.copyWith(fontSize: size, fontWeight: FontWeight.w800),
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+        fontSize: _sizes[smaller ? step + 1 : step],
+        fontWeight: FontWeight.w800,
+        color: color,
+      ),
     );
     if (length > _short) return formatted;
     // `FittedBox` lays the text out on one line and scales it down only
@@ -639,8 +653,9 @@ Widget _withSpeaker(Widget text, Widget? speaker) => speaker == null
 /// Characters from which an answer is shown as a paragraph.
 const _longAnswer = 120;
 
-/// The [solution] under a small copy of the [prompt]: the answer under the
-/// question, or the other way round in reverse. In a language project, also
+/// The [solution] under a large, muted copy of the [prompt] at the top
+/// (small above a long answer): the answer under the question, or the other
+/// way round in reverse. In a language project, also
 /// the example sentence and the notes (variants 2 and 7).
 class _SimpleBack extends StatelessWidget {
   const new({
@@ -690,18 +705,32 @@ class _SimpleBack extends StatelessWidget {
     );
 
     return _Scrolling(
+      // The large question starts at the top, with the answer under it.
+      centered: isLong,
       children: [
-        _withSpeaker(
-          FormattedText(
+        if (isLong)
+          _withSpeaker(
+            FormattedText(
+              prompt,
+              textAlign: TextAlign.start,
+              style: text.titleSmall?.copyWith(color: colors.textMuted),
+            ),
+            promptSpeaker,
+          )
+        else ...[
+          _BigText(
             prompt,
-            textAlign: isLanguage || isLong
-                ? TextAlign.start
-                : TextAlign.center,
-            style: text.titleSmall?.copyWith(color: colors.textMuted),
+            color: colors.textMuted,
+            smaller:
+                FormFactor.fromWidth(MediaQuery.sizeOf(context).width) ==
+                FormFactor.mobile,
           ),
-          promptSpeaker,
-        ),
-        const SizedBox(height: AppSpacing.lg),
+          if (promptSpeaker case final speaker?) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Center(child: speaker),
+          ],
+        ],
+        SizedBox(height: isLong ? AppSpacing.lg : AppSpacing.xl),
         if (image case final image?)
           _CardImage(image, semanticLabel: l10n.answerImageLabel),
         if (isLong)
