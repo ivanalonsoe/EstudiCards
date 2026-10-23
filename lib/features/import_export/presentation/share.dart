@@ -307,6 +307,14 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
       // On desktop the description would otherwise stretch the window
       // across the screen.
       constraints: const BoxConstraints(minWidth: 280, maxWidth: 480),
+      // On a phone, the screens' 16 px margin instead of Material's 40, so
+      // "Con nueva información" has room for its words.
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xl,
+      ),
+      // When the export buttons go one above the other.
+      actionsOverflowButtonSpacing: AppSpacing.sm,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

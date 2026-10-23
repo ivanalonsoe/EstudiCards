@@ -1,4 +1,5 @@
 import 'package:estudicards/app/router.dart';
+import 'package:estudicards/app/theme/dimensions.dart';
 import 'package:estudicards/core/clock.dart';
 import 'package:estudicards/core/db/app_database.dart';
 import 'package:estudicards/features/decks/data/decks_dao.dart';
@@ -162,6 +163,30 @@ void main() {
       final paragraph = tester.renderObject<RenderParagraph>(find.text(label));
       expect(paragraph.didExceedMaxLines, isFalse, reason: label);
     }
+  });
+
+  testWidgets('on a phone the window leaves 16 px at each side, and the '
+      'export buttons, one above the other, have space between them', (
+    tester,
+  ) async {
+    await openDeck(tester, mobile);
+    await tapVisible(tester, _key('deckScreen.aiPrompt'));
+    await tester.pumpAndSettle();
+
+    final box = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Material),
+        )
+        .first;
+    expect(tester.getSize(box).width, mobile.width - 2 * AppSpacing.lg);
+
+    final spanish = tester.getRect(_key('aiPromptDialog.spanish'));
+    final english = tester.getRect(_key('aiPromptDialog.english'));
+    final (upper, lower) = spanish.top < english.top
+        ? (spanish, english)
+        : (english, spanish);
+    expect(lower.top - upper.bottom, greaterThanOrEqualTo(AppSpacing.sm));
   });
 
   testWidgets('on desktop the window is not wider than 480 px', (tester) async {
