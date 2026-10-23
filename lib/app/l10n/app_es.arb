@@ -1547,7 +1547,7 @@
     "description": "Footer of Settings.",
     "placeholders": { "version": { "type": "String" } }
   },
-  "privacyNote": "Sin cuentas ni conexión. Tus datos solo salen si los exportas.",
+  "privacyNote": "Sin cuentas ni conexión. Los datos de tus barajas solo salen si los exportas o los compartes.",
   "@privacyNote": { "description": "Footer of Settings." },
   "restoreDialogTitle": "Ya tienes datos aquí",
   "@restoreDialogTitle": { "description": "Title of the dialog that asks how to restore a backup over existing data (US-25)." },

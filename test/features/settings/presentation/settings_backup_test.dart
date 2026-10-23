@@ -162,7 +162,8 @@ void main() {
     expect(find.text('EstudiCards 1.0.0'), findsOneWidget);
     expect(
       find.text(
-        'Sin cuentas ni conexión. Tus datos solo salen si los exportas.',
+        'Sin cuentas ni conexión. Los datos de tus barajas solo salen si '
+        'los exportas o los compartes.',
       ),
       findsOneWidget,
     );
