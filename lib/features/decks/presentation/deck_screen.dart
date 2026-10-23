@@ -1415,7 +1415,7 @@ class _ShareButton extends ConsumerWidget {
     onPressed: () => unawaited(
       shareDeck(context, ref, project: view.project, deck: view.deck),
     ),
-    icon: const Icon(Icons.ios_share_outlined),
+    icon: const Icon(Icons.share_outlined),
   );
 }
 

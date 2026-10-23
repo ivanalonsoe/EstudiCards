@@ -200,7 +200,7 @@ class _ShareDialogState extends State<_ShareDialog> {
               color: colors.primarySoft,
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
-            child: Icon(Icons.ios_share_outlined, color: colors.primaryStrong),
+            child: Icon(Icons.share_outlined, color: colors.primaryStrong),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(l10n.shareTitle(widget.title), style: text.titleMedium),
@@ -243,7 +243,7 @@ class _ShareDialogState extends State<_ShareDialog> {
         FilledButton.icon(
           key: const Key('shareDialog.confirm'),
           onPressed: () => Navigator.of(context).pop(_format),
-          icon: const Icon(Icons.ios_share_outlined),
+          icon: const Icon(Icons.share_outlined),
           label: Text(l10n.share),
         ),
       ],
