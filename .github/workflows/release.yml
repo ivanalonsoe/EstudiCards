@@ -126,10 +126,15 @@ jobs:
       # release, so publishing one is an error.
       - name: Check the APK is signed with the upload key
         run: |
+          ls "$ANDROID_HOME/build-tools"
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
-          signer="$("$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep 'Signer #1 certificate DN')"
-          echo "$signer"
-          if echo "$signer" | grep -q 'Android Debug'; then
+          echo "Using $apksigner"
+          "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee signer.txt
+          if ! grep -q 'certificate DN' signer.txt; then
+            echo "apksigner did not print the APK's certificate." >&2
+            exit 1
+          fi
+          if grep -q 'Android Debug' signer.txt; then
             echo "The APK is signed with the debug key." >&2
             exit 1
           fi
