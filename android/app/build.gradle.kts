@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ivanalonsoe.estudicards"
+    namespace = "dev.ivalon.estudicards"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,8 +15,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.ivanalonsoe.estudicards"
+        // The app's identity on Android and in Google Play: it never changes
+        // after a release (test/app/app_identifier_test.dart).
+        applicationId = "dev.ivalon.estudicards"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
