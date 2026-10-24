@@ -8,7 +8,7 @@
 PRODUCT_NAME = estudicards
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.ivanalonsoe.estudicards
+PRODUCT_BUNDLE_IDENTIFIER = dev.ivalon.estudicards
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.ivanalonsoe. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 dev.ivalon. All rights reserved.

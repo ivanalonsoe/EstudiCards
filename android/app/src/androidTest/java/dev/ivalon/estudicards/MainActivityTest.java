@@ -1,4 +1,4 @@
-package com.ivanalonsoe.estudicards;
+package dev.ivalon.estudicards;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;

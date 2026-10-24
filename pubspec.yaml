@@ -138,4 +138,4 @@ flutter:
 patrol:
   app_name: EstudiCards
   android:
-    package_name: com.ivanalonsoe.estudicards
+    package_name: dev.ivalon.estudicards
