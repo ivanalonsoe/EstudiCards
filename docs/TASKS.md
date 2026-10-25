@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.8 | ⏳ 6 / 8 |
+| 6. Polish and release | T6.1 – T6.8 | ⏳ 7 / 8 |
 
 ---
 
@@ -507,9 +507,10 @@ Goal: a project that starts, with automated quality from day one.
   - Compare each screen with `docs/design/` on mobile and desktop, light and dark. Note and fix differences.
   - Turn the daily goal on by default (asked by the owner after T6.2): a new install starts with "Objetivo diario" on, at 20 cards. Decided with the owner: it also applies to anyone who never touched the setting (nobody has installed the app yet); someone who turned it off keeps it off. Update SPEC §4.2 (`daily_goal` default) and the decision log.
 
-- [ ] **T6.7 CD: `release.yml`**
+- [x] **T6.7 CD: `release.yml`**
   - Android signing with repository secrets; Android, Windows and macOS builds when a `v*` tag is created; attach them to a *Release*.
   - **Done when:** the `v1.0.0-rc.1` tag produces the three installers and they install.
+  - > **Note:** decided with the owner: one universal APK, an Inno Setup installer and a portable ZIP for Windows, and a DMG for macOS; the upload key's secrets live in the `release` environment, limited to `v*` tags. The app identifier became `dev.ivalon.estudicards` first (assumption 70). The `v1.0.0-rc.1` pre-release installed on Android, Windows (installer and ZIP) and macOS (tested by a friend of the owner, CSV import included). See SPEC §10.5 and assumption 71.
 
 - [ ] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.
