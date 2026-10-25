@@ -1,4 +1,4 @@
-package com.ivanalonsoe.estudicards
+package dev.ivalon.estudicards
 
 import io.flutter.embedding.android.FlutterActivity
 
