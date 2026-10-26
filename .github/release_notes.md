@@ -22,3 +22,10 @@ Descarga el fichero de tu sistema en **Assets**, al final de esta página. La ap
 3. Ve a Ajustes del Sistema → Privacidad y seguridad y pulsa «Abrir igualmente».
 
 Tus datos no se borran al actualizar ni al desinstalar en Windows (están en la carpeta que elegiste). Haz una copia de seguridad desde Ajustes antes de cambiar de dispositivo.
+
+## Comprobar que la descarga es la original
+
+Descárgala siempre desde esta página. Si la consigues en otro sitio, puedes comprobar que es idéntica a la publicada aquí:
+
+- **Checksum.** Descarga también `SHA256SUMS.txt` en la misma carpeta y ejecuta `sha256sum -c SHA256SUMS.txt --ignore-missing` (Linux, macOS o Git Bash). Debe decir `OK` junto al fichero. En PowerShell, `Get-FileHash <fichero>` debe dar el mismo valor que su línea en `SHA256SUMS.txt`.
+- **Procedencia.** Con la [CLI de GitHub](https://cli.github.com/), `gh attestation verify <fichero> --repo ivanalonsoe/EstudiCards` confirma que lo construyó el workflow de este repositorio a partir de esta versión.

@@ -23,6 +23,10 @@
 # comment. A tag like "@v2" can be moved by whoever controls the action, so
 # a hijacked action would run here on the next push; a commit cannot change.
 # Dependabot proposes new versions (.github/dependabot.yml).
+#
+# Every checkout sets `persist-credentials: false`. By default
+# actions/checkout saves the job's token in .git/config, where any later
+# step could read it; no step here needs git to log in to GitHub.
 name: CI
 
 on:
@@ -56,6 +60,7 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Decide which jobs this change needs
@@ -76,6 +81,8 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
@@ -127,6 +134,8 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
@@ -153,6 +162,8 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # The Android build uses Java 17 (android/app/build.gradle.kts).
       - name: Install Java

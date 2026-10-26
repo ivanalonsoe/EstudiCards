@@ -967,7 +967,9 @@ Both workflows pin every action to a full commit SHA, with its version as a comm
 | Windows | Windows | An installer made with Inno Setup (`windows/installer/estudicards.iss`, per user, no administrator rights) and a portable `.zip`, both with the Visual C++ libraries next to the app. |
 | macOS | macOS | A `.dmg` (made with `hdiutil`) with the app and a shortcut to Applications. |
 
-The files (`EstudiCards-<version>-android.apk`, `-windows-setup.exe`, `-windows.zip`, `-macos.dmg`) are attached to a GitHub *Release*, with install notes (`.github/release_notes.md`) and the list of merged PRs. The Windows and macOS files are not signed (see assumption 71). Publishing to the App Store and Google Play is part of the [future goals](#12-future-goals-outside-v1): it requires developer accounts and iOS signing.
+The files (`EstudiCards-<version>-android.apk`, `-windows-setup.exe`, `-windows.zip`, `-macos.dmg`) are attached to a GitHub *Release*, with install notes (`.github/release_notes.md`) and the list of merged PRs. The Release also carries `SHA256SUMS.txt`, and each file gets a build provenance attestation (`actions/attest-build-provenance`); the notes explain how to check a download with `sha256sum -c` and `gh attestation verify`. Only the `release` job can write to the repository, get an OIDC token and store attestations; the others stay `contents: read`.
+
+So that a signed installer only contains reviewed code, `release.yml` uses no caches from earlier runs, runs `pub get --enforce-lockfile`, installs a fixed Inno Setup version when the runner lacks it, and, like `ci.yml`, checks out with `persist-credentials: false` (the job's token is not left in `.git/config`). `test/ci/release_workflow_test.dart` checks all of this. The Windows and macOS files are not signed (see assumption 71). Publishing to the App Store and Google Play is part of the [future goals](#12-future-goals-outside-v1): it requires developer accounts and iOS signing.
 
 > If the repository is private, macOS minutes consume 10 times more of the free quota than Linux minutes; that is why macOS is only used for releases.
 
