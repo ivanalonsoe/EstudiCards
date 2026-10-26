@@ -102,6 +102,34 @@ void main() {
       expect(stored(path!).readAsBytesSync(), jpeg);
     });
 
+    test(
+      'removes the EXIF data of a JPEG of up to 1600 px and keeps its pixels',
+      () async {
+        final photo = phonePhotoBytes(1200, 900);
+        expect(jpegHeaderMarkers(photo), contains(exifMarker));
+
+        final path = await images.saveImported(photo);
+
+        final bytes = stored(path!).readAsBytesSync();
+        expect(jpegHeaderMarkers(bytes), isNot(contains(exifMarker)));
+        expect(
+          img.decodeJpg(bytes)!.getBytes(),
+          img.decodeJpg(photo)!.getBytes(),
+        );
+      },
+    );
+
+    test('rotates a turned JPEG of up to 1600 px to keep it upright', () async {
+      final path = await images.saveImported(
+        phonePhotoBytes(40, 20, orientation: 6),
+      );
+
+      final bytes = stored(path!).readAsBytesSync();
+      expect(jpegHeaderMarkers(bytes), isNot(contains(exifMarker)));
+      final image = img.JpegDecoder().decode(bytes)!;
+      expect((image.width, image.height), (20, 40));
+    });
+
     test('shrinks a bigger JPEG to 1600 px, as the app stores', () async {
       final path = await images.saveImported(jpegBytes(3200, 1000));
 

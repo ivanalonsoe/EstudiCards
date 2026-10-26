@@ -183,6 +183,32 @@ void main() {
     expect(card.answerImage!.bytes, stored(answerImage!).readAsBytesSync());
   });
 
+  test('a shared deck carries no EXIF data in its images', () async {
+    final picked = await images.save(phonePhotoBytes(40, 30));
+    final imported = await images.saveImported(phonePhotoBytes(1200, 900));
+    await cards.create(
+      deck.id,
+      CardInput(
+        type: CardType.simple,
+        question: 'to bring',
+        answer: 'traer',
+        questionImage: picked,
+        answerImage: imported,
+      ),
+    );
+
+    final card = (await exportAndRead()).cards.single;
+
+    expect(
+      jpegHeaderMarkers(card.questionImage!.bytes),
+      isNot(contains(exifMarker)),
+    );
+    expect(
+      jpegHeaderMarkers(card.answerImage!.bytes),
+      isNot(contains(exifMarker)),
+    );
+  });
+
   test(
     'an image file missing from the folder is exported as no image',
     () async {

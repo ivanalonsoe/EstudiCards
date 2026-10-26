@@ -116,16 +116,20 @@ class DiskImageFiles implements ImageFiles {
   /// anything, and the name is always a new one in the images folder.
   ///
   /// A JPEG of up to 1600 px is what the app itself stores (every exported
-  /// image is one), so it is kept byte for byte: decoding and encoding it
-  /// again would take time and lose quality. A bigger one is prepared like
-  /// a picked image.
+  /// image is one), so its image data is kept as it is: decoding and
+  /// encoding it again would take time and lose quality. Only its metadata
+  /// (GPS, camera, date…) is removed. A bigger one, a rotated one or one
+  /// whose header cannot be walked is prepared like a picked image.
   @override
   Future<String?> saveImported(Uint8List jpeg) async {
     final size = jpegSize(jpeg);
     if (size == null) return null;
     final longSide = math.max(size.width, size.height);
     if (longSide > importedImageMaxSide) return null;
-    final bytes = longSide <= cardImageMaxSide ? jpeg : await _prepare(jpeg);
+    final kept = longSide <= cardImageMaxSide && !jpegIsRotated(jpeg)
+        ? removeJpegMetadata(jpeg)
+        : null;
+    final bytes = kept ?? await _prepare(jpeg);
     return bytes == null ? null : await _write(bytes);
   }
 

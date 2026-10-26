@@ -32,8 +32,8 @@ Uint8List? prepareCardImage(Uint8List bytes) {
   }
   if (decoded == null) return null;
 
-  // Phone photos often keep their rotation in the EXIF data, which JPEG
-  // re-encoding drops; applying it first keeps the photo upright.
+  // Phone photos often keep their rotation in the EXIF data; applying it
+  // first keeps the photo upright once the EXIF data is gone.
   final upright = img.bakeOrientation(decoded);
   final longSide = math.max(upright.width, upright.height);
   final resized = longSide <= cardImageMaxSide
@@ -41,8 +41,63 @@ Uint8List? prepareCardImage(Uint8List bytes) {
       : upright.width >= upright.height
       ? img.copyResize(upright, width: cardImageMaxSide)
       : img.copyResize(upright, height: cardImageMaxSide);
-  return img.encodeJpg(resized, quality: cardImageQuality);
+  // The EXIF data can say where the photo was taken (GPS), with which phone
+  // and when, and it would travel with every shared deck: it is dropped.
+  return img.encodeJpg(
+    resized..exif = img.ExifData(),
+    quality: cardImageQuality,
+  );
 }
+
+/// Whether the JPEG in [bytes] must be rotated to be shown upright, as its
+/// EXIF data says.
+bool jpegIsRotated(Uint8List bytes) {
+  try {
+    final orientation = img.decodeJpgExif(bytes)?.imageIfd.orientation;
+    return orientation != null && orientation != 1;
+  } on Object {
+    // Damaged EXIF data can make the decoder throw instead of returning null.
+    return false;
+  }
+}
+
+/// The JPEG in [jpeg] without its metadata segments, and the image data
+/// untouched (it is not re-encoded). Null if its header cannot be read.
+///
+/// A JPEG is a list of segments, each starting with a marker; the image
+/// data comes after the "start of scan" one. Metadata lives in APPn
+/// segments (EXIF and XMP in APP1, Photoshop's IPTC in APP13…) and in
+/// comments. Three APPn segments say how to show the colours, so they are
+/// kept: APP0 (JFIF), APP2 (colour profile) and APP14 (Adobe).
+Uint8List? removeJpegMetadata(Uint8List jpeg) {
+  if (jpeg.length < 4 || jpeg[0] != 0xFF || jpeg[1] != 0xD8) return null;
+  final result = BytesBuilder(copy: false)
+    ..add(Uint8List.sublistView(jpeg, 0, 2));
+  var i = 2;
+  while (i + 4 <= jpeg.length) {
+    if (jpeg[i] != 0xFF) return null;
+    final marker = jpeg[i + 1];
+    // 0xFF bytes may pad the space between segments.
+    if (marker == 0xFF) {
+      i++;
+      continue;
+    }
+    // Start of scan: the rest is the image data, copied as it is.
+    if (marker == 0xDA) {
+      result.add(Uint8List.sublistView(jpeg, i));
+      return result.takeBytes();
+    }
+    final end = i + 2 + (jpeg[i + 2] << 8 | jpeg[i + 3]);
+    if (end > jpeg.length) return null;
+    if (!_isMetadata(marker)) result.add(Uint8List.sublistView(jpeg, i, end));
+    i = end;
+  }
+  return null;
+}
+
+bool _isMetadata(int marker) =>
+    marker == 0xFE || // comment
+    (marker >= 0xE1 && marker <= 0xEF && marker != 0xE2 && marker != 0xEE);
 
 /// The size of a JPEG, read from its header without decoding the image.
 /// Null if [bytes] are not a JPEG.
