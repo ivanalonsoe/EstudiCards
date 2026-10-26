@@ -1,0 +1,21 @@
+# Dependabot is a GitHub bot that opens pull requests to update
+# dependencies.
+#
+# The workflows pin every action to a commit SHA (see ci.yml), so a new
+# version of an action is never used by surprise: Dependabot proposes it
+# here, with the new SHA and version comment, and it goes through CI and
+# review like any other change.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # A version must be a week old before it is proposed: a hijacked release
+    # is usually found and removed within days.
+    cooldown:
+      default-days: 7
+    # One pull request with every update, to spend fewer CI minutes.
+    groups:
+      actions:
+        patterns: ['*']

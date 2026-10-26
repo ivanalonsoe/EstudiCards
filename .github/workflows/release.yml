@@ -13,11 +13,21 @@
 #   - windows: an installer made with Inno Setup and a portable ZIP.
 #   - macos: a DMG. Not signed by Apple: the Release notes explain how to
 #     open it.
-#   - release: creates the GitHub Release with the four files.
+#   - release: creates the GitHub Release with the four files, their
+#     checksums (SHA256SUMS.txt) and a build provenance attestation for each.
 #
 # The upload key and its password are secrets of the `release` environment,
 # which only workflows started by a "v*" tag can read (Settings →
 # Environments): a pull request cannot get them.
+#
+# What goes into a signed installer only comes from reviewed sources:
+#   - Every action is pinned to a full commit SHA, like in ci.yml.
+#   - No caches (Flutter, Gradle) from earlier runs: everything is
+#     downloaded fresh, so a tampered cache can never end up in a release.
+#   - `pub get --enforce-lockfile` uses exactly the versions in pubspec.lock
+#     and fails if a package's content does not match its hash there.
+#   - Checkouts do not keep the job's token (`persist-credentials: false`,
+#     see ci.yml).
 name: Release
 
 on:
@@ -44,17 +54,18 @@ jobs:
       prerelease: ${{ steps.check.outputs.prerelease }}
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
-          cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Check the tag matches the app version
         id: check
@@ -71,25 +82,25 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # The Android build uses Java 17 (android/app/build.gradle.kts).
       - name: Install Java
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
-          cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       # Generated files (*.g.dart) are not committed, so build them first.
       - name: Generate code
@@ -149,7 +160,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "dist/EstudiCards-$VERSION-android.apk"
 
       - name: Keep the APK for the release job
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android
           path: dist/
@@ -167,17 +178,18 @@ jobs:
         shell: pwsh
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
-          cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
@@ -200,11 +212,13 @@ jobs:
           Compress-Archive -Path build\windows\x64\runner\Release\* `
             -DestinationPath "dist\EstudiCards-$env:VERSION-windows.zip"
 
-      # Inno Setup turns the app folder into one installer (.exe).
+      # Inno Setup turns the app folder into one installer (.exe). The runner
+      # usually has it (6.7.1 for v1.0.0-rc.1); if not, the same version is
+      # installed, never whatever Chocolatey serves that day.
       - name: Install Inno Setup
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup --yes --no-progress
+            choco install innosetup --version 6.7.1 --yes --no-progress
           }
 
       - name: Make the installer
@@ -218,7 +232,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Keep the Windows files for the release job
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows
           path: dist/
@@ -233,17 +247,18 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
-          cache: true
 
       - name: Get dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
@@ -264,7 +279,7 @@ jobs:
             "dist/EstudiCards-$VERSION-macos.dmg"
 
       - name: Keep the DMG for the release job
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: macos
           path: dist/
@@ -276,21 +291,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Only this job can write to the repository: it creates the Release.
+    # It is also the only one that attests the installers, which needs an
+    # OIDC token (a short-lived identity of this workflow run) and the right
+    # to store attestations.
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     env:
       VERSION: ${{ needs.version.outputs.version }}
       PRERELEASE: ${{ needs.version.outputs.prerelease }}
     steps:
       # For the Release notes (.github/release_notes.md).
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Get the installers
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: dist
           merge-multiple: true
+
+      # Lets anyone check a downloaded file is the published one
+      # (`sha256sum -c`, see the Release notes).
+      - name: Write the checksums
+        working-directory: dist
+        run: |
+          sha256sum EstudiCards-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # A signed statement, stored by GitHub, that each installer was built
+      # by this workflow from this tag (`gh attestation verify`). The
+      # installers are not signed by Microsoft or Apple, so this is how a
+      # copy found elsewhere can be checked.
+      - name: Attest the installers
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/EstudiCards-*
 
       # The notes say how to install; GitHub adds the list of merged PRs.
       - name: Create the GitHub Release
@@ -300,7 +339,7 @@ jobs:
           ls -l dist
           flags=()
           if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" dist/* \
+          gh release create "$GITHUB_REF_NAME" dist/EstudiCards-* dist/SHA256SUMS.txt \
             --verify-tag \
             --title "EstudiCards $VERSION" \
             --notes-file .github/release_notes.md \

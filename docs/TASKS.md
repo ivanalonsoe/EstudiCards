@@ -519,5 +519,33 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 `saveImported` of a 1200 px JPEG with GPS EXIF stores a JPEG with no EXIF and the same pixels.
     - 🧪 a shared deck with such an image exports a JSON whose image has no EXIF.
 
+- [x] **T6.10 Pin GitHub Actions** · SPEC §10.5 · Depends on: T6.7 · **Before 1.0**
+  - Every `uses:` in `ci.yml` and `release.yml` is pinned to a full commit SHA, with its version as a comment. `.github/dependabot.yml` proposes updates for the `github-actions` ecosystem every week. Optional: turn on "Require actions to be pinned to a full-length commit SHA" in the repository settings.
+  - **Tests first:**
+    - 🧪 a test that reads every workflow file fails if a `uses:` is not followed by 40 hexadecimal characters.
+    - 🧪 `.github/dependabot.yml` exists and covers `github-actions`.
+
+- [ ] **T6.11 Harden the release workflow** · SPEC §10.5 · Depends on: T6.10 · **Before 1.0**
+  - In `release.yml`:
+    - no caches;
+    - `flutter pub get --enforce-lockfile`;
+    - a pinned Inno Setup version;
+    - a `SHA256SUMS.txt` attached to the Release;
+    - a build provenance attestation (`actions/attest-build-provenance`, pinned by SHA like the other actions) for each installer. Only the jobs that attest get `id-token: write` and `attestations: write`; the rest stay `contents: read`.
+  - In both workflows: `persist-credentials: false` on every checkout.
+  - Add to the Release notes how to check a download (`sha256sum -c` and `gh attestation verify`).
+  - **Tests first:**
+    - 🧪 `release.yml` has no `cache:` key, and every `pub get` has `--enforce-lockfile`.
+    - 🧪 every `actions/checkout` step in both workflows sets `persist-credentials: false`.
+    - 🧪 `choco install innosetup` has `--version`.
+    - 🧪 the release step attaches `SHA256SUMS.txt`.
+    - 🧪 every installer the release attaches has an `attest-build-provenance` step, and `id-token: write` / `attestations: write` appear only in the jobs that have one.
+  - **Done when:** a `v1.0.0-rc.2` tag publishes the installers, the checksums match them, and `gh attestation verify` accepts each one.
+  - > **Note:** the workflow changes and their tests are merged; the box is ticked once the `v1.0.0-rc.2` tag meets "Done when" (T6.8).
+
+- [x] **T6.12 Ignore every signing key file** · Depends on: — · **Before 1.0**
+  - `.gitignore` ignores `*.keystore`, `*.p12` and `key.properties` anywhere in the repository, not only under `android/`.
+  - **Tests first:** 🧪 `git check-ignore` matches `upload.keystore`, `upload.p12`, `key.properties` and `android/app/upload.jks`.
+
 - [ ] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.

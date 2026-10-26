@@ -957,6 +957,8 @@ Workflow: each task, or group of related tasks, on its own branch (`feature/T2.3
 
 A first `changes` job (`tool/ci_changes.sh`) decides which jobs a change needs, to save CI minutes. Documentation only (`docs/`, `*.md`): nothing runs. Pull requests: `quality` always; `integration-windows` and `e2e-android` only when something that can change how the app runs changed (`lib/`, `integration_test/`, `assets/`, `pubspec`, code generation and l10n settings, the workflow; plus `windows/` for the first and `android/` and `patrol_test/` for the second). Push to `main`: `quality` only, since the merged PR already ran the rest. The "Run workflow" button (`workflow_dispatch`) runs every job. A skipped job counts as passed for a required check. The workflow's token can only read the repository (`permissions: contents: read`).
 
+Both workflows pin every action to a full commit SHA, with its version as a comment (`uses: actions/checkout@<sha> # v7.0.1`): a tag can be moved to other code, a commit cannot. Dependabot (`.github/dependabot.yml`) proposes new versions of the actions once a week, in one PR, once they are a week old. A test (`test/ci/pinned_actions_test.dart`) fails if a `uses:` is not pinned.
+
 **`release.yml`** — when a `v*` tag is created (e.g. `v1.0.0`). A first job checks the tag is "v" + the version in `pubspec.yaml` (`tool/check_release_tag.dart`); a tag with a suffix (`v1.0.0-rc.1`) is published as a pre-release.
 
 | Job | Runner | Output |
@@ -965,7 +967,9 @@ A first `changes` job (`tool/ci_changes.sh`) decides which jobs a change needs, 
 | Windows | Windows | An installer made with Inno Setup (`windows/installer/estudicards.iss`, per user, no administrator rights) and a portable `.zip`, both with the Visual C++ libraries next to the app. |
 | macOS | macOS | A `.dmg` (made with `hdiutil`) with the app and a shortcut to Applications. |
 
-The files (`EstudiCards-<version>-android.apk`, `-windows-setup.exe`, `-windows.zip`, `-macos.dmg`) are attached to a GitHub *Release*, with install notes (`.github/release_notes.md`) and the list of merged PRs. The Windows and macOS files are not signed (see assumption 71). Publishing to the App Store and Google Play is part of the [future goals](#12-future-goals-outside-v1): it requires developer accounts and iOS signing.
+The files (`EstudiCards-<version>-android.apk`, `-windows-setup.exe`, `-windows.zip`, `-macos.dmg`) are attached to a GitHub *Release*, with install notes (`.github/release_notes.md`) and the list of merged PRs. The Release also carries `SHA256SUMS.txt`, and each file gets a build provenance attestation (`actions/attest-build-provenance`); the notes explain how to check a download with `sha256sum -c` and `gh attestation verify`. Only the `release` job can write to the repository, get an OIDC token and store attestations; the others stay `contents: read`.
+
+So that a signed installer only contains reviewed code, `release.yml` uses no caches from earlier runs, runs `pub get --enforce-lockfile`, installs a fixed Inno Setup version when the runner lacks it, and, like `ci.yml`, checks out with `persist-credentials: false` (the job's token is not left in `.git/config`). `test/ci/release_workflow_test.dart` checks all of this. The Windows and macOS files are not signed (see assumption 71). Publishing to the App Store and Google Play is part of the [future goals](#12-future-goals-outside-v1): it requires developer accounts and iOS signing.
 
 > If the repository is private, macOS minutes consume 10 times more of the free quota than Linux minutes; that is why macOS is only used for releases.
 

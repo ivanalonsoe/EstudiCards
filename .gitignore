@@ -54,8 +54,12 @@ unlinked_spec.ds
 **/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
-**/android/key.properties
+# Signing keys and their passwords, wherever they are saved by mistake (not
+# only under android/). The release key lives in GitHub secrets (SPEC §10.5).
+key.properties
 *.jks
+*.keystore
+*.p12
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
