@@ -24,8 +24,8 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.14 | ⏳ 11 / 14 |
-| After 1.0 | T6.15 | ⏳ 0 / 1 |
+| 6. Polish and release | T6.1 – T6.14 (except T6.13) | ✅ 13 / 13 |
+| After 1.0 | T6.13, T6.15 | ⏳ 0 / 2 |
 
 ---
 
@@ -558,11 +558,16 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 sharing a deck and making a backup with a card whose image is missing works, and the card is exported without that image.
   - > **Note:** decided with the owner: the icon alone did not count as "looking fine", so a missing image shows the icon and "Imagen no disponible" in the study card and in the editor's thumbnail. The rules only include the database files; anything not included is left out, so they need no `<exclude>`. Export already left a missing image out; the new tests keep it that way. See SPEC assumption 72.
 
-- [ ] **T6.8 Version 1.0.0**
+- [x] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.
   - The README says that on Windows, if Documents is synced with OneDrive, the data folder (`Documents\EstudiCards` by default) is uploaded to the cloud too, and how to choose another folder (decided with the owner after the security audit).
   - Tick T6.11 (its "Done when" was met by `v1.0.0-rc.2`: checksums and attestations verified) and T6.13 once a Mac saves files with the rc.2.
+  - `pubspec.yaml` is `1.0.0+1`, which Settings shows as "EstudiCards 1.0.0" (`appVersion`, checked against `pubspec.yaml` by `test/core/app_version_test.dart`).
+  - The 1.0.0 database is kept in `drift_schemas/estudicards_1.0.0.sqlite`, with rows in every table. From now on released migrations are frozen (`AGENTS.md`).
+  - README: roadmap (every phase done), "Install" for users (Android, Windows, macOS), checking a download (checksums and attestation) and "After 1.0". Release notes for users in `.github/release_notes.md`.
+  - **Tests first:** 🧪 the 1.0.0 database has the schema of `drift_schema_v4.json`, opens with every row on the current version, and its `card_stats` match its attempts.
   - > **Note:** the manifest check of the `v1.0.0-rc.2` APK asked for by the security audit is done: no `INTERNET` permission, no `debuggable`, and backup rules that include only the database files (`docs/security/AUDIT-2026-10.md`).
+  - > **Note:** nobody tried the rc.2 on a Mac before 1.0, so T6.13 moved to "After 1.0", pending that check (decided with the owner). The 1.0.0 release notes say that the macOS version has not been tried on a real Mac. The `v1.0.0` tag is created by the owner after this PR is merged.
 
 ---
 
