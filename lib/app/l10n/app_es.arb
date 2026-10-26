@@ -968,6 +968,10 @@
   "@removeImage": {
     "description": "Card editor: removes the image of a field."
   },
+  "imageUnavailable": "Imagen no disponible",
+  "@imageUnavailable": {
+    "description": "Study card and card editor: shown where a card image should be when its file is missing (e.g. after Android restores its copy, which leaves the images out)."
+  },
   "imageNotOpened": "No se ha podido abrir la imagen",
   "@imageNotOpened": {
     "description": "Snackbar when the picked file is not an image the app can read."

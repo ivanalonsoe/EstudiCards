@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What Android 12 and later copy to the user's Google account
+     (cloud-backup) and to a new phone (device-transfer). Once a rule
+     includes something, everything else is left out: only the database
+     travels, with the settings inside it. The images, the automatic
+     backups and the cache stay behind, so the copy stays under Android's
+     25 MB limit. "root" is the app's private data folder, and
+     `app_flutter/` is where Flutter's documents folder lives. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="root" path="app_flutter/estudicards.sqlite" />
+        <include domain="root" path="app_flutter/estudicards.sqlite-wal" />
+        <include domain="root" path="app_flutter/estudicards.sqlite-journal" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="root" path="app_flutter/estudicards.sqlite" />
+        <include domain="root" path="app_flutter/estudicards.sqlite-wal" />
+        <include domain="root" path="app_flutter/estudicards.sqlite-journal" />
+    </device-transfer>
+</data-extraction-rules>

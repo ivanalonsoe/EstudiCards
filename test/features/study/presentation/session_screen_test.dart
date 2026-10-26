@@ -29,6 +29,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../helpers/fake_image_files.dart';
+import '../../../helpers/load_images.dart';
 import '../../../helpers/motion.dart';
 import '../../../helpers/test_app.dart';
 
@@ -754,6 +755,37 @@ void main() {
       expect(fade.opacity, lessThan(1));
       await tester.pumpAndSettle();
     });
+  });
+
+  testWidgets('a card whose image files are missing shows its question and '
+      'answer, with "Imagen no disponible" where the images were', (
+    tester,
+  ) async {
+    // As after Android restores its copy of the app, which leaves the
+    // images out: the card still names files that are not in the folder.
+    await openSession(
+      tester,
+      cards: [
+        const CardInput(
+          type: CardType.simple,
+          question: 'to bring',
+          answer: 'traer',
+          questionImage: 'lost-question.jpg',
+          answerImage: 'lost-answer.jpg',
+        ),
+      ],
+    );
+    await loadImages(tester);
+
+    expect(find.text('to bring'), findsOneWidget);
+    expect(find.text('Imagen no disponible'), findsOneWidget);
+
+    await tapKey(tester, 'session.flip');
+    await loadImages(tester);
+
+    expect(find.text('traer'), findsOneWidget);
+    expect(find.text('Imagen no disponible'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a session that is not in memory any more says so', (
