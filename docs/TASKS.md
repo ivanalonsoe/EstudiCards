@@ -25,6 +25,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
 | 6. Polish and release | T6.1 – T6.14 | ⏳ 11 / 14 |
+| After 1.0 | T6.15 | ⏳ 0 / 1 |
 
 ---
 
@@ -565,3 +566,19 @@ Goal: a project that starts, with automated quality from day one.
 
 - [ ] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.
+  - The README says that on Windows, if Documents is synced with OneDrive, the data folder (`Documents\EstudiCards` by default) is uploaded to the cloud too, and how to choose another folder (decided with the owner after the security audit).
+  - Tick T6.11 (its "Done when" was met by `v1.0.0-rc.2`: checksums and attestations verified) and T6.13 once a Mac saves files with the rc.2.
+  - > **Note:** the manifest check of the `v1.0.0-rc.2` APK asked for by the security audit is done: no `INTERNET` permission, no `debuggable`, and backup rules that include only the database files (`docs/security/AUDIT-2026-10.md`).
+
+---
+
+## After 1.0
+
+Tasks left for after the `v1.0.0` release (decided with the owner).
+
+- [ ] **T6.15 Memory when restoring a large backup** · US-25 · Depends on: T5.10
+  - Restoring reads the whole backup (up to 500 MB) into memory, copies it to a background isolate and decodes it, which may need several GB at its peak and close the app on a phone. Nothing is lost (it fails before writing), but the restore cannot finish.
+  - Measure the peak memory when restoring backups of 100, 250 and 500 MB on a mid-range Android device. If it does not fit, decode the file in parts, or lower the backup limit on mobile and update SPEC §8.4.
+  - **Tests first:**
+    - 🔗 on the Android emulator, restoring a 250 MB backup finishes without the app being closed.
+    - 🧪 `decodeExchange` keeps no second full copy of the file in memory (`ProcessInfo.maxRss` below a set margin).
