@@ -527,7 +527,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 `.github/dependabot.yml` exists and covers `github-actions`.
   - > **Note:** the optional setting was turned on and off again after the merge: `subosito/flutter-action` (v2.23.0) is a composite action that uses `actions/cache@v5` by tag, so every job that installs Flutter failed at "Set up job". Turning it on again needs our own Flutter install step instead of that action (decided with the owner: not for now).
 
-- [ ] **T6.11 Harden the release workflow** · SPEC §10.5 · Depends on: T6.10 · **Before 1.0**
+- [x] **T6.11 Harden the release workflow** · SPEC §10.5 · Depends on: T6.10 · **Before 1.0**
   - In `release.yml`:
     - no caches;
     - `flutter pub get --enforce-lockfile`;
@@ -543,17 +543,11 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the release step attaches `SHA256SUMS.txt`.
     - 🧪 every installer the release attaches has an `attest-build-provenance` step, and `id-token: write` / `attestations: write` appear only in the jobs that have one.
   - **Done when:** a `v1.0.0-rc.2` tag publishes the installers, the checksums match them, and `gh attestation verify` accepts each one.
-  - > **Note:** the workflow changes and their tests are merged; the box is ticked once the `v1.0.0-rc.2` tag meets "Done when" (T6.8).
+  - > **Note:** the workflow changes and their tests were merged in PR #47. The `v1.0.0-rc.2` tag met "Done when": the four files matched `SHA256SUMS.txt` and `gh attestation verify` accepted each one. Ticked in T6.8.
 
 - [x] **T6.12 Ignore every signing key file** · Depends on: — · **Before 1.0**
   - `.gitignore` ignores `*.keystore`, `*.p12` and `key.properties` anywhere in the repository, not only under `android/`.
   - **Tests first:** 🧪 `git check-ignore` matches `upload.keystore`, `upload.p12`, `key.properties` and `android/app/upload.jks`.
-
-- [ ] **T6.13 macOS: write permission for "Guardar como"** · SPEC §3.5 · Depends on: T6.7 · **Before 1.0**
-  - `file_picker` needs `com.apple.security.files.user-selected.read-write` for `saveFile` on macOS (export, "Exportar todo"); the app only has `read-only`. Change it in both entitlements files: it is still the smallest permission that works. Update SPEC §13.2 assumption 28.
-  - **Tests first:** 🧪 both entitlements files have `com.apple.security.files.user-selected.read-write`, no `read-only`, and no `network.client`.
-  - **Done when:** in the rc.2 (T6.8), "Exportar todo" and sharing a deck save the file on a Mac.
-  - > **Note:** the entitlements change and its test are merged; the box is ticked once a Mac saves the files with the rc.2 (T6.8).
 
 - [x] **T6.14 Android backup rules** · SPEC §3.4 · Depends on: — · **Before 1.0**
   - Android's copy (cloud backup and device-to-device transfer) includes only the database `app_flutter/estudicards.sqlite` and its auxiliary files (`-wal`, `-journal`), which hold the settings too (`settings` table). It excludes `images/`, `backups/` and the cache. Declared with `android:dataExtractionRules` (Android 12+) and `android:fullBackupContent` (older versions). Record the decision in SPEC (§3.4 and the decision log).
@@ -575,6 +569,12 @@ Goal: a project that starts, with automated quality from day one.
 ## After 1.0
 
 Tasks left for after the `v1.0.0` release (decided with the owner).
+
+- [ ] **T6.13 macOS: write permission for "Guardar como"** · SPEC §3.5 · Depends on: T6.7 · **Pending a check on a Mac**
+  - `file_picker` needs `com.apple.security.files.user-selected.read-write` for `saveFile` on macOS (export, "Exportar todo"); the app only has `read-only`. Change it in both entitlements files: it is still the smallest permission that works. Update SPEC §13.2 assumption 28.
+  - **Tests first:** 🧪 both entitlements files have `com.apple.security.files.user-selected.read-write`, no `read-only`, and no `network.client`.
+  - **Done when:** "Exportar todo" and sharing a deck save the file on a Mac (with the rc.2 or a later release).
+  - > **Note:** the entitlements change and its test are merged (PR #48), and the `v1.0.0` build includes it. Nobody tried the rc.2 on a Mac before 1.0, so the task moved here, pending that check (decided with the owner in T6.8). If saving fails on a Mac, the fix goes in a 1.0.x release.
 
 - [ ] **T6.15 Memory when restoring a large backup** · US-25 · Depends on: T5.10
   - Restoring reads the whole backup (up to 500 MB) into memory, copies it to a background isolate and decodes it, which may need several GB at its peak and close the app on a phone. Nothing is lost (it fails before writing), but the restore cannot finish.
