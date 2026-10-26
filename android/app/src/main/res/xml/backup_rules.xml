@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What Android 11 and older copy to the user's Google account. The same
+     rules as data_extraction_rules.xml: only the database travels. -->
+<full-backup-content>
+    <include domain="root" path="app_flutter/estudicards.sqlite" />
+    <include domain="root" path="app_flutter/estudicards.sqlite-wal" />
+    <include domain="root" path="app_flutter/estudicards.sqlite-journal" />
+</full-backup-content>

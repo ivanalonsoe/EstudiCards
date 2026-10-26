@@ -237,6 +237,47 @@ void main() {
     });
   });
 
+  test(
+    'a card whose image file is missing is backed up without that image',
+    () async {
+      // As after Android restores its copy of the app, which leaves the
+      // images out: the card still names a file that is not in the folder.
+      final clock = FakeClock(now);
+      final project = await ProjectsRepository(
+        ProjectsDao(db),
+        clock,
+      ).create(const ProjectInput(name: 'P', color: 'blue', icon: 'book'));
+      final deck = await DecksRepository(
+        DecksDao(db),
+        clock,
+      ).create(project.id, const DeckInput(name: 'D'));
+      final kept = await images.saveImported(jpegBytes(40, 30));
+      await CardsRepository(CardsDao(db), clock, images).create(
+        deck.id,
+        CardInput(
+          type: CardType.simple,
+          question: 'q',
+          answer: 'a',
+          questionImage: 'lost.jpg',
+          answerImage: kept,
+        ),
+      );
+
+      final sizes = await repository.backupImageSizes();
+      final document = await repository.exportBackup();
+      final back = decodeExchange(encodeExchange(document)) as BackupDocument;
+
+      expect(sizes, [File('${folder.path}/$kept').lengthSync()]);
+      final card = back.projects.single.decks.single.cards.single;
+      expect(card.question, 'q');
+      expect(card.questionImage, isNull);
+      expect(
+        card.answerImage!.bytes,
+        File('${folder.path}/$kept').readAsBytesSync(),
+      );
+    },
+  );
+
   test('an empty database gives an empty backup', () async {
     final backup = await repository.exportBackup();
 

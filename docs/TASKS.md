@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.14 | ⏳ 10 / 14 |
+| 6. Polish and release | T6.1 – T6.14 | ⏳ 11 / 14 |
 
 ---
 
@@ -554,13 +554,14 @@ Goal: a project that starts, with automated quality from day one.
   - **Done when:** in the rc.2 (T6.8), "Exportar todo" and sharing a deck save the file on a Mac.
   - > **Note:** the entitlements change and its test are merged; the box is ticked once a Mac saves the files with the rc.2 (T6.8).
 
-- [ ] **T6.14 Android backup rules** · SPEC §3.4 · Depends on: — · **Before 1.0**
+- [x] **T6.14 Android backup rules** · SPEC §3.4 · Depends on: — · **Before 1.0**
   - Android's copy (cloud backup and device-to-device transfer) includes only the database `app_flutter/estudicards.sqlite` and its auxiliary files (`-wal`, `-journal`), which hold the settings too (`settings` table). It excludes `images/`, `backups/` and the cache. Declared with `android:dataExtractionRules` (Android 12+) and `android:fullBackupContent` (older versions). Record the decision in SPEC (§3.4 and the decision log).
   - After a restore from that copy, cards point at images that are not there. Today the study card and the editor show the "broken image" icon (`study_card.dart:612`, `card_editor_screen.dart:740`), and export leaves them out (`exchange_repository.dart:225`). The task checks that nothing fails. If the icon does not count as "looking fine", the visual alternative is agreed with the owner before implementing it (`CLAUDE.md`).
   - **Tests first:**
     - 🧪 the main manifest declares both rules files, and each one includes the database and excludes `images/`, `backups/` and the cache.
     - 🧩 a card whose image file is missing shows its question and answer in the study session and in the editor, with no exception.
     - 🧪 sharing a deck and making a backup with a card whose image is missing works, and the card is exported without that image.
+  - > **Note:** decided with the owner: the icon alone did not count as "looking fine", so a missing image shows the icon and "Imagen no disponible" in the study card and in the editor's thumbnail. The rules only include the database files; anything not included is left out, so they need no `<exclude>`. Export already left a missing image out; the new tests keep it that way. See SPEC assumption 72.
 
 - [ ] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.

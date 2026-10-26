@@ -10,6 +10,7 @@ import 'package:estudicards/features/cards/domain/card_speech.dart';
 import 'package:estudicards/features/cards/domain/flashcard.dart';
 import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text.dart';
+import 'package:estudicards/features/cards/presentation/missing_image.dart';
 import 'package:flutter/material.dart';
 
 /// Which side of a card is up.
@@ -588,7 +589,7 @@ class _BigText extends StatelessWidget {
 }
 
 /// A card image (variant 8): up to 160 px high, whole and centred on a
-/// `surface-variant` box. A missing file shows an icon instead.
+/// `surface-variant` box. A missing file shows "Imagen no disponible".
 class _CardImage extends StatelessWidget {
   const new(this.image, {required this.semanticLabel});
 
@@ -609,8 +610,7 @@ class _CardImage extends StatelessWidget {
             image: image,
             fit: BoxFit.contain,
             semanticLabel: semanticLabel,
-            errorBuilder: (context, error, stackTrace) =>
-                Icon(Icons.broken_image_outlined, color: colors.textMuted),
+            errorBuilder: (context, error, stackTrace) => const MissingImage(),
           ),
         ),
       ),

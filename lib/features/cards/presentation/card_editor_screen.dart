@@ -18,6 +18,7 @@ import 'package:estudicards/features/cards/domain/inline_format.dart';
 import 'package:estudicards/features/cards/presentation/card_providers.dart';
 import 'package:estudicards/features/cards/presentation/delete_cards.dart';
 import 'package:estudicards/features/cards/presentation/formatted_text_controller.dart';
+import 'package:estudicards/features/cards/presentation/missing_image.dart';
 import 'package:estudicards/features/cards/presentation/speaker_button.dart';
 import 'package:estudicards/features/cards/presentation/study_card.dart';
 import 'package:estudicards/features/decks/domain/deck.dart';
@@ -738,7 +739,7 @@ class _ImageThumbnail extends StatelessWidget {
                 image: image,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.broken_image_outlined, color: colors.textMuted),
+                    const MissingImage(),
               ),
             ),
           ),

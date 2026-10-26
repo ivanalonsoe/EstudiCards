@@ -23,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../helpers/fake_image_files.dart';
 import '../../../helpers/fake_image_source.dart';
 import '../../../helpers/fake_voice.dart';
+import '../../../helpers/load_images.dart';
 import '../../../helpers/test_app.dart';
 import '../../../helpers/test_images.dart';
 import 'card_editor_finders.dart';
@@ -678,6 +679,48 @@ void main() {
         findsNothing,
       );
       expect(storedFiles(), isEmpty);
+    });
+
+    testWidgets('a card whose image file is missing opens with its question '
+        'and answer, and "Imagen no disponible" in the thumbnail', (
+      tester,
+    ) async {
+      // As after Android restores its copy of the app, which leaves the
+      // images out: the card still names a file that is not in the folder.
+      final card = await cards.create(
+        constitution.id,
+        const CardInput(
+          type: CardType.simple,
+          question: '¿Qué orgánulo aparece?',
+          answer: 'La mitocondria',
+          questionImage: 'lost.jpg',
+        ),
+      );
+      await pumpTestApp(
+        tester,
+        size: mobile,
+        db: db,
+        clock: clock,
+        location: AppRoutes.editCard(general.id, constitution.id, card.id),
+        imagesFolder: folder,
+      );
+      await loadImages(tester);
+
+      expect(fieldText(tester, questionField), '¿Qué orgánulo aparece?');
+      expect(fieldText(tester, answerField), 'La mitocondria');
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('cardEditor.question.imagePreview')),
+          matching: find.text('Imagen no disponible'),
+        ),
+        findsOneWidget,
+      );
+      // "Quitar imagen" lets the user clear it.
+      expect(
+        find.byKey(const Key('cardEditor.question.removeImage')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('a file that is not an image shows a message', (tester) async {
