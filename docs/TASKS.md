@@ -519,7 +519,7 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 `saveImported` of a 1200 px JPEG with GPS EXIF stores a JPEG with no EXIF and the same pixels.
     - 🧪 a shared deck with such an image exports a JSON whose image has no EXIF.
 
-- [ ] **T6.10 Pin GitHub Actions** · SPEC §10.5 · Depends on: T6.7 · **Before 1.0**
+- [x] **T6.10 Pin GitHub Actions** · SPEC §10.5 · Depends on: T6.7 · **Before 1.0**
   - Every `uses:` in `ci.yml` and `release.yml` is pinned to a full commit SHA, with its version as a comment. `.github/dependabot.yml` proposes updates for the `github-actions` ecosystem every week. Optional: turn on "Require actions to be pinned to a full-length commit SHA" in the repository settings.
   - **Tests first:**
     - 🧪 a test that reads every workflow file fails if a `uses:` is not followed by 40 hexadecimal characters.
@@ -541,8 +541,9 @@ Goal: a project that starts, with automated quality from day one.
     - 🧪 the release step attaches `SHA256SUMS.txt`.
     - 🧪 every installer the release attaches has an `attest-build-provenance` step, and `id-token: write` / `attestations: write` appear only in the jobs that have one.
   - **Done when:** a `v1.0.0-rc.2` tag publishes the installers, the checksums match them, and `gh attestation verify` accepts each one.
+  - > **Note:** the workflow changes and their tests are merged; the box is ticked once the `v1.0.0-rc.2` tag meets "Done when" (T6.8).
 
-- [ ] **T6.12 Ignore every signing key file** · Depends on: — · **Before 1.0**
+- [x] **T6.12 Ignore every signing key file** · Depends on: — · **Before 1.0**
   - `.gitignore` ignores `*.keystore`, `*.p12` and `key.properties` anywhere in the repository, not only under `android/`.
   - **Tests first:** 🧪 `git check-ignore` matches `upload.keystore`, `upload.p12`, `key.properties` and `android/app/upload.jks`.
 
