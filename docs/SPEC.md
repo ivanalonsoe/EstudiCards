@@ -957,6 +957,8 @@ Workflow: each task, or group of related tasks, on its own branch (`feature/T2.3
 
 A first `changes` job (`tool/ci_changes.sh`) decides which jobs a change needs, to save CI minutes. Documentation only (`docs/`, `*.md`): nothing runs. Pull requests: `quality` always; `integration-windows` and `e2e-android` only when something that can change how the app runs changed (`lib/`, `integration_test/`, `assets/`, `pubspec`, code generation and l10n settings, the workflow; plus `windows/` for the first and `android/` and `patrol_test/` for the second). Push to `main`: `quality` only, since the merged PR already ran the rest. The "Run workflow" button (`workflow_dispatch`) runs every job. A skipped job counts as passed for a required check. The workflow's token can only read the repository (`permissions: contents: read`).
 
+Both workflows pin every action to a full commit SHA, with its version as a comment (`uses: actions/checkout@<sha> # v7.0.1`): a tag can be moved to other code, a commit cannot. Dependabot (`.github/dependabot.yml`) proposes new versions of the actions once a week, in one PR, once they are a week old. A test (`test/ci/pinned_actions_test.dart`) fails if a `uses:` is not pinned.
+
 **`release.yml`** — when a `v*` tag is created (e.g. `v1.0.0`). A first job checks the tag is "v" + the version in `pubspec.yaml` (`tool/check_release_tag.dart`); a tag with a suffix (`v1.0.0-rc.1`) is published as a pre-release.
 
 | Job | Runner | Output |

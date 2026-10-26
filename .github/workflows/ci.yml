@@ -18,6 +18,11 @@
 #     jobs already ran on the PR.
 #   - "Run workflow" button in the Actions tab (workflow_dispatch): every
 #     job, to force a full run on any branch.
+#
+# Every action is pinned to a full commit SHA, with its version as a
+# comment. A tag like "@v2" can be moved by whoever controls the action, so
+# a hijacked action would run here on the next push; a commit cannot change.
+# Dependabot proposes new versions (.github/dependabot.yml).
 name: CI
 
 on:
@@ -49,7 +54,7 @@ jobs:
     steps:
       # The whole history, so the change can be compared with its base.
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -70,10 +75,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           # Same version as the development machines, so lint results match.
@@ -107,7 +112,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage
           path: coverage/lcov.info
@@ -121,10 +126,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
@@ -147,11 +152,11 @@ jobs:
     timeout-minutes: 75
     steps:
       - name: Check out the code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The Android build uses Java 17 (android/app/build.gradle.kts).
       - name: Install Java
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: 17
@@ -159,7 +164,7 @@ jobs:
           cache: gradle
 
       - name: Install Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.5
@@ -236,7 +241,7 @@ jobs:
       # retries below and still stops a stuck emulator before the job's own.
       - name: Run integration and E2E tests on an Android emulator
         timeout-minutes: 50
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           # The default renderer (`-gpu swiftshader_indirect`) logged graphics
           # errors ("Failed to find ColorBuffer") before those hangs. `guest`
@@ -279,7 +284,7 @@ jobs:
       # be studied (they stay for a few days in the run's "Artifacts").
       - name: Upload the Android test reports
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-test-reports
           path: |
