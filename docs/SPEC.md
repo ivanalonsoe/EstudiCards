@@ -186,6 +186,7 @@ lefthook.yml                 # git hooks
 - Database: `<app documents>/estudicards.sqlite`. On Windows, `<app documents>` is the folder the user chose (`Documents\EstudiCards` by default, T5.11), not Documents itself.
 - Images: `<app documents>/images/<uuid>.jpg`. Only the relative path is stored in the database.
 - Images are resized to at most 1600 px on the long side and saved as JPEG at quality 80.
+- Stored images carry no metadata: the EXIF data (GPS location, camera, date) is removed from every picked or imported image, after applying its rotation, so it never travels in a shared file (T6.9).
 
 ### 3.5 Platforms and distribution
 
@@ -806,7 +807,7 @@ to bring;traer (brought, brought);;;;;;;;;Can you bring me some water?;Verbo irr
 1. **Validation:** `format` and `version` (JSON) or the header row (CSV) are checked. An invalid file shows a clear error and imports nothing.
    - An imported file is not trusted: it is fully read and checked before anything is written. A JSON file must have every field with the right type and an allowed value, no repeated IDs and, in a backup, no session, attempt or statistic pointing at something missing from the file; the first problem rejects the file.
    - Limits (`import_limits.dart`): a full backup up to **500 MB** (about 1,400 images, T5.10), a shared project or deck up to **100 MB**, a CSV file up to **5 MB** and **10,000** card rows, and each image up to **5 MB** and **8,000 px** on its longest side. Sizes are checked before decoding. A bigger file is rejected.
-   - Images are never taken from a path in the file: the file holds the JPEG itself, and the app stores it under a new name in its images folder. A JPEG of up to 1600 px is stored byte for byte; a bigger one is shrunk as in §3.4.
+   - Images are never taken from a path in the file: the file holds the JPEG itself, and the app stores it under a new name in its images folder. A JPEG of up to 1600 px keeps its image data as it is and only loses its metadata; a bigger or rotated one is prepared as in §3.4.
 2. **Preview:** number of new cards, number of duplicates that will be skipped, and a list of rows with errors (shown in the UI as, e.g., "Fila 7: falta la respuesta"). Rows with errors are skipped; the rest is imported if the user confirms.
 3. **IDs:**
    - As a new project or new deck: **new IDs** are generated for everything, avoiding clashes.
@@ -1030,6 +1031,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 | Cards | Simple or test (2–6 options, check to allow several correct). Explanation on test cards. Image, system TTS, bold/italic. Example and notes for languages. |
 | Study | Random selection (option to prioritise missed cards), always shuffled, shuffled options. Self-grading. Multiple answer with no partial credit. Mutually exclusive timers. Pause hides the card. "Show answer" and "Leave for later". Buttons only, no shortcuts. |
 | Study session (phase 3) | Decided before the session engine (T3.2, T3.4): <br>• The per-question timer stops when a simple card is flipped, on "Comprobar" and on "Ver respuesta". The response time keeps counting until "Acerté" or "Fallé". <br>• Pending repeats are not recorded on exit or when the global timer runs out. Only pending original cards are recorded as `unanswered`, and "No respondidas" lists original cards only. <br>• The ✓ and ✗ counters count first attempts only; the progress of repeats shows in "+N repasos". |
+| Image metadata (T6.9) | Card images keep no EXIF data, so a shared deck never reveals where or with which phone a photo was taken. Removed when an image is picked and when it is imported, on every platform. |
 | Errors | A card enters when answered wrong; leaves after 2 correct in a row (fixed). Per direction. Never mixes projects. |
 | Design | Minimal, orange as the main colour, light/dark, sidebar on desktop. Plus Jakarta Sans typeface. Icon: two cards with a ✓. |
 | Languages | UI in Spanish. Documentation, code, tests, commits, CSV column names and the AI prompt in English. Coding agents talk to the owner in Spanish. |
@@ -1345,7 +1347,7 @@ Each phase can be built, tested and used on its own. "Done when" says when to mo
 51. **JSON format (T5.1):**
     - The final schema is in §8.2. Shared files carry no dates and no favourite, archived or trash state (they are the owner's own state, not content); only a backup does. Each card writes only the fields of its type, as the database stores them.
     - Reading is strict and all-or-nothing (`decodeExchange`): the first wrong field rejects the file with an `ExchangeError` and the path of the field (e.g. `data.deck.cards[3].type`). Content that the import preview reports per card (a test card with no correct option, a simple card with no answer) is left to the import engine (T5.3). The limits are in §8.4 rule 1; the Spanish messages arrive with the import screen (T5.4).
-    - Only `image/jpeg` is accepted, and the bytes themselves must start like a JPEG whatever `mime` says. `ImageFiles.saveImported` reads the size from the JPEG header without decoding the image, refuses more than 8,000 px on a side (a small file can need gigabytes once decoded), keeps a JPEG of up to 1600 px byte for byte (every image the app exports is one) and shrinks a bigger one in a background isolate. The name is always new.
+    - Only `image/jpeg` is accepted, and the bytes themselves must start like a JPEG whatever `mime` says. `ImageFiles.saveImported` reads the size from the JPEG header without decoding the image, refuses more than 8,000 px on a side (a small file can need gigabytes once decoded), keeps the image data of a JPEG of up to 1600 px untouched (every image the app exports is one) and shrinks a bigger one in a background isolate. The name is always new. T6.9 added that the kept JPEG loses its metadata segments (EXIF, XMP, IPTC, comments; the colour segments APP0, APP2 and APP14 stay) without being re-encoded, and a rotated one is prepared like a picked image so it stays upright.
     - `encodeExchangeInBackground` and `decodeExchangeInBackground` run in a background isolate (`Isolate.run`), so a large backup never freezes the screen; the import and export screens use them.
     - `appVersion` (`lib/core/app_version.dart`) must match `pubspec.yaml`; a test checks it.
     - A deck's cards are written oldest first; cards created at the same instant keep their insertion order (SQLite's `rowid`).

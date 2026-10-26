@@ -24,7 +24,7 @@ Test legend: 🧪 unit · 🧩 widget · 🔗 integration · 🤖 E2E (Patrol).
 | 3. Study session | T3.1 – T3.10 | ✅ 10 / 10 |
 | 4. Statistics and errors | T4.1 – T4.7 | ✅ 7 / 7 |
 | 5. Import and export | T5.1 – T5.11 | ✅ 11 / 11 |
-| 6. Polish and release | T6.1 – T6.8 | ⏳ 7 / 8 |
+| 6. Polish and release | T6.1 – T6.9 | ⏳ 7 / 9 |
 
 ---
 
@@ -511,6 +511,13 @@ Goal: a project that starts, with automated quality from day one.
   - Android signing with repository secrets; Android, Windows and macOS builds when a `v*` tag is created; attach them to a *Release*.
   - **Done when:** the `v1.0.0-rc.1` tag produces the three installers and they install.
   - > **Note:** decided with the owner: one universal APK, an Inno Setup installer and a portable ZIP for Windows, and a DMG for macOS; the upload key's secrets live in the `release` environment, limited to `v*` tags. The app identifier became `dev.ivalon.estudicards` first (assumption 70). The `v1.0.0-rc.1` pre-release installed on Android, Windows (installer and ZIP) and macOS (tested by a friend of the owner, CSV import included). See SPEC §10.5 and assumption 71.
+
+- [ ] **T6.9 Remove image metadata** · SPEC §3.4 · Depends on: T2.6 · **Before 1.0**
+  - Every stored card image loses its EXIF data (GPS, camera, date). A picked image loses it when it is prepared. An imported JPEG of up to 1600 px, which is now kept byte for byte, loses its metadata segments without being re-encoded. The orientation is still applied first, so photos stay upright.
+  - **Tests first:**
+    - 🧪 `prepareCardImage` of a JPEG with GPS and orientation EXIF returns an upright JPEG with no EXIF.
+    - 🧪 `saveImported` of a 1200 px JPEG with GPS EXIF stores a JPEG with no EXIF and the same pixels.
+    - 🧪 a shared deck with such an image exports a JSON whose image has no EXIF.
 
 - [ ] **T6.8 Version 1.0.0**
   - All tests and E2E green, coverage within thresholds, README updated and tag `v1.0.0`.
