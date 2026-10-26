@@ -5,3 +5,6 @@
 # Test fixtures are byte-exact copies of real files (BOM, CRLF or LF line
 # endings, other encodings): git must never convert them.
 test/fixtures/** -text
+
+# Databases of released versions, opened by the migration tests.
+*.sqlite binary

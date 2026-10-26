@@ -42,7 +42,12 @@ class AppDatabase extends _$AppDatabase {
   /// 3. `type`, `source_lang` and `target_lang` move from `projects` to
   ///    `decks` (T2.10).
   /// 4. `card_stats` is filled from the attempts saved in phase 3 (T4.1),
-  ///    and `attempts.local_day` is added with its index (T4.2).
+  ///    and `attempts.local_day` is added with its index (T4.2). Released in
+  ///    1.0.0: `drift_schemas/estudicards_1.0.0.sqlite` is a database made by
+  ///    that version, and `migration_test.dart` opens it.
+  ///
+  /// Released versions are frozen: a later schema change adds a new version
+  /// and its step, and never edits a released step or schema file.
   @override
   int get schemaVersion => 4;
 
