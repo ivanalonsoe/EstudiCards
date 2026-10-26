@@ -2,7 +2,7 @@
 
 Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. Organise what you study into projects and decks, practise with random, optionally timed sessions, and review your mistakes.
 
-> **Status:** phase 0 (foundation) complete. Next: phase 1, projects and decks, in [`docs/TASKS.md`](docs/TASKS.md).
+> **Status:** version 1.0.0. Every phase of the plan is done; see the [roadmap](#roadmap) and [what comes after 1.0](#after-10). To try the app, see [Install](#install).
 >
 > **Languages:** the app UI is in Spanish. Documentation, code and tests are in English.
 
@@ -14,7 +14,7 @@ Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. O
 - **Two card types:**
   - **Simple:** a question, word or sentence, and its answer or translation. Tap to flip.
   - **Test:** 2 to 6 options, with one or several correct. The app grades it automatically.
-- **Language projects:** text-to-speech (system TTS, free and offline), example sentence, notes and **reverse mode**.
+- **Language decks:** text-to-speech (system TTS, free and offline), example sentence, notes and **reverse mode**.
 - Configurable **study sessions**:
   - number of cards, decks, normal mode or **errors only**;
   - **per-question timer** or **global timer**;
@@ -28,6 +28,63 @@ Flashcard app for **Windows, macOS, Android and iOS**, built with **Flutter**. O
   - import cards from CSV, with a downloadable template and an **AI prompt to generate them**.
 - 15-day **trash** for projects and decks.
 - **Light and dark theme.** 100% offline, no accounts or login.
+
+## Install
+
+Download the file for your system from the latest release on the [Releases page](https://github.com/ivanalonsoe/EstudiCards/releases/latest), under **Assets**. The app is not in Google Play or the App Store yet, and the Windows and macOS versions are not signed, so each system shows a warning the first time. iOS has no download: it needs Apple signing (see [After 1.0](#after-10)).
+
+| System | File |
+|---|---|
+| Android | `EstudiCards-<version>-android.apk` |
+| Windows (installer) | `EstudiCards-<version>-windows-setup.exe` |
+| Windows (portable, no install) | `EstudiCards-<version>-windows.zip` |
+| macOS | `EstudiCards-<version>-macos.dmg` |
+
+### Android
+
+1. Open the `.apk` on the phone (from the browser's downloads or a file manager).
+2. Android blocks apps from unknown sources: it says that, for your security, the phone cannot install apps from this source. Tap **Settings** («Ajustes»), turn on **Allow from this source** («Permitir de esta fuente») for that browser or file manager, and go back.
+3. Tap **Install**. If Play Protect warns about an unknown app, tap **More details** → **Install anyway** («Más detalles» → «Instalar de todas formas»).
+
+You can turn "Allow from this source" off again afterwards. An update installs over the old version and keeps your data.
+
+### Windows
+
+- The browser may say the file "isn't commonly downloaded": choose **Keep** («Conservar»).
+- When you open it, Windows SmartScreen may show **"Windows protected your PC"** («Windows protegió su PC») because the app is not signed with a Microsoft certificate: click **More info** → **Run anyway** («Más información» → «Ejecutar de todas formas»).
+- The installer needs no administrator rights. The portable `.zip` can be unzipped into any folder; open `estudicards.exe`.
+- On the first start the app asks for a folder for your data and proposes `Documents\EstudiCards`. Uninstalling or updating never deletes it.
+
+> **OneDrive:** the app never uploads anything, but if OneDrive syncs your Documents folder (common on Windows 10 and 11), the data folder `Documents\EstudiCards` is uploaded to the cloud too. To avoid it, click **Cambiar carpeta…** on the first start and choose a folder outside Documents, e.g. `C:\Users\<you>\EstudiCards`. To move it later: close the app, move the `EstudiCards` folder out of Documents, open the app, which says it cannot find your data folder, choose the new place and then **Cargar datos**.
+
+### macOS
+
+The app is not signed by Apple, so macOS refuses to open it at first:
+
+1. Open the `.dmg` and drag EstudiCards to **Applications**.
+2. Open it once. macOS says it cannot check the app for malicious software («No se ha podido verificar…»): click **OK**.
+3. Open **System Settings → Privacy & Security**, scroll down to **Security** and click **Open Anyway** («Abrir igualmente»), then confirm with your password. From then on it opens normally.
+
+> The 1.0.0 macOS version has not been tried on a real Mac yet. An earlier test version worked on a Mac, but saving files ("Exportar todo" and sharing a deck) is still unchecked (T6.13, see [After 1.0](#after-10)).
+
+### Checking a download
+
+Each release carries `SHA256SUMS.txt` and a [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations) for every file, made by the release workflow (`.github/workflows/release.yml`). If you got a file anywhere other than the Releases page, you can check that it is the published one:
+
+- **Checksum:** put `SHA256SUMS.txt` in the same folder as the file and run
+
+  ```bash
+  sha256sum -c SHA256SUMS.txt --ignore-missing    # Linux, macOS or Git Bash
+  ```
+
+  It must print `OK` next to the file. In PowerShell, `Get-FileHash <file>` must show the same value as the file's line in `SHA256SUMS.txt`.
+- **Attestation:** with the [GitHub CLI](https://cli.github.com/),
+
+  ```bash
+  gh attestation verify <file> --repo ivanalonsoe/EstudiCards
+  ```
+
+  confirms that this repository's release workflow built the file from a release tag.
 
 ## Documentation
 
@@ -145,7 +202,7 @@ lefthook install
 | Command | What it does |
 |---|---|
 | `dart run build_runner build --delete-conflicting-outputs` | Generates the database code (`*.g.dart`) from the table definitions. |
-| `dart run drift_dev schema dump lib/core/db/app_database.dart drift_schemas/drift_schema_vN.json` | After a schema change (N = the new `schemaVersion`): saves the new schema, which the migration tests in `test/core/db/` use. Commit the file. |
+| `dart run drift_dev schema dump lib/core/db/app_database.dart drift_schemas/drift_schema_vN.json` | After a schema change (N = the new `schemaVersion`): saves the new schema, which the migration tests in `test/core/db/` use. Commit the file. Released schemas and databases in `drift_schemas/` are never edited (see `AGENTS.md`). |
 | `flutter analyze` | Checks the code for errors and bad practices. It must report no warnings. |
 | `flutter test` | Runs the unit and widget tests. |
 | `flutter test --coverage` | Same, generating the coverage report in `coverage/lcov.info`. |
@@ -218,16 +275,38 @@ Full details in [`docs/SPEC.md` §8](docs/SPEC.md#8-import-and-export).
 | Phase | Content | Status |
 |---|---|---|
 | 0. Foundation | Flutter project, hooks, CI, Patrol, theme, routes, database | ✅ Done |
-| 1. Projects and decks | Dashboard, favourites, archive, trash | ⏳ Pending |
-| 2. Cards | Simple and test editor, preview, images, voice | ⏳ Pending |
-| 3. Study session | Random selection, timers, pause, results | ⏳ Pending |
-| 4. Statistics and errors | Error list, statistics, streak | ⏳ Pending |
-| 5. Import and export | JSON, CSV, template, AI prompt | ⏳ Pending |
-| 6. Polish | Animations, accessibility, icons, packaging | ⏳ Pending |
+| 1. Projects and decks | Dashboard, favourites, archive, trash | ✅ Done |
+| 2. Cards | Simple and test editor, preview, images, voice | ✅ Done |
+| 3. Study session | Random selection, timers, pause, results | ✅ Done |
+| 4. Statistics and errors | Error list, statistics, streak | ✅ Done |
+| 5. Import and export | JSON, CSV, template, AI prompt | ✅ Done |
+| 6. Polish and release | Animations, accessibility, settings, performance, security fixes, installers, version 1.0.0 | ✅ Done |
 
 Each phase is broken down task by task in [`docs/TASKS.md`](docs/TASKS.md).
 
-**Future goals (after v1):** login and cloud sync, web version, AI voices, spaced repetition, "type the answer" mode, formulas and code on cards, keyboard shortcuts and more UI languages.
+### After 1.0
+
+Pending tasks (in [`docs/TASKS.md`](docs/TASKS.md#after-10)):
+
+- **T6.13 Saving files on macOS:** the macOS app has the permission to save the files the user picks, but nobody has tried "Exportar todo" or sharing a deck on a Mac yet. Checked when someone with a Mac tries it; a fix, if needed, goes in a 1.0.x release.
+- **T6.15 Memory when restoring a large backup:** restoring a backup of several hundred MB may run out of memory on a phone. Nothing is lost, but the restore cannot finish. To be measured on a mid-range Android phone, then decode the file in parts or lower the backup limit on mobile.
+
+Future goals ([`docs/SPEC.md` §12](docs/SPEC.md#12-future-goals-outside-v1)):
+
+- login and cloud sync between devices;
+- web and Linux versions;
+- AI voices in the cloud;
+- spaced repetition (SM-2 or FSRS);
+- a "type the answer" mode;
+- maths formulas (LaTeX) and code blocks on cards;
+- keyboard shortcuts on desktop;
+- a configurable number of correct answers to leave the error list;
+- more UI languages;
+- import from Anki and other formats;
+- recorded audio on cards;
+- publishing to Google Play and the App Store (with signed iOS, Windows and macOS builds);
+- visual regression tests (golden tests);
+- checking and registering the name before publishing in the stores.
 
 ## Privacy
 

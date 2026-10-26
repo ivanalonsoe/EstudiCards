@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show OrderingTerm, Variable;
 import 'package:drift/native.dart';
 import 'package:drift_dev/api/migrations_native.dart';
@@ -293,6 +295,87 @@ void main() {
           '${local.day.toString().padLeft(2, '0')}';
       final attempts = await db.select(db.attempts).get();
       expect(attempts.map((a) => a.localDay).toSet(), {expected});
+    });
+  });
+
+  group('from the 1.0.0 release (version 4)', () {
+    // A database file made by the 1.0.0 app, with rows in every table. It
+    // is never regenerated: every later version must open it as it is.
+    const releasedFile = 'drift_schemas/estudicards_1.0.0.sqlite';
+
+    /// Opens a copy of [releasedFile] with the app's database, migrated to
+    /// the current version and checked against a fresh install.
+    Future<AppDatabase> openReleased() async {
+      final folder = Directory.systemTemp.createTempSync('released_db');
+      addTearDown(() => folder.deleteSync(recursive: true));
+      final copy = File(releasedFile).copySync('${folder.path}/copy.sqlite');
+      final db = AppDatabase(NativeDatabase(copy));
+      addTearDown(db.close);
+      await verifier.migrateAndValidate(db, db.schemaVersion);
+      return db;
+    }
+
+    test('has the schema saved in drift_schema_v4.json', () async {
+      final schema = await verifier.schemaAt(4);
+      final raw = schema.rawDatabase
+        ..execute("ATTACH DATABASE '$releasedFile' AS released");
+      List<String> objects(String database) => [
+        for (final row in raw.select(
+          'SELECT type, name, sql FROM $database.sqlite_master '
+          "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name",
+        ))
+          '${row['type']} ${row['name']}: ${row['sql']}',
+      ];
+
+      expect(objects('released'), objects('main'));
+    });
+
+    test('opens with every row', () async {
+      final db = await openReleased();
+
+      final project = await db.select(db.projects).getSingle();
+      final decks = await (db.select(
+        db.decks,
+      )..orderBy([(d) => OrderingTerm.asc(d.name)])).get();
+      final cards = await (db.select(
+        db.cards,
+      )..orderBy([(c) => OrderingTerm.asc(c.id)])).get();
+      expect((project.name, project.isFavorite), ('Inglés B2', true));
+      expect(decks.map((d) => (d.name, d.type, d.sourceLang, d.targetLang)), [
+        ('Repaso general', 'general', null, null),
+        ('Verbos irregulares', 'language', 'en-GB', 'es-ES'),
+      ]);
+      expect(cards.map((c) => (c.type, c.question, c.questionImage)), [
+        ('simple', 'to bring', 'c1-question.jpg'),
+        ('test', '¿Qué verbos son irregulares?', null),
+      ]);
+      expect(await db.select(db.cardOptions).get(), hasLength(3));
+      expect(await db.select(db.studySessions).get(), hasLength(1));
+      expect(await db.select(db.sessionDecks).get(), hasLength(2));
+      expect(await db.select(db.attempts).get(), hasLength(3));
+      expect(
+        {
+          for (final setting in await db.select(db.settings).get())
+            setting.key: setting.value,
+        },
+        {'theme_mode': 'dark', 'card_text_scale': '1.2', 'daily_goal': null},
+      );
+    });
+
+    test('keeps card_stats as the attempts give them', () async {
+      final db = await openReleased();
+      Future<List<CardStatsRow>> stats() =>
+          (db.select(db.cardStats)..orderBy([
+                (s) => OrderingTerm.asc(s.cardId),
+                (s) => OrderingTerm.asc(s.direction),
+              ]))
+              .get();
+
+      final stored = await stats();
+      await db.recomputeCardStats();
+
+      expect(stored, hasLength(2));
+      expect(await stats(), stored);
     });
   });
 }

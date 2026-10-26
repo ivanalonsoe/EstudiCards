@@ -167,3 +167,5 @@ app.*.map.json
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
+# Except the databases of released versions, which the migration tests open.
+!/drift_schemas/estudicards_*.sqlite

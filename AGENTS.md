@@ -93,7 +93,8 @@ lefthook.yml      # git hooks
 - **Time:** use the injectable clock in `core/clock.dart`, never `DateTime.now()` directly. This makes timers, streaks and the trash testable.
 - **Business rules in `domain/`**, pure and unit-tested: card selection and shuffling, session engine, timers, error list, streak, trash, JSON/CSV parsers and validation.
 - **Transactions** for any write that touches several tables (answering, importing, deleting, moving).
-- **Database schema:** any change bumps `schemaVersion` and adds its migration. Never edit a released migration.
+- **Database schema:** any change bumps `schemaVersion`, adds its migration step and saves the new schema in `drift_schemas/` (see `app_database.dart`).
+- **Released migrations are frozen.** Since 1.0.0 (schema version 4), people have databases on their devices. Never edit, reorder or remove a released migration step, a released `drift_schemas/drift_schema_vN.json`, or a released database (`drift_schemas/estudicards_<version>.sqlite`); fix a released step's mistake with a new version. `test/core/db/migration_test.dart` opens the 1.0.0 database on every run and must keep passing unchanged. When a release changes the schema, add its own `estudicards_<version>.sqlite` and a test that opens it.
 - **Deletion:** projects and decks are marked with `deleted_at` (15-day trash). Cards are permanently deleted after the undo window. See SPEC §7.1.
 - **Statistics:** only first attempts count (`is_first_attempt = true`). `card_stats` is derived and must be recomputable from `attempts`.
 - **Theme:** use theme tokens (`Theme.of(context)` / extensions), never literal colours in widgets. Correct and wrong always with an icon as well as colour.
